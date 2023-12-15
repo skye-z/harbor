@@ -1,6 +1,9 @@
 <template>
-    <div class="pa-10">
-        <div>Setting</div>
+    <div>
+        <div class="sub-header pa-10 border-bottom flex align-center justify-between">
+            <div class="sub-title">平台设置</div>
+            <n-button strong secondary type="primary">Github</n-button>
+        </div>
         <div>平台配置</div>
     </div>
 </template>

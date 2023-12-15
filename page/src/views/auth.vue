@@ -3,7 +3,10 @@
         <div id="auth-box">
             <div class="flex align-center justify-center">
                 <img id="auth-logo" src="../assets/icon/icon-light@2x.png" />
-                <div id="auth-title">Harbor</div>
+                <div>
+                    <div id="auth-title">Harbor</div>
+                    <div id="auth-subtitle">轻量级本地服务交付平台</div>
+                </div>
             </div>
             <div id="auth-card" class="card">
                 <n-form ref="formRef" :model="form" :disabled="loading" label-placement="top">
@@ -71,17 +74,18 @@ export default {
 }
 
 #auth-logo {
-    width: 48px;
+    width: 64px;
 }
 
 #auth-title {
     font-weight: bold;
+    line-height: 42px;
     font-size: 42px;
-    color: #17e3f0;
+    color: #25D8E4;
 }
 
 #auth-card {
-    margin-bottom: 10px;
+    margin: 20px 0 10px 0;
     padding: 20px;
     width: 300px;
 }

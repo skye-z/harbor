@@ -1,6 +1,9 @@
 <template>
-    <div class="pa-10">
-        <div>Network</div>
+    <div>
+        <div class="sub-header pa-10 border-bottom flex align-center justify-between">
+            <div class="sub-title">内部网络</div>
+            <n-button strong secondary type="primary">创建网络</n-button>
+        </div>
         <div>网络列表、创建、删除、连接、断开、编辑</div>
     </div>
 </template>

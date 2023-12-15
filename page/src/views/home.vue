@@ -10,7 +10,7 @@
             </n-scrollbar>
             <div class="border-top pa-10 text-center text-gray">v1.0.0 build 123</div>
             <div class="border-top pa-10 text-center">
-                <n-button tertiary type="error" class="full-width">
+                <n-button tertiary type="error" class="full-width" @click="exit">
                     <template #icon>
                         <n-icon>
                             <Power />
@@ -126,6 +126,13 @@ export default {
                 if (path.indexOf('/') !== -1) path = path.substring(0, path.indexOf('/'));
                 this.select = path;
             }
+        },
+        exit() {
+            window.$message.success("登陆已退出, Bye!")
+            localStorage.removeItem("user:access:token")
+            setTimeout(() => {
+                this.$router.push('/auth')
+            }, 1000)
         }
     },
     mounted() {
@@ -153,7 +160,8 @@ export default {
 }
 
 #menu-title {
-    margin-right: 10px;
+    margin: 5px 10px 5.5px 0;
+    line-height: 24px;
     font-size: 24px;
 }
 
