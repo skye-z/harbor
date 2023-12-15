@@ -1,6 +1,7 @@
 <template>
     <div class="pa-10">
-        Stack
+        <div>Stack</div>
+        <div>编排列表、部署、删除、更新</div>
     </div>
 </template>
   

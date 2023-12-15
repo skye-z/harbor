@@ -1,6 +1,7 @@
 <template>
     <div class="pa-10">
-        Network
+        <div>Network</div>
+        <div>网络列表、创建、删除、连接、断开、编辑</div>
     </div>
 </template>
   

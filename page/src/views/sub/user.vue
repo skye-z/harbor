@@ -1,6 +1,7 @@
 <template>
     <div class="pa-10">
-        User
+        <div>User</div>
+        <div>用户列表、创建、编辑、删除、权限</div>
     </div>
 </template>
   

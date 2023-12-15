@@ -1,6 +1,7 @@
 <template>
     <div class="pa-10">
-        Container
+        <div>Container</div>
+        <div>容器列表、创建、删除、编辑、重命名、停止、关闭、暂停、恢复、接入网络、资源限制</div>
     </div>
 </template>
   

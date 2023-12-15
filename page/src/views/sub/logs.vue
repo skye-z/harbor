@@ -1,6 +1,7 @@
 <template>
     <div class="pa-10">
-        Logs
+        <div>Logs</div>
+        <div>平台与docker操作日志</div>
     </div>
 </template>
   

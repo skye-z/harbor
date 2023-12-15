@@ -1,6 +1,7 @@
 <template>
     <div class="pa-10">
-        Setting
+        <div>Setting</div>
+        <div>平台配置</div>
     </div>
 </template>
   
