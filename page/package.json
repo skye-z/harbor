@@ -1,0 +1,24 @@
+{
+  "name": "page",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build --base=/app/",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.3.11",
+    "vue-router": "4"
+  },
+  "devDependencies": {
+    "@vicons/carbon": "^0.12.0",
+    "@vitejs/plugin-vue": "^4.5.2",
+    "naive-ui": "^2.35.0",
+    "unplugin-auto-import": "^0.17.2",
+    "unplugin-vue-components": "^0.26.0",
+    "vfonts": "^0.0.3",
+    "vite": "^5.0.8"
+  }
+}
