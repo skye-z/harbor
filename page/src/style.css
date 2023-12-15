@@ -57,3 +57,15 @@
 .text-gray {
     color: #999;
 }
+
+.border-top{
+  border-top: #cacaca 1px solid;
+}
+
+.border-bottom{
+  border-bottom: #cacaca 1px solid;
+}
+
+.border-right{
+  border-right: #cacaca 1px solid;
+}

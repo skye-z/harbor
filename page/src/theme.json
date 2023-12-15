@@ -4,6 +4,7 @@
     "primaryColor": "#0FCFDCFF",
     "primaryColorHover": "#25D8E4FF",
     "primaryColorPressed": "#08BECBFF",
-    "primaryColorSuppl": "#25D8E4FF"
+    "primaryColorSuppl": "#25D8E4FF",
+    "dividerColor": "#cacacaFF"
   }
 }
