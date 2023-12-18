@@ -18,5 +18,5 @@ func NewDockerService(client *docker.Docker) *DockerService {
 }
 
 func (ds DockerService) GetInfo(ctx *gin.Context) {
-	util.ReturnData(ctx, true, ds.Client)
+	util.ReturnData(ctx, true, ds.Client.Config)
 }
