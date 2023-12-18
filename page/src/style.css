@@ -54,8 +54,22 @@
   padding: 10px;
 }
 
+.mb-10{
+  margin-bottom: 10px;
+}
+
 .mr-10{
   margin-right: 10px;
+}
+
+.text-big{
+  font-size: 18px;
+  line-height: 18px;
+}
+
+.text-small{
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .text-gray {

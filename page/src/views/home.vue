@@ -128,11 +128,19 @@ export default {
             }
         },
         exit() {
-            window.$message.success("登陆已退出, Bye!")
-            localStorage.removeItem("user:access:token")
-            setTimeout(() => {
-                this.$router.push('/auth')
-            }, 1000)
+            window.$dialog.warning({
+                title: '操作确认',
+                content: '确认要退出登陆吗?',
+                positiveText: '确认退出',
+                negativeText: '取消',
+                onPositiveClick: () => {
+                    window.$message.success("登陆已退出, Bye!")
+                    localStorage.removeItem("user:access:token")
+                    setTimeout(() => {
+                        this.$router.push('/auth')
+                    }, 1000)
+                }
+            })
         }
     },
     mounted() {

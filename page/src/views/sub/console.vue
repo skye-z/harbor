@@ -4,7 +4,60 @@
             <div class="sub-title">控制台</div>
             <n-select id="refresh" v-model:value="refresh" :options="refreshOptions" />
         </div>
-        <!-- <div>本机性能监控(docker部署需安装代理)、docker信息、容器数量、镜像数量、网络数量、存储卷数量、用户数量</div> -->
+        <div class="pa-10">
+            <div class="card mb-10 pa-10">
+                <div>
+                    <div>本机名称#123123123</div>
+                    <div></div>
+                </div>
+                <n-grid :x-gap="10" :y-gap="10" cols="3">
+                    <n-grid-item>
+                        <n-progress type="dashboard" gap-position="bottom" :percentage="80">
+                            <div class="text-center">
+                                <div class="text-big">10%</div>
+                                <div class="text-gray text-small">CPU</div>
+                            </div>
+                        </n-progress>
+                    </n-grid-item>
+                    <n-grid-item>
+                        <n-progress type="dashboard" gap-position="bottom" :percentage="80">
+                            <div class="text-center">
+                                <div class="text-big">10%</div>
+                                <div class="text-gray text-small">内存</div>
+                            </div>
+                        </n-progress>
+                    </n-grid-item>
+                    <n-grid-item>
+                        <n-progress type="dashboard" gap-position="bottom" :percentage="80">
+                            <div class="text-center">
+                                <div class="text-big">10%</div>
+                                <div class="text-gray text-small">磁盘</div>
+                            </div>
+                        </n-progress>
+                    </n-grid-item>
+                </n-grid>
+            </div>
+            <n-grid :x-gap="10" :y-gap="10" cols="1 600:3 1200:6">
+                <n-grid-item>
+                    <div class="card">Docker信息</div>
+                </n-grid-item>
+                <n-grid-item>
+                    <div class="card">容器数量</div>
+                </n-grid-item>
+                <n-grid-item>
+                    <div class="card">镜像数量</div>
+                </n-grid-item>
+                <n-grid-item>
+                    <div class="card">网络数量</div>
+                </n-grid-item>
+                <n-grid-item>
+                    <div class="card">存储卷数量</div>
+                </n-grid-item>
+                <n-grid-item>
+                    <div class="card">用户数量</div>
+                </n-grid-item>
+            </n-grid>
+        </div>
     </div>
 </template>
   
@@ -44,7 +97,7 @@ export default {
 </script>
   
 <style scoped>
-#refresh{
+#refresh {
     width: 100px;
 }
 </style>
