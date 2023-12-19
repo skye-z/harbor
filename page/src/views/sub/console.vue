@@ -2,160 +2,192 @@
     <div class="no-select">
         <div class="sub-header pa-10 border-bottom flex align-center justify-between">
             <div class="sub-title">控制台</div>
-            <n-select id="refresh" v-model:value="refresh" :options="refreshOptions" />
         </div>
         <div class="pa-10">
-            <div class="card mb-10 pa-10">
-                <div class="mb-10">
+            <div v-if="info.name">
+                <div class="card mb-10 pa-10">
                     <div class="server-name">{{ info.name }}</div>
                     <div class="text-gray text-small line1">{{ info.docker.id }}</div>
+                    <div>{{ info.cpu }}核 {{ info.memory }}</div>
                 </div>
-            </div>
-            <div class="card mb-10 pa-10">
-                <n-grid :x-gap="10" :y-gap="10" cols="1 300:2 600:4" class="text-center">
-                    <n-grid-item class="pt-10">
-                        <n-progress type="dashboard" gap-position="bottom" :stroke-width="20" :percentage="80">
-                            <div>
-                                <div class="text-big">80%</div>
-                                <div class="text-small text-gray">CPU</div>
+                <div class="card mb-10 pa-10">
+                    <n-grid :x-gap="10" :y-gap="10" cols="1 300:2 600:4" class="text-center">
+                        <n-grid-item class="pt-10">
+                            <n-progress type="dashboard" gap-position="bottom" :stroke-width="20" :percentage="80">
+                                <div>
+                                    <div class="text-big">80%</div>
+                                    <div class="text-small text-gray">CPU</div>
+                                </div>
+                            </n-progress>
+                        </n-grid-item>
+                        <n-grid-item class="pt-10">
+                            <n-progress type="dashboard" gap-position="bottom" :stroke-width="20" :percentage="80">
+                                <div>
+                                    <div class="text-big">80%</div>
+                                    <div class="text-small text-gray">物理内存</div>
+                                </div>
+                            </n-progress>
+                        </n-grid-item>
+                        <n-grid-item class="pt-10">
+                            <n-progress type="dashboard" gap-position="bottom" :stroke-width="20" :percentage="80">
+                                <div>
+                                    <div class="text-big">80%</div>
+                                    <div class="text-small text-gray">虚拟内存</div>
+                                </div>
+                            </n-progress>
+                        </n-grid-item>
+                        <n-grid-item class="pt-10">
+                            <n-progress type="dashboard" gap-position="bottom" :stroke-width="20" :percentage="80">
+                                <div>
+                                    <div class="text-big">80%</div>
+                                    <div class="text-small text-gray">磁盘</div>
+                                </div>
+                            </n-progress>
+                        </n-grid-item>
+                    </n-grid>
+                </div>
+                <n-grid :x-gap="10" :y-gap="10" cols="1 600:3 1200:6">
+                    <n-grid-item>
+                        <div class="card pa-10">
+                            <div class="item-title">引擎</div>
+                            <div class="item-bar flex align-center">
+                                <div class="mr-10">v{{ info.docker.version }}</div>
+                                <div>{{ info.docker.runtime }}</div>
                             </div>
-                        </n-progress>
+                        </div>
                     </n-grid-item>
-                    <n-grid-item class="pt-10">
-                        <n-progress type="dashboard" gap-position="bottom" :stroke-width="20" :percentage="80">
-                            <div>
-                                <div class="text-big">80%</div>
-                                <div class="text-small text-gray">物理内存</div>
+                    <n-grid-item>
+                        <div class="card pa-10">
+                            <div class="item-number float-right">{{ info.containers.total }}</div>
+                            <div class="item-title">容器</div>
+                            <div class="item-bar flex align-center">
+                                <div class="flex align-center mr-20">
+                                    <n-icon size="14" color="#008000" class="mr-5">
+                                        <Play32Filled />
+                                    </n-icon>
+                                    <div>{{ info.containers.running }}</div>
+                                </div>
+                                <div class="flex align-center mr-20">
+                                    <n-icon size="14" color="#ffa500" class="mr-5">
+                                        <Pause48Filled />
+                                    </n-icon>
+                                    <div>{{ info.containers.paused }}</div>
+                                </div>
+                                <div class="flex align-center">
+                                    <n-icon size="14" color="#ff0000" class="mr-5">
+                                        <RecordStop32Filled />
+                                    </n-icon>
+                                    <div>{{ info.containers.stopped }}</div>
+                                </div>
                             </div>
-                        </n-progress>
+                        </div>
                     </n-grid-item>
-                    <n-grid-item class="pt-10">
-                        <n-progress type="dashboard" gap-position="bottom" :stroke-width="20" :percentage="80">
-                            <div>
-                                <div class="text-big">80%</div>
-                                <div class="text-small text-gray">虚拟内存</div>
+                    <n-grid-item>
+                        <div class="card pa-10">
+                            <div class="item-number float-right">{{ info.image.number }}</div>
+                            <div class="item-title">镜像</div>
+                            <div class="item-bar flex align-center">
+                                <n-icon size="14" color="#999" class="mr-5">
+                                    <LinkSquare24Filled />
+                                </n-icon>
+                                <div>{{ info.image.mirror[0] }}</div>
                             </div>
-                        </n-progress>
+                        </div>
                     </n-grid-item>
-                    <n-grid-item class="pt-10">
-                        <n-progress type="dashboard" gap-position="bottom" :stroke-width="20" :percentage="80">
-                            <div>
-                                <div class="text-big">80%</div>
-                                <div class="text-small text-gray">磁盘</div>
+                    <n-grid-item>
+                        <div class="card pa-10">
+                            <div class="item-number float-right">{{ info.network.number }}</div>
+                            <div class="item-title">网络</div>
+                            <div class="item-bar flex align-center">
+                                <div class="mr-10">IPTables </div>
+                                <div class="flex align-center mr-10">
+                                    <n-icon size="14" color="#008000" class="mr-5" v-if="info.network.ipv4">
+                                        <CheckmarkCircle12Filled />
+                                    </n-icon>
+                                    <n-icon size="14" color="#ff0000" class="mr-5" v-else>
+                                        <DismissCircle12Filled />
+                                    </n-icon>
+                                    <div>IPv4</div>
+                                </div>
+                                <div class="flex align-center">
+                                    <n-icon size="14" color="#008000" class="mr-5" v-if="info.network.ipv6">
+                                        <CheckmarkCircle12Filled />
+                                    </n-icon>
+                                    <n-icon size="14" color="#ff0000" class="mr-5" v-else>
+                                        <DismissCircle12Filled />
+                                    </n-icon>
+                                    <div>IPv6</div>
+                                </div>
                             </div>
-                        </n-progress>
+                        </div>
+                    </n-grid-item>
+                    <n-grid-item>
+                        <div class="card pa-10">
+                            <div class="item-number float-right">{{ info.volume.number }}</div>
+                            <div class="item-title">存储</div>
+                            <div class="item-bar text-gray">{{ info.volume.root }}</div>
+                        </div>
+                    </n-grid-item>
+                    <n-grid-item>
+                        <div class="card pa-10">
+                            <div class="item-number float-right">{{ info.user.number }}</div>
+                            <div class="item-title">用户</div>
+                            <div class="item-bar flex align-center">
+                                <div class="flex align-center mr-20">
+                                    <n-icon size="14" color="#008000" class="mr-5" v-if="info.user.totp">
+                                        <CheckmarkCircle12Filled />
+                                    </n-icon>
+                                    <n-icon size="14" color="#ff0000" class="mr-5" v-else>
+                                        <DismissCircle12Filled />
+                                    </n-icon>
+                                    <div>TOTP</div>
+                                </div>
+                                <div class="flex align-center">
+                                    <n-icon size="14" color="#008000" class="mr-5" v-if="info.user.oauth">
+                                        <CheckmarkCircle12Filled />
+                                    </n-icon>
+                                    <n-icon size="14" color="#ff0000" class="mr-5" v-else>
+                                        <DismissCircle12Filled />
+                                    </n-icon>
+                                    <div>OAuth2</div>
+                                </div>
+                            </div>
+                        </div>
                     </n-grid-item>
                 </n-grid>
             </div>
-            <n-grid :x-gap="10" :y-gap="10" cols="1 600:3 1200:6">
-                <n-grid-item>
-                    <div class="card pa-10">
-                        <div class="item-title">引擎</div>
-                        <div class="item-bar flex align-center">
-                            <div class="mr-10">v{{ info.docker.version }}</div>
-                            <div>{{ info.docker.runtime }}</div>
-                        </div>
-                    </div>
-                </n-grid-item>
-                <n-grid-item>
-                    <div class="card pa-10">
-                        <div class="item-number float-right">{{ info.containers.total }}</div>
-                        <div class="item-title">容器</div>
-                        <div class="item-bar flex align-center">
-                            <div class="flex align-center mr-20">
-                                <n-icon size="14" color="#008000" class="mr-5">
-                                    <Play32Filled />
-                                </n-icon>
-                                <div>{{ info.containers.running }}</div>
-                            </div>
-                            <div class="flex align-center mr-20">
-                                <n-icon size="14" color="#ffa500" class="mr-5">
-                                    <Pause48Filled />
-                                </n-icon>
-                                <div>{{ info.containers.paused }}</div>
-                            </div>
-                            <div class="flex align-center">
-                                <n-icon size="14" color="#ff0000" class="mr-5">
-                                    <RecordStop32Filled />
-                                </n-icon>
-                                <div>{{ info.containers.stopped }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </n-grid-item>
-                <n-grid-item>
-                    <div class="card pa-10">
-                        <div class="item-number float-right">{{ info.image.number }}</div>
-                        <div class="item-title">镜像</div>
-                        <div class="item-bar flex align-center">
-                            <n-icon size="14" color="#999" class="mr-5">
-                                <LinkSquare24Filled />
-                            </n-icon>
-                            <div>{{ info.image.mirror[0] }}</div>
-                        </div>
-                    </div>
-                </n-grid-item>
-                <n-grid-item>
-                    <div class="card pa-10">
-                        <div class="item-number float-right">{{ info.network.number }}</div>
-                        <div class="item-title">网络</div>
-                        <div class="item-bar flex align-center">
-                            <div class="mr-10">IPTables </div>
-                            <div class="flex align-center mr-10">
-                                <n-icon size="14" color="#008000" class="mr-5" v-if="info.network.ipv4">
-                                    <CheckmarkCircle12Filled />
-                                </n-icon>
-                                <n-icon size="14" color="#ff0000" class="mr-5" v-else>
-                                    <DismissCircle12Filled />
-                                </n-icon>
-                                <div>IPv4</div>
-                            </div>
-                            <div class="flex align-center">
-                                <n-icon size="14" color="#008000" class="mr-5" v-if="info.network.ipv6">
-                                    <CheckmarkCircle12Filled />
-                                </n-icon>
-                                <n-icon size="14" color="#ff0000" class="mr-5" v-else>
-                                    <DismissCircle12Filled />
-                                </n-icon>
-                                <div>IPv6</div>
-                            </div>
-                        </div>
-                    </div>
-                </n-grid-item>
-                <n-grid-item>
-                    <div class="card pa-10">
-                        <div class="item-number float-right">{{ info.volume.number }}</div>
-                        <div class="item-title">存储</div>
-                        <div class="item-bar text-gray">{{ info.volume.root }}</div>
-                    </div>
-                </n-grid-item>
-                <n-grid-item>
-                    <div class="card pa-10">
-                        <div class="item-number float-right">{{ info.user.number }}</div>
-                        <div class="item-title">用户</div>
-                        <div class="item-bar flex align-center">
-                            <div class="flex align-center mr-20">
-                                <n-icon size="14" color="#008000" class="mr-5" v-if="info.user.totp">
-                                    <CheckmarkCircle12Filled />
-                                </n-icon>
-                                <n-icon size="14" color="#ff0000" class="mr-5" v-else>
-                                    <DismissCircle12Filled />
-                                </n-icon>
-                                <div>TOTP</div>
-                            </div>
-                            <div class="flex align-center">
-                                <n-icon size="14" color="#008000" class="mr-5" v-if="info.user.oauth">
-                                    <CheckmarkCircle12Filled />
-                                </n-icon>
-                                <n-icon size="14" color="#ff0000" class="mr-5" v-else>
-                                    <DismissCircle12Filled />
-                                </n-icon>
-                                <div>OAuth2</div>
-                            </div>
-                        </div>
-                    </div>
-                </n-grid-item>
-            </n-grid>
+            <template v-else>
+                <n-result v-if="error" style="margin-top: 24vh;" status="warning" title="无法连接到服务器"
+                    description="请检查您的网络与防火墙">
+                    <template #footer>
+                        <n-button @click="init">重新连接</n-button>
+                    </template>
+                </n-result>
+                <n-space v-else vertical>
+                    <n-skeleton height="90px" :sharp="false" />
+                    <n-skeleton height="150px" :sharp="false" />
+                    <n-grid :x-gap="10" :y-gap="10" cols="1 600:3 1200:6">
+                        <n-grid-item>
+                            <n-skeleton height="69px" :sharp="false" />
+                        </n-grid-item>
+                        <n-grid-item>
+                            <n-skeleton height="69px" :sharp="false" />
+                        </n-grid-item>
+                        <n-grid-item>
+                            <n-skeleton height="69px" :sharp="false" />
+                        </n-grid-item>
+                        <n-grid-item>
+                            <n-skeleton height="69px" :sharp="false" />
+                        </n-grid-item>
+                        <n-grid-item>
+                            <n-skeleton height="69px" :sharp="false" />
+                        </n-grid-item>
+                        <n-grid-item>
+                            <n-skeleton height="69px" :sharp="false" />
+                        </n-grid-item>
+                    </n-grid>
+                </n-space>
+            </template>
         </div>
     </div>
 </template>
@@ -170,25 +202,6 @@ export default {
     name: "Console",
     components: { Server24Filled, Play32Filled, Pause48Filled, RecordStop32Filled, LinkSquare24Filled, CheckmarkCircle12Filled, DismissCircle12Filled },
     data: () => ({
-        refresh: 0,
-        refreshOptions: [
-            {
-                label: "手动刷新",
-                value: 0
-            },
-            {
-                label: "每1秒",
-                value: 1
-            },
-            {
-                label: "每3秒",
-                value: 3
-            },
-            {
-                label: "每5秒",
-                value: 5
-            }
-        ],
         info: {
             name: '',
             system: '',
@@ -224,11 +237,13 @@ export default {
                 totp: false,
                 oauth: false
             }
-        }
+        },
+        error: false
     }),
     methods: {
         init() {
             console.log('[Init] Console')
+            this.error = false;
             this.getDockerInfo();
         },
         getDockerInfo() {
@@ -248,7 +263,7 @@ export default {
                         system: data.OperatingSystem,
                         kernel: data.KernelVersion,
                         cpu: data.NCPU,
-                        memory: data.MemTotal,
+                        memory: this.getMemory(data.MemTotal),
                         containers: {
                             total: data.Containers,
                             running: data.ContainersRunning,
@@ -282,7 +297,23 @@ export default {
                 }
             }).catch(err => {
                 console.log(err)
+                setTimeout(() => {
+                    this.error = true
+                }, 1000)
             })
+        },
+        getMemory(num) {
+            let unit = 'KB'
+            num = num / 1024
+            if (num >= 1024) {
+                num = num / 1024
+                unit = 'MB'
+            }
+            if (num >= 1024) {
+                num = num / 1024
+                unit = 'GB'
+            }
+            return num.toFixed(2) + unit;
         }
     },
     mounted() {

@@ -12,6 +12,8 @@
 </template>
   
 <script>
+import { image } from "../../plugins/api";
+
 export default {
     name: "Image",
     data: () => ({
@@ -19,7 +21,15 @@ export default {
     methods: {
         init() {
             console.log('[Init] Image')
+            this.getList();
         },
+        getList(){
+            image.getList().then(res => {
+                console.log(res)
+            }).catch(err => {
+                console.log(err)
+            })
+        }
     },
     mounted() {
         this.init()

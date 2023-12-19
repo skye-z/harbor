@@ -9,6 +9,7 @@
 </template>
   
 <script>
+import { volume } from "../../plugins/api";
 export default {
     name: "Volume",
     data: () => ({
@@ -16,7 +17,15 @@ export default {
     methods: {
         init() {
             console.log('[Init] Volume')
+            this.getList();
         },
+        getList(){
+            volume.getList().then(res => {
+                console.log(res)
+            }).catch(err => {
+                console.log(err)
+            })
+        }
     },
     mounted() {
         this.init()

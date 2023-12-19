@@ -9,6 +9,7 @@
 </template>
   
 <script>
+import { network } from "../../plugins/api";
 export default {
     name: "Network",
     data: () => ({
@@ -16,7 +17,15 @@ export default {
     methods: {
         init() {
             console.log('[Init] Network')
+            this.getList();
         },
+        getList(){
+            network.getList().then(res => {
+                console.log(res)
+            }).catch(err => {
+                console.log(err)
+            })
+        }
     },
     mounted() {
         this.init()

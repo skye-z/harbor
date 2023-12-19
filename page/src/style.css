@@ -12,6 +12,7 @@
 
 *{
   box-sizing: border-box;
+  --n-color-start: #fff !important;
 }
 
 .flex {
