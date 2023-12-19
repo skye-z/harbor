@@ -60,9 +60,20 @@ func (r Route) addPublicRoute() {
 		ctx.Request.URL.Path = "/app"
 		r.Router.HandleContext(ctx)
 	})
-	dc := service.NewDockerService(r.DockerClient)
-	// 获取系统配置
-	r.Router.GET("/api/docker/info", dc.GetInfo)
+	ds := service.NewDockerService(r.DockerClient)
+	r.Router.GET("/api/docker/info", ds.GetInfo)
+
+	cs := service.NewContainerService(r.DockerClient)
+	r.Router.GET("/api/container/list", cs.GetList)
+
+	is := service.NewImageService(r.DockerClient)
+	r.Router.GET("/api/image/list", is.GetList)
+
+	ns := service.NewNetworkService(r.DockerClient)
+	r.Router.GET("/api/network/list", ns.GetList)
+
+	vs := service.NewVolumeService(r.DockerClient)
+	r.Router.GET("/api/volume/list", vs.GetList)
 }
 
 // 私有路由
@@ -80,7 +91,7 @@ func (r Route) Run() {
 func (r Route) getPort() string {
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "1280"
+		port = "12800"
 	}
 	return port
 }
