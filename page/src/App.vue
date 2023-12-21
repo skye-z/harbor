@@ -2,8 +2,10 @@
   <n-config-provider :locale="i18n.main" :date-locale="i18n.date" :theme-overrides="theme">
     <n-dialog-provider>
       <n-message-provider>
-        <global-api />
-        <n-back-top :right="10" />
+        <n-notification-provider>
+          <global-api />
+          <n-back-top :right="10" />
+        </n-notification-provider>
       </n-message-provider>
     </n-dialog-provider>
     <div id="app-bg"></div>

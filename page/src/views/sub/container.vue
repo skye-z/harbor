@@ -3,6 +3,92 @@
         <div class="sub-header pa-10 border-bottom flex align-center justify-between">
             <div class="sub-title">应用容器</div>
             <div class="flex align-center">
+                <n-button-group class="mr-10">
+                    <n-popover placement="bottom" trigger="hover">
+                        <template #trigger>
+                            <n-button tertiary circle type="success" @click="control('start')">
+                                <template #icon>
+                                    <n-icon>
+                                        <Play12Regular />
+                                    </n-icon>
+                                </template>
+                            </n-button>
+                        </template>
+                        <span>启动</span>
+                    </n-popover>
+                    <n-popover placement="bottom" trigger="hover">
+                        <template #trigger>
+                            <n-button tertiary circle type="error" @click="control('stop')">
+                                <template #icon>
+                                    <n-icon>
+                                        <RecordStop12Regular />
+                                    </n-icon>
+                                </template>
+                            </n-button>
+                        </template>
+                        <span>停止</span>
+                    </n-popover>
+                    <n-popover placement="bottom" trigger="hover">
+                        <template #trigger>
+                            <n-button tertiary circle type="warning" @click="control('pause')">
+                                <template #icon>
+                                    <n-icon>
+                                        <Pause12Regular />
+                                    </n-icon>
+                                </template>
+                            </n-button>
+                        </template>
+                        <span>暂停</span>
+                    </n-popover>
+                    <n-popover placement="bottom" trigger="hover">
+                        <template #trigger>
+                            <n-button tertiary circle type="success" @click="control('unpause')">
+                                <template #icon>
+                                    <n-icon>
+                                        <Replay20Filled />
+                                    </n-icon>
+                                </template>
+                            </n-button>
+                        </template>
+                        <span>恢复</span>
+                    </n-popover>
+                    <n-popover placement="bottom" trigger="hover">
+                        <template #trigger>
+                            <n-button tertiary circle type="warning" @click="control('restart')">
+                                <template #icon>
+                                    <n-icon>
+                                        <ArrowReset24Filled />
+                                    </n-icon>
+                                </template>
+                            </n-button>
+                        </template>
+                        <span>重启</span>
+                    </n-popover>
+                    <n-popover placement="bottom" trigger="hover">
+                        <template #trigger>
+                            <n-button tertiary circle type="error" @click="control('kill')">
+                                <template #icon>
+                                    <n-icon>
+                                        <Power24Filled />
+                                    </n-icon>
+                                </template>
+                            </n-button>
+                        </template>
+                        <span>强停</span>
+                    </n-popover>
+                    <n-popover placement="bottom" trigger="hover">
+                        <template #trigger>
+                            <n-button strong secondary circle type="error" @click="control('remove')">
+                                <template #icon>
+                                    <n-icon>
+                                        <Delete16Regular />
+                                    </n-icon>
+                                </template>
+                            </n-button>
+                        </template>
+                        <span>删除</span>
+                    </n-popover>
+                </n-button-group>
                 <n-button quaternary circle type="primary" class="mr-10" @click="getList">
                     <template #icon>
                         <n-icon>
@@ -17,8 +103,8 @@
             <div class="card">
                 <n-scrollbar x-scrollable
                     style="max-height: calc(100vh - 80px);width: calc(100vw - 165px);border-radius: 8px;">
-                    <n-data-table striped size="small" :row-key="rowKey" :bordered="false" :columns="columns"
-                        :data="list" />
+                    <n-data-table :loading="loading" size="small" :row-key="rowKey" :bordered="false" :columns="columns"
+                        :data="list" @update:checked-row-keys="selectCallback" style="min-height: calc(100vh - 80px);" />
                 </n-scrollbar>
             </div>
         </div>
@@ -28,10 +114,10 @@
 <script>
 import { container } from "../../plugins/api";
 import { NIcon, NTag, NButton, NTime } from "naive-ui";
-import { ArrowSync20Filled, CheckmarkCircle12Filled, ErrorCircle12Filled, DismissCircle12Filled, ArrowSyncCircle24Filled } from '@vicons/fluent';
+import { Play12Regular, RecordStop12Regular, Pause12Regular, Replay20Filled, Power24Filled, Delete16Regular, ArrowReset24Filled, ArrowSync20Filled, CheckmarkCircle12Filled, ErrorCircle12Filled, PauseCircle24Filled, DismissCircle12Filled, ArrowSyncCircle24Filled } from '@vicons/fluent';
 export default {
     name: "Container",
-    components: { ArrowSync20Filled },
+    components: { Play12Regular, RecordStop12Regular, Pause12Regular, Replay20Filled, Power24Filled, Delete16Regular, ArrowReset24Filled, ArrowSync20Filled },
     data: () => ({
         columns: [
             {
@@ -156,10 +242,10 @@ export default {
                 key: "network",
                 width: '140px',
                 sorter: (row1, row2) => {
-                    let ip1 = row1.network.length == 0 ? '-':row1.network[0].ip;
-                    let ip2 = row2.network.length == 0 ? '-':row2.network[0].ip;
-                    if(ip1 == ip2) return 0;
-                    return ip1 > ip2 ? 1:-1;
+                    let ip1 = row1.network.length == 0 ? '-' : row1.network[0].ip;
+                    let ip2 = row2.network.length == 0 ? '-' : row2.network[0].ip;
+                    if (ip1 == ip2) return 0;
+                    return ip1 > ip2 ? 1 : -1;
                 },
                 render(row) {
                     if (row.network.length == 0) return "-"
@@ -183,7 +269,10 @@ export default {
                                     marginRight: "5px"
                                 },
                                 type: "info",
-                                class: 'taxt-small'
+                                class: 'taxt-small',
+                                onClick: () => {
+                                    window.open(window.location.hostname + ":" + key)
+                                }
                             },
                             {
                                 default: () => {
@@ -197,6 +286,8 @@ export default {
             },
         ],
         list: [],
+        select: [],
+        loading: false,
         rowKey(row) {
             return row.id
         },
@@ -207,6 +298,8 @@ export default {
             this.getList();
         },
         getList() {
+            if (this.loading) return false;
+            this.loading = true
             container.getList().then(res => {
                 if (res.state) {
                     let list = []
@@ -226,6 +319,7 @@ export default {
                         })
                     }
                     this.list = list
+                    this.loading = false
                 }
             }).catch(err => {
                 console.log(err)
@@ -273,6 +367,61 @@ export default {
         getProject(tags) {
             if (tags && tags['com.docker.compose.project']) return tags['com.docker.compose.project'];
             return ''
+        },
+        selectCallback(e) {
+            this.select = e
+        },
+        id2Name(id) {
+            for (let i in this.list) {
+                if (this.list[i].id === id) return this.list[i].name;
+            }
+            return "未知容器"
+        },
+        control(action) {
+            let num = this.select.length;
+            if (num == 0) {
+                window.$message.info("请先选择要控制的容器")
+                return false;
+            }
+            let now = 0
+            switch (action) {
+                case 'start':
+                case 'stop':
+                case 'restart':
+                case 'kill':
+                case 'pause':
+                case 'unpause':
+                    for (let i in this.select) {
+                        let id = this.select[i];
+                        container[action](id).then(res => {
+                            window.$notify[res.state ? 'success' : 'warning']({
+                                meta: this.id2Name(id),
+                                content: res.message,
+                                duration: 2500,
+                                keepAliveOnHover: true
+                            })
+                            now++;
+                        }).catch(() => {
+                            window.$notify.error({
+                                content: "容器控制出错",
+                                meta: "容器服务暂不可用",
+                                duration: 2500,
+                                keepAliveOnHover: true
+                            })
+                            now++;
+                        })
+                    }
+                    break;
+                default:
+                    window.$message.warning("无效的控制指令")
+                    return false;
+            }
+            let timer = setInterval(() => {
+                if (num == now) {
+                    this.getList()
+                    clearInterval(timer)
+                }
+            }, 1000)
         }
     },
     mounted() {

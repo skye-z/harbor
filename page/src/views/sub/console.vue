@@ -248,7 +248,6 @@ export default {
         },
         getDockerInfo() {
             docker.getInfo().then(res => {
-                console.log(res)
                 if (res.state) {
                     let data = res.data
                     let mirror = [];
