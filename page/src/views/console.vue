@@ -193,7 +193,7 @@
 </template>
   
 <script>
-import { docker } from "../../plugins/api";
+import { docker } from "../plugins/api";
 import {
     Server24Filled, Play32Filled, Pause48Filled, RecordStop32Filled, LinkSquare24Filled, CheckmarkCircle12Filled, DismissCircle12Filled
 } from '@vicons/fluent';

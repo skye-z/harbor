@@ -6,16 +6,16 @@ import {
 const Home = () => import('../views/home.vue')
 const Auth = () => import('../views/auth.vue')
 
-const Console = () => import('../views/sub/console.vue')
-const Stack = () => import('../views/sub/stack.vue')
-const Container = () => import('../views/sub/container.vue')
-const Image = () => import('../views/sub/image.vue')
-const Network = () => import('../views/sub/network.vue')
-const Volume = () => import('../views/sub/volume.vue')
-const Monitor = () => import('../views/sub/monitor.vue')
-const Logs = () => import('../views/sub/logs.vue')
-const User = () => import('../views/sub/user.vue')
-const Setting = () => import('../views/sub/setting.vue')
+const Console = () => import('../views/console.vue')
+const Stack = () => import('../views/list/stack.vue')
+const Container = () => import('../views/list/container.vue')
+const Image = () => import('../views/list/image.vue')
+const Network = () => import('../views/list/network.vue')
+const Volume = () => import('../views/list/volume.vue')
+const Monitor = () => import('../views/list/monitor.vue')
+const Logs = () => import('../views/list/logs.vue')
+const User = () => import('../views/list/user.vue')
+const Setting = () => import('../views/list/setting.vue')
 
 const router = createRouter({
     history: createWebHashHistory(),
