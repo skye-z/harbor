@@ -112,179 +112,193 @@
 </template>
   
 <script>
+import { useRouter } from 'vue-router'
 import { container } from "../../plugins/api";
 import { NIcon, NTag, NButton, NTime } from "naive-ui";
 import { Play12Regular, RecordStop12Regular, Pause12Regular, Replay20Filled, Power24Filled, Delete16Regular, ArrowReset24Filled, ArrowSync20Filled, CheckmarkCircle12Filled, ErrorCircle12Filled, PauseCircle24Filled, DismissCircle12Filled, ArrowSyncCircle24Filled } from '@vicons/fluent';
+
 export default {
     name: "Container",
     components: { Play12Regular, RecordStop12Regular, Pause12Regular, Replay20Filled, Power24Filled, Delete16Regular, ArrowReset24Filled, ArrowSync20Filled },
-    data: () => ({
-        columns: [
-            {
-                type: 'selection'
-            },
-            {
-                title: "名称",
-                key: "name",
-                width: '150px',
-                ellipsis: {
-                    tooltip: true
+    setup() {
+        const router = useRouter()
+
+        const openItem = (id) => {
+            router.push(`/container/${id}`);
+        };
+
+        return {
+            columns: [
+                {
+                    type: 'selection'
                 },
-                sorter: 'default',
-                render(row) {
-                    return h(
-                        NButton,
-                        {
-                            text: true
-                        },
-                        {
-                            default: () => {
-                                return row.name
-                            }
-                        }
-                    );
-                }
-            },
-            {
-                title: "状态",
-                key: "state",
-                width: '100px',
-                sorter: 'default',
-                render(row) {
-                    let type = 'warning'
-                    let icon = ErrorCircle12Filled;
-                    if (row.state === 'exited' || row.state === 'stop' || row.state === 'removing' || row.state === 'dead') {
-                        type = 'error'
-                        icon = DismissCircle12Filled
-                    } else if (row.state === 'running') {
-                        type = 'success'
-                        icon = CheckmarkCircle12Filled
-                    } else if (row.state === 'restarting') icon = ArrowSyncCircle24Filled
-                    else if (row.state === 'created') icon = AddCircle16Filled
-                    else if (row.state === 'paused') icon = PauseCircle24Filled
-                    return h(
-                        NTag,
-                        {
-                            style: {
-                                marginRight: '6px'
-                            },
-                            type: type,
-                            bordered: false,
-                            round: true
-                        },
-                        {
-                            icon: () => h(NIcon, null, { default: () => h(icon) }),
-                            default: () => row.stateZh
-                        }
-                    )
-                }
-            },
-            {
-                title: "项目",
-                key: "project",
-                width: '100px',
-                ellipsis: {
-                    tooltip: true
-                },
-                sorter: 'default',
-                render(row) {
-                    return h(
-                        NButton,
-                        {
-                            text: true
-                        },
-                        {
-                            default: () => {
-                                return row.project
-                            }
-                        }
-                    );
-                }
-            },
-            {
-                title: "镜像",
-                key: "image",
-                ellipsis: {
-                    tooltip: true
-                },
-                minWidth: '150px',
-                sorter: 'default',
-                render(row) {
-                    return h(
-                        NButton,
-                        {
-                            text: true
-                        },
-                        {
-                            default: () => {
-                                return row.image
-                            }
-                        }
-                    );
-                }
-            },
-            {
-                title: "创建时间",
-                key: "created",
-                width: '170px',
-                sorter: 'default',
-                render(row) {
-                    return h(
-                        NTime,
-                        {
-                            time: row.created
-                        }, null
-                    );
-                }
-            },
-            {
-                title: "网络",
-                key: "network",
-                width: '140px',
-                sorter: (row1, row2) => {
-                    let ip1 = row1.network.length == 0 ? '-' : row1.network[0].ip;
-                    let ip2 = row2.network.length == 0 ? '-' : row2.network[0].ip;
-                    if (ip1 == ip2) return 0;
-                    return ip1 > ip2 ? 1 : -1;
-                },
-                render(row) {
-                    if (row.network.length == 0) return "-"
-                    return row.network[0].ip;
-                }
-            },
-            {
-                title: "端口",
-                key: "ports",
-                minWidth: '140px',
-                render(row) {
-                    let list = [];
-                    for (let key in row.ports) {
-                        list.push(h(
+                {
+                    title: "名称",
+                    key: "name",
+                    width: '150px',
+                    ellipsis: {
+                        tooltip: true
+                    },
+                    sorter: 'default',
+                    render(row) {
+                        return h(
                             NButton,
                             {
-                                strong: true,
-                                secondary: true,
-                                size: "small",
-                                style: {
-                                    marginRight: "5px"
-                                },
-                                type: "info",
-                                class: 'taxt-small',
-                                onClick: () => {
-                                    window.open(window.location.hostname + ":" + key)
-                                }
+                                text: true,
+                                onClick: () => openItem(row.id)
+
                             },
                             {
                                 default: () => {
-                                    return key + ":" + row.ports[key]
+                                    return row.name
                                 }
                             }
-                        ))
+                        );
                     }
-                    return list;
-                }
-            },
-        ],
+                },
+                {
+                    title: "状态",
+                    key: "state",
+                    width: '100px',
+                    sorter: 'default',
+                    render(row) {
+                        let type = 'warning'
+                        let icon = ErrorCircle12Filled;
+                        if (row.state === 'exited' || row.state === 'stop' || row.state === 'removing' || row.state === 'dead') {
+                            type = 'error'
+                            icon = DismissCircle12Filled
+                        } else if (row.state === 'running') {
+                            type = 'success'
+                            icon = CheckmarkCircle12Filled
+                        } else if (row.state === 'restarting') icon = ArrowSyncCircle24Filled
+                        else if (row.state === 'created') icon = AddCircle16Filled
+                        else if (row.state === 'paused') icon = PauseCircle24Filled
+                        return h(
+                            NTag,
+                            {
+                                style: {
+                                    marginRight: '6px'
+                                },
+                                type: type,
+                                bordered: false,
+                                round: true
+                            },
+                            {
+                                icon: () => h(NIcon, null, { default: () => h(icon) }),
+                                default: () => row.stateZh
+                            }
+                        )
+                    }
+                },
+                {
+                    title: "项目",
+                    key: "project",
+                    width: '100px',
+                    ellipsis: {
+                        tooltip: true
+                    },
+                    sorter: 'default',
+                    render(row) {
+                        return h(
+                            NButton,
+                            {
+                                text: true
+                            },
+                            {
+                                default: () => {
+                                    return row.project
+                                }
+                            }
+                        );
+                    }
+                },
+                {
+                    title: "镜像",
+                    key: "image",
+                    ellipsis: {
+                        tooltip: true
+                    },
+                    minWidth: '150px',
+                    sorter: 'default',
+                    render(row) {
+                        return h(
+                            NButton,
+                            {
+                                text: true
+                            },
+                            {
+                                default: () => {
+                                    return row.image
+                                }
+                            }
+                        );
+                    }
+                },
+                {
+                    title: "创建时间",
+                    key: "created",
+                    width: '170px',
+                    sorter: 'default',
+                    render(row) {
+                        return h(
+                            NTime,
+                            {
+                                time: row.created
+                            }, null
+                        );
+                    }
+                },
+                {
+                    title: "网络",
+                    key: "network",
+                    width: '140px',
+                    sorter: (row1, row2) => {
+                        let ip1 = row1.network.length == 0 ? '-' : row1.network[0].ip;
+                        let ip2 = row2.network.length == 0 ? '-' : row2.network[0].ip;
+                        if (ip1 == ip2) return 0;
+                        return ip1 > ip2 ? 1 : -1;
+                    },
+                    render(row) {
+                        if (row.network.length == 0) return "-"
+                        return row.network[0].ip;
+                    }
+                },
+                {
+                    title: "端口",
+                    key: "ports",
+                    minWidth: '140px',
+                    render(row) {
+                        let list = [];
+                        for (let key in row.ports) {
+                            list.push(h(
+                                NButton,
+                                {
+                                    strong: true,
+                                    secondary: true,
+                                    size: "small",
+                                    style: {
+                                        marginRight: "5px"
+                                    },
+                                    type: "info",
+                                    class: 'taxt-small',
+                                    onClick: () => {
+                                        window.open(window.location.hostname + ":" + key)
+                                    }
+                                },
+                                {
+                                    default: () => {
+                                        return key + ":" + row.ports[key]
+                                    }
+                                }
+                            ))
+                        }
+                        return list;
+                    }
+                },
+            ]
+        }
+    },
+    data: () => ({
         list: [],
         select: [],
         loading: true,

@@ -9,6 +9,7 @@ const Auth = () => import('../views/auth.vue')
 const Console = () => import('../views/console.vue')
 const Stack = () => import('../views/list/stack.vue')
 const Container = () => import('../views/list/container.vue')
+const ContainerInfo = () => import('../views/info/container.vue')
 const Image = () => import('../views/list/image.vue')
 const Network = () => import('../views/list/network.vue')
 const Volume = () => import('../views/list/volume.vue')
@@ -62,6 +63,15 @@ const router = createRouter({
                     component: Container,
                     meta: {
                         title: '应用容器',
+                        auth: true
+                    }
+                },
+                {
+                    name: 'ContainerInfo',
+                    path: '/container/:id',
+                    component: ContainerInfo,
+                    meta: {
+                        title: '容器详情',
                         auth: true
                     }
                 },
