@@ -1,5 +1,5 @@
 <template>
-  <n-config-provider :locale="i18n.main" :date-locale="i18n.date" :theme-overrides="theme">
+  <n-config-provider :theme="lightTheme" :locale="i18n.main" :date-locale="i18n.date" :theme-overrides="theme">
     <n-dialog-provider>
       <n-message-provider>
         <n-notification-provider>
@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import { zhCN, dateZhCN } from 'naive-ui'
+import { lightTheme, zhCN, dateZhCN } from 'naive-ui'
 import GlobalApi from './components/globalApi.vue'
 import theme from './theme.json'
 

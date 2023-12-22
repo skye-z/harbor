@@ -125,3 +125,16 @@
   line-height: 18px;
   font-size: 18px;
 }
+
+.n-popover:not(.n-popover--raw),
+.n-popover-shared .n-popover-arrow-wrapper .n-popover-arrow{
+  background-color: #fff;
+}
+
+.n-popover-shared .n-popover-arrow-wrapper .n-popover-arrow{
+  box-shadow: none;
+}
+
+.n-popover{
+  color: #333333 !important;
+}

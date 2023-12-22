@@ -89,7 +89,7 @@
                         <span>删除</span>
                     </n-popover>
                 </n-button-group>
-                <n-button quaternary circle type="primary" class="mr-10" @click="getList">
+                <n-button quaternary circle type="primary" class="mr-10" :loading="loading" @click="getList">
                     <template #icon>
                         <n-icon>
                             <ArrowSync20Filled />
@@ -287,7 +287,7 @@ export default {
         ],
         list: [],
         select: [],
-        loading: false,
+        loading: true,
         rowKey(row) {
             return row.id
         },
@@ -298,7 +298,6 @@ export default {
             this.getList();
         },
         getList() {
-            if (this.loading) return false;
             this.loading = true
             container.getList().then(res => {
                 if (res.state) {
@@ -323,6 +322,7 @@ export default {
                 }
             }).catch(err => {
                 console.log(err)
+                this.loading = false
             })
         },
         getName(names) {
