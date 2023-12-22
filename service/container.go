@@ -26,6 +26,16 @@ func (ds ContainerService) GetList(ctx *gin.Context) {
 	}
 }
 
+func (ds ContainerService) GetInfo(ctx *gin.Context) {
+	id := ctx.Query("id")
+	info, err := ds.Client.GetContainerInfo(id)
+	if err != nil {
+		util.ReturnMessage(ctx, false, "获取详情失败")
+	} else {
+		util.ReturnData(ctx, true, info)
+	}
+}
+
 // 启动容器
 func (ds ContainerService) StartContainer(ctx *gin.Context) {
 	id := ctx.Query("id")
