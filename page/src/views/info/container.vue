@@ -109,7 +109,10 @@
                 </n-button>
             </div>
         </div>
-        <div class="pa-10">
+        <div class="loading flex align-center justify-center" v-if="loading">
+            <n-spin />
+        </div>
+        <div v-else class="sub-body">
             <n-grid :x-gap="10" :y-gap="10" cols="1 800:2">
                 <n-grid-item>
                     <div class="card pa-10">
@@ -169,6 +172,16 @@
                                 <span v-else>-</span>
                             </div>
                         </div>
+                        <div class="flex align-center">
+                            <div class="item-label">启动时间</div>
+                            <div>
+                                <template v-if="state && state.StartTime">
+                                    <n-time :time="state.StartTime" /> (<n-time :time="state.StartTime" :to="now"
+                                        type="relative" />)
+                                </template>
+                                <span v-else>-</span>
+                            </div>
+                        </div>
                     </div>
                 </n-grid-item>
                 <n-grid-item>
@@ -184,24 +197,58 @@
                         </div>
                         <div class="flex align-center">
                             <div class="item-label">启动命令</div>
-                            <div class="item-info line1">
-                                <span v-for="item in run.cmd" class="mr-5">{{ item }}</span>
+                            <div class="item-info line1" style="display: -webkit-box;">
+                                <template v-for="item in run.cmd" class="mr-5">{{ item }}&nbsp;&nbsp;</template>
                             </div>
                         </div>
                         <div class="flex align-center">
                             <div class="item-label">重启次数</div>
-                            <div>{{ run.count }}</div>
+                            <div>{{ run.count }}次</div>
                         </div>
-                        <div class="flex align-center">
-                            <div class="item-label">启动时间</div>
-                            <div>
-                                <template v-if="state && state.StartTime">
-                                    <n-time :time="state.StartTime" /> (<n-time :time="state.StartTime" :to="now"
-                                        type="relative" />)
+                        <div class="text-small text-gray">*指启动容器中应用服务的次数</div>
+                    </div>
+
+                    <div class="tools">
+                        <n-button-group class="full-width">
+                            <n-button type="primary" strong secondary round>
+                                <template #icon>
+                                    <n-icon>
+                                        <Blog />
+                                    </n-icon>
                                 </template>
-                                <span v-else>-</span>
-                            </div>
-                        </div>
+                                日志
+                            </n-button>
+                            <n-button type="primary" strong secondary>
+                                <template #icon>
+                                    <n-icon>
+                                        <Terminal />
+                                    </n-icon>
+                                </template>终端</n-button>
+                            <n-button type="primary" strong secondary>
+                                <template #icon>
+                                    <n-icon>
+                                        <ChartLineSmooth />
+                                    </n-icon>
+                                </template>统计</n-button>
+                            <n-button type="primary" strong secondary>
+                                <template #icon>
+                                    <n-icon>
+                                        <Edit />
+                                    </n-icon>
+                                </template>编辑</n-button>
+                            <n-button type="primary" strong secondary>
+                                <template #icon>
+                                    <n-icon>
+                                        <Replicate />
+                                    </n-icon>
+                                </template>克隆</n-button>
+                            <n-button type="primary" strong secondary round>
+                                <template #icon>
+                                    <n-icon>
+                                        <ForecastHail />
+                                    </n-icon>
+                                </template>重建</n-button>
+                        </n-button-group>
                     </div>
                 </n-grid-item>
             </n-grid>
@@ -211,6 +258,20 @@
                 <div class="flex align-center" v-for="(value, key) in env">
                     <div class="env-key line1">{{ key }}</div>
                     <div class="env-value line1">{{ value }}</div>
+                </div>
+            </div>
+            <div class="card mt-10 pa-10">
+                <div class="card-title">容器标签</div>
+                <div class="flex align-center" v-for="(value, key) in labels">
+                    <div class="label-key line1">{{ key }}</div>
+                    <div class="label-value line1">{{ value }}</div>
+                </div>
+            </div>
+            <div class="card mt-10 pa-10">
+                <div class="card-title">存储设置</div>
+                <div class="flex align-center" v-for="item in volumes">
+                    <div class="volume-from line1">{{ item.Source }}</div>
+                    <div class="volume-to line1">{{ item.Destination }}</div>
                 </div>
             </div>
             <div class="card mt-10 pa-10">
@@ -239,7 +300,7 @@
                         </div>
                     </n-grid-item>
                     <n-grid-item>
-                        <div class="item-label">外内端口</div>
+                        <div class="item-label">端口映射</div>
                         <template class="flex align-center" v-for="(value, key) in ports">
                             <n-button strong secondary type="info" class="mr-10">
                                 {{ value }}:{{ key }}
@@ -256,10 +317,18 @@
 import { container } from "../../plugins/api";
 import { Play12Regular, RecordStop12Regular, Pause12Regular, Replay20Filled, Power24Filled, Delete16Regular, ArrowReset24Filled, ArrowSync20Filled, CheckmarkCircle12Filled, ErrorCircle12Filled, PauseCircle24Filled, DismissCircle12Filled, ArrowSyncCircle24Filled } from '@vicons/fluent';
 
+import { Blog, Terminal, Edit, Replicate, ChartLineSmooth, ForecastHail } from '@vicons/carbon';
+
 export default {
     name: "ContainerInfo",
-    components: { Play12Regular, RecordStop12Regular, Pause12Regular, Replay20Filled, Power24Filled, Delete16Regular, ArrowReset24Filled, ArrowSync20Filled, CheckmarkCircle12Filled, ErrorCircle12Filled, PauseCircle24Filled, DismissCircle12Filled, ArrowSyncCircle24Filled },
+    components: {
+        Play12Regular, RecordStop12Regular, Pause12Regular, Replay20Filled, Power24Filled, Terminal,
+        Delete16Regular, ArrowReset24Filled, ArrowSync20Filled, CheckmarkCircle12Filled, Blog, Edit,
+        ErrorCircle12Filled, PauseCircle24Filled, DismissCircle12Filled, ArrowSyncCircle24Filled,
+        ChartLineSmooth, Replicate, ForecastHail
+    },
     data: () => ({
+        loading: true,
         id: '',
         now: 0,
         name: '正在加载中',
@@ -282,14 +351,32 @@ export default {
             count: 0,
             cmd: []
         },
-        env: {}
+        env: {},
+        labels: {},
+        volumes: []
     }),
     methods: {
         init() {
             this.id = this.$route.params.id;
             this.getInfo();
         },
+        cleanInfo() {
+            this.loading = true;
+            this.name = '正在加载中';
+            this.image = {
+                id: '',
+                name: 'loading...'
+            };
+            this.state = {};
+            this.ports = {};
+            this.network = {};
+            this.run = {};
+            this.env = {};
+            this.labels = {};
+            this.volumes = [];
+        },
         getInfo() {
+            this.cleanInfo();
             this.now = new Date().getTime();
             container.getInfo(this.id).then(res => {
                 if (res.state) {
@@ -321,7 +408,8 @@ export default {
                         let map = {}
                         for (let key in item.NetworkSettings.Ports) {
                             let port = item.NetworkSettings.Ports[key];
-                            map[key.substring(0, key.indexOf('/'))] = port[0].HostPort
+                            if (port) map[key.substring(0, key.indexOf('/'))] = port[0].HostPort
+                            else map[key.substring(0, key.indexOf('/'))] = 'Privacy'
                         }
                         this.ports = map
                     }
@@ -342,9 +430,17 @@ export default {
                             this.env[env.substring(0, env.indexOf('='))] = env.substring(env.indexOf('=') + 1)
                         }
                     }
+                    if (item.Config.Labels) this.labels = item.Config.Labels
+                    this.volumes = item.Mounts
                 }
+                setTimeout(() => {
+                    this.loading = false;
+                }, 500);
             }).catch(err => {
                 console.log(err)
+                setTimeout(() => {
+                    this.loading = false;
+                }, 500);
             })
         },
         getState(state) {
@@ -397,13 +493,40 @@ export default {
 </script>
   
 <style scoped>
+.sub-header {
+    background-color: #e8e8e8;
+    width: calc(100vw - 145px);
+    position: fixed;
+    z-index: 999;
+}
+
+.loading {
+    height: 100vh;
+}
+
+.card {
+    padding-bottom: 5px;
+}
+
 .sub-title {
     margin-bottom: 3px;
+}
+
+.sub-body {
+    padding: 66px 10px 10px 10px;
 }
 
 .card-title {
     font-size: 18px;
     font-weight: bold;
+}
+
+.tools {
+    padding: 10px 0 0 0;
+}
+
+.tools:deep(.n-button) {
+    width: 16.6%;
 }
 
 .item-label {
@@ -417,10 +540,24 @@ export default {
 }
 
 .env-key {
-    width: 250px;
     max-width: 250px;
     min-width: 250px;
     padding: 5px 0;
+    width: 250px;
+}
+
+.label-key {
+    max-width: 50%;
+    min-width: 280px;
+    padding: 5px 0;
+    width: 280px;
+}
+
+.volume-from {
+    max-width: 250px;
+    min-width: 250px;
+    padding: 5px 0;
+    width: 250px;
 }
 </style>
   
