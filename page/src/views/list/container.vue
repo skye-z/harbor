@@ -115,7 +115,7 @@
 import { useRouter } from 'vue-router'
 import { container } from "../../plugins/api";
 import { NIcon, NTag, NButton, NTime } from "naive-ui";
-import { Play12Regular, RecordStop12Regular, Pause12Regular, Replay20Filled, Power24Filled, Delete16Regular, ArrowReset24Filled, ArrowSync20Filled, CheckmarkCircle12Filled, ErrorCircle12Filled, PauseCircle24Filled, DismissCircle12Filled, ArrowSyncCircle24Filled } from '@vicons/fluent';
+import { Play12Regular, RecordStop12Regular, Pause12Regular, Replay20Filled, Power24Filled, Delete16Regular, AddCircle16Filled, ArrowReset24Filled, ArrowSync20Filled, CheckmarkCircle12Filled, ErrorCircle12Filled, PauseCircle24Filled, DismissCircle12Filled, ArrowSyncCircle24Filled } from '@vicons/fluent';
 
 export default {
     name: "Container",

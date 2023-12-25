@@ -1,5 +1,5 @@
 <template>
-    <div class="full-width flex">
+    <div class="flex">
         <div id="app-menu" class="border-right">
             <div class="flex align-center justify-center pa-10 border-bottom">
                 <img id="menu-logo" src="../assets/icon/icon-light@1x.png" />
@@ -20,7 +20,7 @@
                 </n-button>
             </div>
         </div>
-        <div id="app-content" class="full-width">
+        <div id="app-content">
             <n-scrollbar style="max-height: 100vh">
                 <router-view />
             </n-scrollbar>
@@ -160,6 +160,10 @@ export default {
 <style scoped>
 #app-menu {
     height: 100vh;
+}
+
+#app-content{
+    width: calc(100vw - 145px);
 }
 
 #menu-logo {
