@@ -145,3 +145,16 @@
 .n-popover{
   color: #333333 !important;
 }
+
+.n-log .n-log-loader{
+  background-color: #08BDC9FF;
+  align-items: center;
+  font-size: 16px;
+  display: flex;
+  color: #fff;
+  border: none;
+}
+
+.n-log .n-log-loader .n-base-loading{
+  color: #fff;
+}

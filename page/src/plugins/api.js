@@ -25,6 +25,7 @@ export const docker = {
 export const container = {
     getList: () => get('/container/list'),
     getInfo: id => get('/container/info?id=' + id),
+    getLogs: (id, tail) => get('/container/logs?id=' + id + '&tail=' + tail),
     start: id => get('/container/start?id=' + id),
     stop: id => get('/container/stop?id=' + id),
     restart: id => get('/container/restart?id=' + id),

@@ -210,42 +210,42 @@
 
                     <div class="tools">
                         <n-button-group class="full-width">
-                            <n-button type="primary" @click="jump('log')" strong secondary round>
+                            <n-button type="info" @click="jump('logs')" strong secondary round>
                                 <template #icon>
                                     <n-icon>
-                                        <Blog />
+                                        <DocumentBulletListClock20Regular />
                                     </n-icon>
                                 </template>
                                 日志
                             </n-button>
-                            <n-button type="primary" @click="jump('terminal')" strong secondary>
+                            <n-button type="info" @click="jump('terminal')" strong secondary>
                                 <template #icon>
                                     <n-icon>
                                         <Terminal />
                                     </n-icon>
                                 </template>终端</n-button>
-                            <n-button type="primary" @click="jump('stat')" strong secondary>
+                            <n-button type="info" @click="jump('stat')" strong secondary>
                                 <template #icon>
                                     <n-icon>
-                                        <ChartLineSmooth />
+                                        <ChartMultiple24Regular />
                                     </n-icon>
                                 </template>统计</n-button>
-                            <n-button type="primary" @click="jump('edit')" strong secondary>
+                            <n-button type="info" @click="jump('edit')" strong secondary>
                                 <template #icon>
                                     <n-icon>
-                                        <Edit />
+                                        <BoxEdit24Regular />
                                     </n-icon>
                                 </template>编辑</n-button>
-                            <n-button type="primary" @click="jump('copy')" strong secondary>
+                            <n-button type="info" @click="jump('copy')" strong secondary>
                                 <template #icon>
                                     <n-icon>
-                                        <Replicate />
+                                        <CopyAdd24Regular />
                                     </n-icon>
                                 </template>克隆</n-button>
-                            <n-button type="primary" @click="jump('rebuild')" strong secondary round>
+                            <n-button type="info" @click="jump('rebuild')" strong secondary round>
                                 <template #icon>
                                     <n-icon>
-                                        <ForecastHail />
+                                        <BranchCompare24Regular />
                                     </n-icon>
                                 </template>重建</n-button>
                         </n-button-group>
@@ -315,17 +315,26 @@
   
 <script>
 import { container } from "../../plugins/api";
-import { Play12Regular, RecordStop12Regular, Pause12Regular, Replay20Filled, Power24Filled, Delete16Regular, ArrowReset24Filled, ArrowSync20Filled, CheckmarkCircle12Filled, ErrorCircle12Filled, PauseCircle24Filled, DismissCircle12Filled, ArrowSyncCircle24Filled } from '@vicons/fluent';
+import { 
+    AddCircle16Filled, Play12Regular, RecordStop12Regular, Pause12Regular, 
+    Replay20Filled, Power24Filled, Delete16Regular, ArrowReset24Filled, 
+    ArrowSync20Filled, CheckmarkCircle12Filled, ErrorCircle12Filled, 
+    PauseCircle24Filled, DismissCircle12Filled, ArrowSyncCircle24Filled,
+    DocumentBulletListClock20Regular,ChartMultiple24Regular, BoxEdit24Regular,
+    CopyAdd24Regular, BranchCompare24Regular
+ } from '@vicons/fluent';
 
-import { Blog, Terminal, Edit, Replicate, ChartLineSmooth, ForecastHail } from '@vicons/carbon';
+import { Terminal } from '@vicons/tabler';
 
 export default {
     name: "ContainerInfo",
     components: {
-        Play12Regular, RecordStop12Regular, Pause12Regular, Replay20Filled, Power24Filled, Terminal,
-        Delete16Regular, ArrowReset24Filled, ArrowSync20Filled, CheckmarkCircle12Filled, Blog, Edit,
-        ErrorCircle12Filled, PauseCircle24Filled, DismissCircle12Filled, ArrowSyncCircle24Filled,
-        ChartLineSmooth, Replicate, ForecastHail
+        AddCircle16Filled, Play12Regular, RecordStop12Regular, Pause12Regular, 
+        Replay20Filled, Power24Filled, Delete16Regular, ArrowReset24Filled, 
+        ArrowSync20Filled, CheckmarkCircle12Filled, ErrorCircle12Filled, 
+        PauseCircle24Filled, DismissCircle12Filled, ArrowSyncCircle24Filled,
+        DocumentBulletListClock20Regular,ChartMultiple24Regular, BoxEdit24Regular,
+        CopyAdd24Regular, BranchCompare24Regular, Terminal
     },
     data: () => ({
         loading: true,

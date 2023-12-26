@@ -78,7 +78,7 @@ const router = createRouter({
                 },
                 {
                     name: 'ContainerLog',
-                    path: '/container/:id/log',
+                    path: '/container/:id/logs',
                     component: ContainerLog,
                     meta: {
                         title: '容器日志',

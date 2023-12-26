@@ -114,8 +114,16 @@
 <script>
 import { useRouter } from 'vue-router'
 import { container } from "../../plugins/api";
-import { NIcon, NTag, NButton, NTime } from "naive-ui";
-import { Play12Regular, RecordStop12Regular, Pause12Regular, Replay20Filled, Power24Filled, Delete16Regular, AddCircle16Filled, ArrowReset24Filled, ArrowSync20Filled, CheckmarkCircle12Filled, ErrorCircle12Filled, PauseCircle24Filled, DismissCircle12Filled, ArrowSyncCircle24Filled } from '@vicons/fluent';
+import { NIcon, NTag, NButton, NButtonGroup, NTime } from "naive-ui";
+import { 
+    Play12Regular, RecordStop12Regular, Pause12Regular, Replay20Filled, 
+    Power24Filled, Delete16Regular, AddCircle16Filled, ArrowReset24Filled, 
+    ArrowSync20Filled, CheckmarkCircle12Filled, ErrorCircle12Filled, PauseCircle24Filled, 
+    DismissCircle12Filled, ArrowSyncCircle24Filled, DocumentBulletListClock20Regular,
+    ChartMultiple24Regular
+ } from '@vicons/fluent';
+
+import { Terminal } from '@vicons/tabler';
 
 export default {
     name: "Container",
@@ -123,8 +131,8 @@ export default {
     setup() {
         const router = useRouter()
 
-        const openItem = (id) => {
-            router.push(`/container/${id}`);
+        const openItem = (id, path) => {
+            router.push(`/container/${id}${path}`);
         };
 
         return {
@@ -145,7 +153,7 @@ export default {
                             NButton,
                             {
                                 text: true,
-                                onClick: () => openItem(row.id)
+                                onClick: () => openItem(row.id, '')
 
                             },
                             {
@@ -188,6 +196,56 @@ export default {
                                 default: () => row.stateZh
                             }
                         )
+                    }
+                },
+                {
+                    title: "快捷入口",
+                    key: "action",
+                    align: 'center',
+                    width: '140px',
+                    render(row) {
+                        return h(
+                            NButtonGroup,
+                            {
+                            },
+                            {
+                                default: () => {
+                                    return [h(
+                                        NButton,
+                                        {
+                                            tertiary: true,
+                                            round: true,
+                                            size: 'small',
+                                            onClick: () => openItem(row.id, '/logs')
+                                        },
+                                        {
+                                            icon: () => h(NIcon, null, { default: () => h(DocumentBulletListClock20Regular) })
+                                        }
+                                    ), h(
+                                        NButton,
+                                        {
+                                            tertiary: true,
+                                            size: 'small',
+                                            onClick: () => openItem(row.id, '/terminal')
+                                        },
+                                        {
+                                            icon: () => h(NIcon, null, { default: () => h(Terminal) })
+                                        }
+                                    ), h(
+                                        NButton,
+                                        {
+                                            tertiary: true,
+                                            round: true,
+                                            size: 'small',
+                                            onClick: () => openItem(row.id, '/stat')
+                                        },
+                                        {
+                                            icon: () => h(NIcon, null, { default: () => h(ChartMultiple24Regular) })
+                                        }
+                                    )]
+                                }
+                            }
+                        );
                     }
                 },
                 {
