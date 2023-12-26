@@ -48,7 +48,7 @@
                 </div>
                 <n-grid :x-gap="10" :y-gap="10" cols="1 600:3 1200:6">
                     <n-grid-item>
-                        <div class="card pa-10">
+                        <div class="card menu-item pa-10" @click="jump('engine')">
                             <div class="item-title">引擎</div>
                             <div class="item-bar flex align-center">
                                 <div class="mr-10">v{{ info.docker.version }}</div>
@@ -57,7 +57,7 @@
                         </div>
                     </n-grid-item>
                     <n-grid-item>
-                        <div class="card pa-10">
+                        <div class="card menu-item pa-10" @click="jump('container')">
                             <div class="item-number float-right">{{ info.containers.total }}</div>
                             <div class="item-title">容器</div>
                             <div class="item-bar flex align-center">
@@ -83,7 +83,7 @@
                         </div>
                     </n-grid-item>
                     <n-grid-item>
-                        <div class="card pa-10">
+                        <div class="card menu-item pa-10" @click="jump('image')">
                             <div class="item-number float-right">{{ info.image.number }}</div>
                             <div class="item-title">镜像</div>
                             <div class="item-bar flex align-center">
@@ -95,7 +95,7 @@
                         </div>
                     </n-grid-item>
                     <n-grid-item>
-                        <div class="card pa-10">
+                        <div class="card menu-item pa-10" @click="jump('network')">
                             <div class="item-number float-right">{{ info.network.number }}</div>
                             <div class="item-title">网络</div>
                             <div class="item-bar flex align-center">
@@ -122,14 +122,14 @@
                         </div>
                     </n-grid-item>
                     <n-grid-item>
-                        <div class="card pa-10">
+                        <div class="card menu-item pa-10" @click="jump('volume')">
                             <div class="item-number float-right">{{ info.volume.number }}</div>
                             <div class="item-title">存储</div>
                             <div class="item-bar text-gray">{{ info.volume.root }}</div>
                         </div>
                     </n-grid-item>
                     <n-grid-item>
-                        <div class="card pa-10">
+                        <div class="card menu-item pa-10" @click="jump('user')">
                             <div class="item-number float-right">{{ info.user.number }}</div>
                             <div class="item-title">用户</div>
                             <div class="item-bar flex align-center">
@@ -313,6 +313,9 @@ export default {
                 unit = 'GB'
             }
             return num.toFixed(2) + unit;
+        },
+        jump(path){
+            this.$router.push('/'+path)
         }
     },
     mounted() {
@@ -324,6 +327,14 @@ export default {
 <style scoped>
 #refresh {
     width: 100px;
+}
+
+.menu-item{
+    cursor: pointer;
+}
+
+.menu-item:hover{
+    border: 1px #08BDC9 solid;
 }
 
 .server-name {

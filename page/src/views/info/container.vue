@@ -210,7 +210,7 @@
 
                     <div class="tools">
                         <n-button-group class="full-width">
-                            <n-button type="primary" strong secondary round>
+                            <n-button type="primary" @click="jump('log')" strong secondary round>
                                 <template #icon>
                                     <n-icon>
                                         <Blog />
@@ -218,31 +218,31 @@
                                 </template>
                                 日志
                             </n-button>
-                            <n-button type="primary" strong secondary>
+                            <n-button type="primary" @click="jump('terminal')" strong secondary>
                                 <template #icon>
                                     <n-icon>
                                         <Terminal />
                                     </n-icon>
                                 </template>终端</n-button>
-                            <n-button type="primary" strong secondary>
+                            <n-button type="primary" @click="jump('stat')" strong secondary>
                                 <template #icon>
                                     <n-icon>
                                         <ChartLineSmooth />
                                     </n-icon>
                                 </template>统计</n-button>
-                            <n-button type="primary" strong secondary>
+                            <n-button type="primary" @click="jump('edit')" strong secondary>
                                 <template #icon>
                                     <n-icon>
                                         <Edit />
                                     </n-icon>
                                 </template>编辑</n-button>
-                            <n-button type="primary" strong secondary>
+                            <n-button type="primary" @click="jump('copy')" strong secondary>
                                 <template #icon>
                                     <n-icon>
                                         <Replicate />
                                     </n-icon>
                                 </template>克隆</n-button>
-                            <n-button type="primary" strong secondary round>
+                            <n-button type="primary" @click="jump('rebuild')" strong secondary round>
                                 <template #icon>
                                     <n-icon>
                                         <ForecastHail />
@@ -260,7 +260,7 @@
                     <div class="env-value line1">{{ value }}</div>
                 </div>
             </div>
-            <div class="card mt-10 pa-10">
+            <div class="card mt-10 pa-10" v-if="labels != null">
                 <div class="card-title">容器标签</div>
                 <div class="flex align-center" v-for="(value, key) in labels">
                     <div class="label-key line1">{{ key }}</div>
@@ -352,7 +352,7 @@ export default {
             cmd: []
         },
         env: {},
-        labels: {},
+        labels: null,
         volumes: []
     }),
     methods: {
@@ -372,7 +372,7 @@ export default {
             this.network = {};
             this.run = {};
             this.env = {};
-            this.labels = {};
+            this.labels = null;
             this.volumes = [];
         },
         getInfo() {
@@ -430,7 +430,8 @@ export default {
                             this.env[env.substring(0, env.indexOf('='))] = env.substring(env.indexOf('=') + 1)
                         }
                     }
-                    if (item.Config.Labels) this.labels = item.Config.Labels
+                    if (item.Config.Labels && Object.keys(item.Config.Labels).length > 0) 
+                        this.labels = item.Config.Labels
                     this.volumes = item.Mounts
                 }
                 setTimeout(() => {
@@ -484,6 +485,9 @@ export default {
                     window.$message.warning("无效的控制指令")
                     return false;
             }
+        },
+        jump(path){
+            this.$router.push('/container/'+this.id+'/'+path)
         }
     },
     mounted() {
