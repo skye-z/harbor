@@ -340,7 +340,7 @@ export default {
                                     type: "info",
                                     class: 'taxt-small',
                                     onClick: () => {
-                                        window.open(window.location.hostname + ":" + key)
+                                        window.open('http://'+window.location.hostname + ":" + key)
                                     }
                                 },
                                 {
