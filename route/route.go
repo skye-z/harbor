@@ -60,6 +60,7 @@ func (r Route) addPublicRoute() {
 	cs := service.NewContainerService(r.DockerClient)
 	r.Router.GET("/api/container/list", cs.GetList)
 	r.Router.GET("/api/container/info", cs.GetInfo)
+	r.Router.GET("/api/container/logs", cs.GetLogs)
 	r.Router.GET("/api/container/start", cs.StartContainer)
 	r.Router.GET("/api/container/stop", cs.StopContainer)
 	r.Router.GET("/api/container/restart", cs.RestartContainer)

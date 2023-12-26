@@ -103,3 +103,15 @@ func (ds ContainerService) UnpauseContainer(ctx *gin.Context) {
 		util.ReturnMessage(ctx, true, "容器恢复成功")
 	}
 }
+
+// 从挂起中恢复容器
+func (ds ContainerService) GetLogs(ctx *gin.Context) {
+	id := ctx.Query("id")
+	tail := ctx.DefaultQuery("tail", "100")
+	logs, err := ds.Client.GetContainerLogs(id, tail)
+	if err != nil {
+		util.ReturnMessage(ctx, false, "容器日志读取失败")
+	} else {
+		util.ReturnData(ctx, true, logs)
+	}
+}

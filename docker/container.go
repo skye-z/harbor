@@ -1,6 +1,8 @@
 package docker
 
 import (
+	"harbor/util"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
@@ -55,6 +57,24 @@ func (d Docker) GetContainerStat(id string) (types.ContainerStats, error) {
 	}
 
 	return stats, nil
+}
+
+// 获取容器统计信息
+func (d Docker) GetContainerLogs(id string, tail string) ([]string, error) {
+	logs, err := d.Session.ContainerLogs(d.Context, id, types.ContainerLogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Details:    true,
+		Tail:       tail,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer logs.Close()
+	cleanedLogs := util.ProcessLogs(logs)
+	// resultString := strings.Join(cleanedLogs, "\n")
+
+	return cleanedLogs, nil
 }
 
 // 创建容器
