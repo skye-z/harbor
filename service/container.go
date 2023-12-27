@@ -1,12 +1,11 @@
 package service
 
 import (
-	"bytes"
 	"harbor/docker"
 	"harbor/util"
+	"log"
 	"net/http"
 	"strconv"
-	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -132,38 +131,13 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-// WebSocket 缓存池
-type wsBufferWriter struct {
-	buffer bytes.Buffer
-	mu     sync.Mutex
-}
-
-// 写入缓存
-func (w *wsBufferWriter) Write(p []byte) (n int, err error) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	return w.buffer.Write(p)
-}
-
-// 获取缓存
-func (w *wsBufferWriter) Bytes() []byte {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	return w.buffer.Bytes()
-}
-
-// 刷新缓存
-func (w *wsBufferWriter) Reset() {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	w.buffer.Reset()
-}
-
 func (ds ContainerService) ConnectTerminal(ctx *gin.Context) {
 	id := ctx.Query("id")
 	cmd := ctx.DefaultQuery("cmd", "/bin/sh")
 	cols, _ := strconv.Atoi(ctx.DefaultQuery("cols", "80"))
 	rows, _ := strconv.Atoi(ctx.DefaultQuery("rows", "90"))
+
+	log.Panicf("id=%v cmd=%v cols=%v rows=%v", id, cmd, cols, rows)
 
 	// 升级连接
 	upgrade, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)

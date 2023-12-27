@@ -16,7 +16,7 @@
             </div>
         </div>
         <div class="pa-10">
-                <div ref="xterm" id="xterm" class="xterm"></div>
+            <div ref="xterm" id="xterm" class="xterm"></div>
         </div>
     </div>
 </template>
@@ -42,6 +42,7 @@ export default {
             id: '',
             name: ''
         },
+        cmd: '/bin/bash',
         term: null,
         socket: null,
         fitAddon: null,
@@ -73,27 +74,31 @@ export default {
             })
         },
         initConnect() {
-            this.term = new Terminal({
-                // theme: {
-                //     background,
-                //     foreground
-                // },
-                fontSize: 14
-            })
-            // 加载插件
-            this.addPlugins();
-            setTimeout(() => {
-                // 打开Dom元素
-                this.term.open(this.$refs.xterm)
-                // 自适应窗口大小
-                this.fitAddon.fit()
-            }, 100)
-            // 创建连接
-            this.addSocket()
-            // 输入聚焦
-            this.term.focus()
-            // 加载大小变动事件
-            this.addResizeEvent();
+            try {
+                this.term = new Terminal({
+                    // theme: {
+                    //     background,
+                    //     foreground
+                    // },
+                    fontSize: 14
+                })
+                // 加载插件
+                this.addPlugins();
+                setTimeout(() => {
+                    // 打开Dom元素
+                    this.term.open(this.$refs.xterm)
+                    // 自适应窗口大小
+                    this.fitAddon.fit()
+                }, 100)
+                // 创建连接
+                this.addSocket()
+                // 输入聚焦
+                this.term.focus()
+                // 加载大小变动事件
+                this.addResizeEvent();
+            } catch (err) {
+                console.log(err)
+            }
         },
         addPlugins() {
             // 加载Canvas渲染
@@ -103,19 +108,26 @@ export default {
             this.term.loadAddon(this.fitAddon)
         },
         addSocket() {
+            let url = this.socketURI + '?cols=' + this.term.cols + '&rows=' + this.term.rows + '&id=' + this.id + '&cmd=' + this.cmd;
             // 创建WebSocket连接
-            this.socket = new WebSocket(this.socketURI + '?cols=' + this.term.cols + '&rows' + this.term.rows + '&id=' + this.id)
+            this.socket = new WebSocket(url)
             // 连接开启事件
             this.socket.onopen = () => {
-                window.dispatchEvent(new CustomEvent("cache:connect", { detail: { id: this.id, connect: true } }))
+                console.log('onopen')
             };
             // 连接关闭事件
             this.socket.onclose = () => {
-                window.dispatchEvent(new CustomEvent("cache:connect", { detail: { id: this.id, connect: false } }))
+                console.log('onclose')
             };
-            this.socket.onerror = () => this.close()
-            // 加载WebSocket插件
-            this.term.loadAddon(new AttachAddon(this.socket))
+            this.socket.onerror = err => {
+                console.log('error',err)
+            }
+            // this.socket.onerror = () => this.close()
+            setTimeout(() => {
+                console.log(this.socket)
+                // 加载WebSocket插件
+                this.term.loadAddon(new AttachAddon(this.socket))
+            }, 1000)
         },
         addResizeEvent() {
             let timeout = 0
