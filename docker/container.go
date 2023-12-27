@@ -6,6 +6,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
+	"github.com/gorilla/websocket"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -72,7 +73,6 @@ func (d Docker) GetContainerLogs(id string, tail string) ([]string, error) {
 	}
 	defer logs.Close()
 	cleanedLogs := util.ProcessLogs(logs)
-	// resultString := strings.Join(cleanedLogs, "\n")
 
 	return cleanedLogs, nil
 }
@@ -193,4 +193,58 @@ func (d Docker) GetContainerProcesses(id string) ([][]string, error) {
 	}
 
 	return processes.Processes, nil
+}
+
+func (d Docker) CreateTerminal(conn *websocket.Conn, containerID string, cmd string, cols uint, rows uint) error {
+	createResp, err := d.Session.ContainerExecCreate(d.Context, containerID, types.ExecConfig{
+		AttachStdin:  true,
+		AttachStdout: true,
+		AttachStderr: true,
+		Tty:          true,
+		Cmd:          []string{cmd},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = d.Session.ContainerExecResize(d.Context, createResp.ID, types.ResizeOptions{
+		Height: cols,
+		Width:  rows,
+	})
+	if err != nil {
+		return err
+	}
+
+	attachResp, err := d.Session.ContainerExecAttach(d.Context, createResp.ID, types.ExecStartCheck{Tty: true})
+	if err != nil {
+		return err
+	}
+
+	defer attachResp.Close()
+
+	// Forward output from the container to the WebSocket
+	go func() {
+		for {
+			// Read from container and write to WebSocket
+			buffer := make([]byte, 4096)
+			_, err := attachResp.Reader.Read(buffer)
+			if err != nil {
+				break
+			}
+			conn.WriteMessage(websocket.TextMessage, buffer)
+		}
+	}()
+
+	// Handle input to the exec process
+	go func() {
+		for {
+			_, message, err := conn.ReadMessage()
+			if err != nil {
+				return
+			}
+			attachResp.Conn.Write(message)
+		}
+	}()
+
+	return nil
 }

@@ -67,6 +67,7 @@ func (r Route) addPublicRoute() {
 	r.Router.GET("/api/container/kill", cs.KillContainer)
 	r.Router.GET("/api/container/pause", cs.PauseContainer)
 	r.Router.GET("/api/container/unpause", cs.UnpauseContainer)
+	r.Router.GET("/api/container/terminal", cs.ConnectTerminal)
 
 	is := service.NewImageService(r.DockerClient)
 	r.Router.GET("/api/image/list", is.GetList)

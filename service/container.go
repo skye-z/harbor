@@ -1,10 +1,15 @@
 package service
 
 import (
+	"bytes"
 	"harbor/docker"
 	"harbor/util"
+	"net/http"
+	"strconv"
+	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 type ContainerService struct {
@@ -104,7 +109,7 @@ func (ds ContainerService) UnpauseContainer(ctx *gin.Context) {
 	}
 }
 
-// 从挂起中恢复容器
+// 获取容器日志
 func (ds ContainerService) GetLogs(ctx *gin.Context) {
 	id := ctx.Query("id")
 	tail := ctx.DefaultQuery("tail", "100")
@@ -114,4 +119,59 @@ func (ds ContainerService) GetLogs(ctx *gin.Context) {
 	} else {
 		util.ReturnData(ctx, true, logs)
 	}
+}
+
+// ================ Socket ================ //
+
+// 连接升级程序
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  2048,
+	WriteBufferSize: 2048,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+// WebSocket 缓存池
+type wsBufferWriter struct {
+	buffer bytes.Buffer
+	mu     sync.Mutex
+}
+
+// 写入缓存
+func (w *wsBufferWriter) Write(p []byte) (n int, err error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.buffer.Write(p)
+}
+
+// 获取缓存
+func (w *wsBufferWriter) Bytes() []byte {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.buffer.Bytes()
+}
+
+// 刷新缓存
+func (w *wsBufferWriter) Reset() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.buffer.Reset()
+}
+
+func (ds ContainerService) ConnectTerminal(ctx *gin.Context) {
+	id := ctx.Query("id")
+	cmd := ctx.DefaultQuery("cmd", "/bin/sh")
+	cols, _ := strconv.Atoi(ctx.DefaultQuery("cols", "80"))
+	rows, _ := strconv.Atoi(ctx.DefaultQuery("rows", "90"))
+
+	// 升级连接
+	upgrade, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+	if err != nil {
+		ctx.AbortWithStatus(http.StatusNotAcceptable)
+		return
+	}
+	defer upgrade.Close()
+
+	ds.Client.CreateTerminal(upgrade, id, cmd, uint(cols), uint(rows))
 }
