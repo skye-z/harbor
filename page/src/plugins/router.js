@@ -11,6 +11,7 @@ const Stack = () => import('../views/list/stack.vue')
 const Container = () => import('../views/list/container.vue')
 const ContainerInfo = () => import('../views/info/container.vue')
 const ContainerLog = () => import('../views/info/container_log.vue')
+const ContainerTerminal = () => import('../views/info/container_terminal.vue')
 const Image = () => import('../views/list/image.vue')
 const Network = () => import('../views/list/network.vue')
 const Volume = () => import('../views/list/volume.vue')
@@ -82,6 +83,15 @@ const router = createRouter({
                     component: ContainerLog,
                     meta: {
                         title: '容器日志',
+                        auth: true
+                    }
+                },
+                {
+                    name: 'ContainerTerminal',
+                    path: '/container/:id/terminal',
+                    component: ContainerTerminal,
+                    meta: {
+                        title: '容器终端',
                         auth: true
                     }
                 },

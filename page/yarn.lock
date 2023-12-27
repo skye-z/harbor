@@ -1036,3 +1036,23 @@ webpack-virtual-modules@^0.6.0:
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/webpack-virtual-modules/-/webpack-virtual-modules-0.6.1.tgz#ac6fdb9c5adb8caecd82ec241c9631b7a3681b6f"
   integrity sha512-poXpCylU7ExuvZK8z+On3kX+S8o/2dQ/SVYueKA0D4WEMXROXgY8Ez50/bQEUmvoSMMrWcrJqCHuhAbsiwg7Dg==
+
+xterm-addon-attach@^0.9.0:
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/xterm-addon-attach/-/xterm-addon-attach-0.9.0.tgz#dd18057f147a402de1df852c1de4c8f3b63b37be"
+  integrity sha512-NykWWOsobVZPPK3P9eFkItrnBK9Lw0f94uey5zhqIVB1bhswdVBfl+uziEzSOhe2h0rT9wD0wOeAYsdSXeavPw==
+
+xterm-addon-canvas@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/xterm-addon-canvas/-/xterm-addon-canvas-0.5.0.tgz#95d056cec6da42a51b2c47746a011409020c388c"
+  integrity sha512-QOo/eZCMrCleAgMimfdbaZCgmQRWOml63Ued6RwQ+UTPvQj3Av9QKx3xksmyYrDGRO/AVRXa9oNuzlYvLdmoLQ==
+
+xterm-addon-fit@^0.8.0:
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/xterm-addon-fit/-/xterm-addon-fit-0.8.0.tgz#48ca99015385141918f955ca7819e85f3691d35f"
+  integrity sha512-yj3Np7XlvxxhYF/EJ7p3KHaMt6OdwQ+HDu573Vx1lRXsVxOcnVJs51RgjZOouIZOczTsskaS+CpXspK81/DLqw==
+
+xterm@^5.3.0:
+  version "5.3.0"
+  resolved "https://registry.yarnpkg.com/xterm/-/xterm-5.3.0.tgz#867daf9cc826f3d45b5377320aabd996cb0fce46"
+  integrity sha512-8QqjlekLUFTrU6x7xck1MsPzPA571K5zNqWm0M0oroYEWVOptZ0+ubQSkQ3uxIEhcIHRujJy6emDWX4A7qyFzg==
