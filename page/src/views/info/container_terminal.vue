@@ -76,10 +76,6 @@ export default {
         initConnect() {
             try {
                 this.term = new Terminal({
-                    // theme: {
-                    //     background,
-                    //     foreground
-                    // },
                     fontSize: 14
                 })
                 // 加载插件
@@ -168,7 +164,22 @@ export default {
 }
 
 .xterm:deep(.terminal) {
-    padding: 5px;
+    padding: 10px;
+}
+
+.xterm:deep(.xterm-viewport) {
+    border-radius: 8px;
+}
+
+.xterm:deep(.xterm-viewport::-webkit-scrollbar) {
+    background-color: #000;
+    border-radius: 100%;
+    width: 5px;
+}
+
+.xterm:deep(.xterm-viewport::-webkit-scrollbar-thumb) {
+    background: #999;
+    border-radius: 24px;
 }
 </style>
   
