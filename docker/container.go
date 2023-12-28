@@ -208,8 +208,8 @@ func (d Docker) CreateTerminal(conn *websocket.Conn, containerID string, cmd str
 	}
 
 	err = d.Session.ContainerExecResize(d.Context, createResp.ID, types.ResizeOptions{
-		Height: cols,
-		Width:  rows,
+		Height: rows,
+		Width:  cols,
 	})
 	if err != nil {
 		return err

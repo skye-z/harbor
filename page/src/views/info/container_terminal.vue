@@ -84,12 +84,10 @@ export default {
                 })
                 // 加载插件
                 this.addPlugins();
-                setTimeout(() => {
-                    // 打开Dom元素
-                    this.term.open(this.$refs.xterm)
-                    // 自适应窗口大小
-                    this.fitAddon.fit()
-                }, 100)
+                // 打开Dom元素
+                this.term.open(this.$refs.xterm)
+                // 自适应窗口大小
+                this.fitAddon.fit()
                 // 创建连接
                 this.addSocket()
                 // 输入聚焦
@@ -119,15 +117,9 @@ export default {
             this.socket.onclose = () => {
                 console.log('onclose')
             };
-            this.socket.onerror = err => {
-                console.log('error',err)
-            }
-            // this.socket.onerror = () => this.close()
-            setTimeout(() => {
-                console.log(this.socket)
-                // 加载WebSocket插件
-                this.term.loadAddon(new AttachAddon(this.socket))
-            }, 1000)
+            this.socket.onerror = () => this.close()
+            // 加载WebSocket插件
+            this.term.loadAddon(new AttachAddon(this.socket))
         },
         addResizeEvent() {
             let timeout = 0
@@ -154,7 +146,6 @@ export default {
                 console.log(err)
             }
             document.getElementById('xterm').innerHTML = "";
-            window.dispatchEvent(new CustomEvent("cache:connect", { detail: { id: this.id, connect: false } }))
             console.log('Terminal Close')
         },
         back() {
