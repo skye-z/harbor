@@ -3,6 +3,7 @@ package docker
 import (
 	"encoding/json"
 	"harbor/util"
+	"log"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -215,6 +216,13 @@ func (d Docker) CreateTerminal(conn *websocket.Conn, containerID string, cmd str
 		return err
 	}
 
+	log.Println("[Docker] create terminal")
+	attachResp, err := d.Session.ContainerExecAttach(d.Context, createResp.ID, types.ExecStartCheck{Tty: true})
+	if err != nil {
+		return err
+	}
+
+	log.Println("[Docker] connect terminal")
 	err = d.Session.ContainerExecResize(d.Context, createResp.ID, types.ResizeOptions{
 		Height: rows,
 		Width:  cols,
@@ -223,36 +231,40 @@ func (d Docker) CreateTerminal(conn *websocket.Conn, containerID string, cmd str
 		return err
 	}
 
-	attachResp, err := d.Session.ContainerExecAttach(d.Context, createResp.ID, types.ExecStartCheck{Tty: true})
-	if err != nil {
-		return err
-	}
+	// 创建一个退出通道，用于协程之间的通知
+	exitChan := make(chan struct{})
 
-	defer attachResp.Close()
-
-	// Forward output from the container to the WebSocket
 	go func() {
+		defer close(exitChan)
 		for {
-			// Read from container and write to WebSocket
 			buffer := make([]byte, 4096)
 			_, err := attachResp.Reader.Read(buffer)
 			if err != nil {
+				if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
+					defer attachResp.Close()
+				}
 				break
 			}
 			conn.WriteMessage(websocket.TextMessage, buffer)
 		}
 	}()
 
-	// Handle input to the exec process
 	go func() {
+		defer close(exitChan)
 		for {
 			_, message, err := conn.ReadMessage()
 			if err != nil {
-				return
+				if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
+					defer attachResp.Close()
+				}
+				break
 			}
 			attachResp.Conn.Write(message)
 		}
 	}()
+
+	<-exitChan
+	log.Println("[Docker] terminal session close")
 
 	return nil
 }

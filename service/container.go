@@ -3,7 +3,6 @@ package service
 import (
 	"harbor/docker"
 	"harbor/util"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -138,8 +137,6 @@ func (ds ContainerService) ConnectTerminal(ctx *gin.Context) {
 	cols, _ := strconv.Atoi(ctx.DefaultQuery("cols", "80"))
 	rows, _ := strconv.Atoi(ctx.DefaultQuery("rows", "90"))
 
-	log.Panicf("id=%v cmd=%v cols=%v rows=%v", id, cmd, cols, rows)
-
 	// 升级连接
 	upgrade, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 	if err != nil {
@@ -148,7 +145,11 @@ func (ds ContainerService) ConnectTerminal(ctx *gin.Context) {
 	}
 	defer upgrade.Close()
 
-	ds.Client.CreateTerminal(upgrade, id, cmd, uint(cols), uint(rows))
+	err = ds.Client.CreateTerminal(upgrade, id, cmd, uint(cols), uint(rows))
+	if err != nil {
+		ctx.AbortWithStatus(http.StatusNotAcceptable)
+		return
+	}
 }
 
 // 获取容器变动
