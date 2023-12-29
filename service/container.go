@@ -11,6 +11,15 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// 连接升级程序
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  2048,
+	WriteBufferSize: 2048,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
 type ContainerService struct {
 	Client *docker.Docker
 }
@@ -21,6 +30,7 @@ func NewContainerService(client *docker.Docker) *ContainerService {
 	return ds
 }
 
+// 获取容器列表
 func (ds ContainerService) GetList(ctx *gin.Context) {
 	list, err := ds.Client.GetContainerList()
 	if err != nil {
@@ -30,6 +40,7 @@ func (ds ContainerService) GetList(ctx *gin.Context) {
 	}
 }
 
+// 获取容器详情
 func (ds ContainerService) GetInfo(ctx *gin.Context) {
 	id := ctx.Query("id")
 	info, err := ds.Client.GetContainerInfo(id)
@@ -120,17 +131,7 @@ func (ds ContainerService) GetLogs(ctx *gin.Context) {
 	}
 }
 
-// ================ Socket ================ //
-
-// 连接升级程序
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  2048,
-	WriteBufferSize: 2048,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
+// 连接容器终端
 func (ds ContainerService) ConnectTerminal(ctx *gin.Context) {
 	id := ctx.Query("id")
 	cmd := ctx.DefaultQuery("cmd", "/bin/sh")
@@ -148,4 +149,37 @@ func (ds ContainerService) ConnectTerminal(ctx *gin.Context) {
 	defer upgrade.Close()
 
 	ds.Client.CreateTerminal(upgrade, id, cmd, uint(cols), uint(rows))
+}
+
+// 获取容器变动
+func (ds ContainerService) GetDiff(ctx *gin.Context) {
+	id := ctx.Query("id")
+	list, err := ds.Client.GetContainerDiff(id)
+	if err != nil {
+		util.ReturnMessage(ctx, false, "获取容器变动失败")
+	} else {
+		util.ReturnData(ctx, true, list)
+	}
+}
+
+// 获取容器统计信息
+func (ds ContainerService) GetStat(ctx *gin.Context) {
+	id := ctx.Query("id")
+	stat, err := ds.Client.GetContainerStat(id)
+	if err != nil {
+		util.ReturnMessage(ctx, false, "获取容器统计信息失败")
+	} else {
+		util.ReturnData(ctx, true, stat)
+	}
+}
+
+// 获取容器进程信息
+func (ds ContainerService) GetProcesses(ctx *gin.Context) {
+	id := ctx.Query("id")
+	list, err := ds.Client.GetContainerProcesses(id)
+	if err != nil {
+		util.ReturnMessage(ctx, false, "获取容器进程信息失败")
+	} else {
+		util.ReturnData(ctx, true, list)
+	}
 }

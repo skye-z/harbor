@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"encoding/json"
 	"harbor/util"
 
 	"github.com/docker/docker/api/types"
@@ -51,13 +52,19 @@ func (d Docker) GetContainerDiff(id string) ([]container.FilesystemChange, error
 }
 
 // 获取容器统计信息
-func (d Docker) GetContainerStat(id string) (types.ContainerStats, error) {
+func (d Docker) GetContainerStat(id string) (*types.Stats, error) {
 	stats, err := d.Session.ContainerStatsOneShot(d.Context, id)
 	if err != nil {
-		return types.ContainerStats{}, err
+		return nil, err
+	}
+	defer stats.Body.Close()
+
+	var stat types.Stats
+	if err := json.NewDecoder(stats.Body).Decode(&stat); err != nil {
+		return nil, err
 	}
 
-	return stats, nil
+	return &stat, nil
 }
 
 // 获取容器统计信息
@@ -195,6 +202,7 @@ func (d Docker) GetContainerProcesses(id string) ([][]string, error) {
 	return processes.Processes, nil
 }
 
+// 创建终端
 func (d Docker) CreateTerminal(conn *websocket.Conn, containerID string, cmd string, cols uint, rows uint) error {
 	createResp, err := d.Session.ContainerExecCreate(d.Context, containerID, types.ExecConfig{
 		AttachStdin:  true,
