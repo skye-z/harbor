@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"harbor/util"
 	"log"
+	"sync"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -53,14 +54,14 @@ func (d Docker) GetContainerDiff(id string) ([]container.FilesystemChange, error
 }
 
 // 获取容器统计信息
-func (d Docker) GetContainerStat(id string) (*types.Stats, error) {
+func (d Docker) GetContainerStat(id string) (*types.StatsJSON, error) {
 	stats, err := d.Session.ContainerStatsOneShot(d.Context, id)
 	if err != nil {
 		return nil, err
 	}
 	defer stats.Body.Close()
 
-	var stat types.Stats
+	var stat types.StatsJSON
 	if err := json.NewDecoder(stats.Body).Decode(&stat); err != nil {
 		return nil, err
 	}
@@ -234,8 +235,12 @@ func (d Docker) CreateTerminal(conn *websocket.Conn, containerID string, cmd str
 	// 创建一个退出通道，用于协程之间的通知
 	exitChan := make(chan struct{})
 
+	// 用于等待协程完成的 WaitGroup
+	var wg sync.WaitGroup
+	wg.Add(2) // 两个协程
+
 	go func() {
-		defer close(exitChan)
+		defer wg.Done()
 		for {
 			buffer := make([]byte, 4096)
 			_, err := attachResp.Reader.Read(buffer)
@@ -250,7 +255,7 @@ func (d Docker) CreateTerminal(conn *websocket.Conn, containerID string, cmd str
 	}()
 
 	go func() {
-		defer close(exitChan)
+		defer wg.Done()
 		for {
 			_, message, err := conn.ReadMessage()
 			if err != nil {
@@ -263,6 +268,13 @@ func (d Docker) CreateTerminal(conn *websocket.Conn, containerID string, cmd str
 		}
 	}()
 
+	// 启动协程后等待协程完成
+	go func() {
+		wg.Wait()
+		close(exitChan)
+	}()
+
+	// 阻塞主函数，直到任一协程退出
 	<-exitChan
 	log.Println("[Docker] terminal session close")
 
