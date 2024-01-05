@@ -118,6 +118,20 @@ func (ds ContainerService) UnpauseContainer(ctx *gin.Context) {
 	}
 }
 
+// 删除容器
+func (ds ContainerService) RemoveContainer(ctx *gin.Context) {
+	id := ctx.Query("id")
+	volumes := ctx.Query("volumes")
+	links := ctx.Query("links")
+	force := ctx.Query("force")
+	err := ds.Client.RemoveContainer(id, volumes == "1", links == "1", force == "1")
+	if err != nil {
+		util.ReturnMessage(ctx, false, "容器删除失败")
+	} else {
+		util.ReturnMessage(ctx, true, "容器删除成功")
+	}
+}
+
 // 获取容器日志
 func (ds ContainerService) GetLogs(ctx *gin.Context) {
 	id := ctx.Query("id")
