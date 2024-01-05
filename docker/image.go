@@ -20,7 +20,7 @@ func (d Docker) GetImageList() ([]types.ImageSummary, error) {
 }
 
 // 删除镜像
-func (d Docker) Remove(id string, prune bool, force bool) error {
+func (d Docker) RemoveImage(id string, prune bool, force bool) error {
 	_, err := d.Session.ImageRemove(d.Context, id, types.ImageRemoveOptions{
 		PruneChildren: prune,
 		Force:         force,
@@ -29,7 +29,7 @@ func (d Docker) Remove(id string, prune bool, force bool) error {
 }
 
 // 拉取镜像
-func (d Docker) Pull(ctx *gin.Context, id string, store string, name string, platform string) {
+func (d Docker) PullImage(ctx *gin.Context, id string, store string, name string, platform string) {
 	log.Printf("[Image] pull %s(%s) for %s\n", name, platform, store)
 	out, err := d.Session.ImagePull(d.Context, store+"/"+name, types.ImagePullOptions{
 		Platform: platform,
@@ -50,13 +50,13 @@ func (d Docker) Pull(ctx *gin.Context, id string, store string, name string, pla
 }
 
 // 打标签
-func (d Docker) AddTag(id string, tag string) error {
+func (d Docker) AddImageTag(id string, tag string) error {
 	err := d.Session.ImageTag(d.Context, id, tag)
 	return err
 }
 
 // 获取镜像详情
-func (d Docker) GetInfo(id string) (types.ImageInspect, error) {
+func (d Docker) GetImageInfo(id string) (types.ImageInspect, error) {
 	info, _, err := d.Session.ImageInspectWithRaw(d.Context, id)
 	if err != nil {
 		return types.ImageInspect{}, err
