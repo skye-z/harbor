@@ -86,6 +86,11 @@ func (r Route) addPublicRoute() {
 
 	ns := service.NewNetworkService(r.DockerClient)
 	r.Router.GET("/api/network/list", ns.GetList)
+	r.Router.GET("/api/network/info", ns.GetInfo)
+	r.Router.GET("/api/network/create", ns.Create)
+	r.Router.GET("/api/network/remove", ns.Remove)
+	r.Router.GET("/api/network/connect", ns.Connect)
+	r.Router.GET("/api/network/disconnect", ns.Disconnect)
 
 	vs := service.NewVolumeService(r.DockerClient)
 	r.Router.GET("/api/volume/list", vs.GetList)
