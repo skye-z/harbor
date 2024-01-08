@@ -94,6 +94,9 @@ func (r Route) addPublicRoute() {
 
 	vs := service.NewVolumeService(r.DockerClient)
 	r.Router.GET("/api/volume/list", vs.GetList)
+	r.Router.GET("/api/volume/info", vs.GetInfo)
+	r.Router.GET("/api/volume/create", vs.Create)
+	r.Router.GET("/api/volume/remove", vs.Remove)
 }
 
 // 私有路由
