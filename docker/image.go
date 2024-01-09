@@ -9,6 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type ImageBuild struct {
+	Id       int    `json:"id"`
+	Tag      string `json:"tag"`
+	Store    string `json:"store"`
+	Platform string `json:"platform"`
+}
+
 // 获取镜像列表
 func (d Docker) GetImageList() ([]types.ImageSummary, error) {
 	images, err := d.Session.ImageList(d.Context, types.ImageListOptions{All: true})
@@ -29,10 +36,10 @@ func (d Docker) RemoveImage(id string, prune bool, force bool) error {
 }
 
 // 拉取镜像
-func (d Docker) PullImage(ctx *gin.Context, id string, store string, name string, platform string) {
-	log.Printf("[Image] pull %s(%s) for %s\n", name, platform, store)
-	out, err := d.Session.ImagePull(d.Context, store+"/"+name, types.ImagePullOptions{
-		Platform: platform,
+func (d Docker) PullImage(ctx *gin.Context, form ImageBuild) {
+	log.Printf("[Image] pull %s(%s) for %s\n", form.Tag, form.Platform, form.Store)
+	out, err := d.Session.ImagePull(d.Context, form.Store+"/"+form.Tag, types.ImagePullOptions{
+		Platform: form.Platform,
 	})
 	if err != nil {
 		log.Println("[Image] pull failed:", err)
@@ -43,9 +50,9 @@ func (d Docker) PullImage(ctx *gin.Context, id string, store string, name string
 	ctx.Status(http.StatusOK)
 	_, err = io.Copy(ctx.Writer, out)
 	if err != nil {
-		log.Printf("[Image] pull %s pulled failed\n", name)
+		log.Printf("[Image] pull %s pulled failed\n", form.Tag)
 	} else {
-		log.Printf("[Image] pull %s pulled successfully\n", name)
+		log.Printf("[Image] pull %s pulled successfully\n", form.Tag)
 	}
 }
 

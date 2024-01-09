@@ -80,7 +80,7 @@ func (r Route) addPublicRoute() {
 	is := service.NewImageService(r.DockerClient)
 	r.Router.GET("/api/image/list", is.GetList)
 	r.Router.GET("/api/image/remove", is.Remove)
-	r.Router.GET("/api/image/pull", is.Pull)
+	r.Router.POST("/api/image/pull", is.Pull)
 	r.Router.GET("/api/image/tag", is.AddTag)
 	r.Router.GET("/api/image/info", is.GetInfo)
 

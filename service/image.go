@@ -42,11 +42,24 @@ func (is ImageService) Remove(ctx *gin.Context) {
 
 // 拉取镜像
 func (is ImageService) Pull(ctx *gin.Context) {
-	id := ctx.Query("id")
-	store := ctx.Query("store")
-	name := ctx.Query("name")
-	platform := ctx.Query("platform")
-	is.Client.PullImage(ctx, id, store, name, platform)
+	var form docker.ImageBuild
+	if err := ctx.ShouldBindJSON(&form); err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	if len(form.Store) == 0 {
+		util.ReturnMessage(ctx, false, "镜像仓库不能为空")
+		return
+	}
+	if len(form.Tag) == 0 {
+		util.ReturnMessage(ctx, false, "镜像标签不能为空")
+		return
+	}
+	if len(form.Platform) == 0 {
+		util.ReturnMessage(ctx, false, "平台架构不能为空")
+		return
+	}
+	is.Client.PullImage(ctx, form)
 }
 
 // 打标签
