@@ -132,7 +132,10 @@ func (d Docker) RestartContainer(id string, timeout *int) error {
 
 // 停止容器(超时强制停止)
 func (d Docker) StopContainer(id string, timeout *int) error {
-	err := d.Session.ContainerStop(d.Context, id, container.StopOptions{Timeout: timeout})
+	err := d.Session.ContainerStop(d.Context, id, container.StopOptions{
+		Signal:  "SIGTERM",
+		Timeout: timeout,
+	})
 	if err != nil {
 		return err
 	}
