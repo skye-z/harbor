@@ -84,3 +84,14 @@ func (is ImageService) GetInfo(ctx *gin.Context) {
 		util.ReturnData(ctx, true, info)
 	}
 }
+
+// 获取镜像构建历史
+func (is ImageService) GetHistory(ctx *gin.Context) {
+	id := ctx.Query("id")
+	info, err := is.Client.GetImageHistory(id)
+	if err != nil {
+		util.ReturnMessage(ctx, false, "获取镜像历史失败")
+	} else {
+		util.ReturnData(ctx, true, info)
+	}
+}

@@ -83,6 +83,7 @@ func (r Route) addPublicRoute() {
 	r.Router.POST("/api/image/pull", is.Pull)
 	r.Router.GET("/api/image/tag", is.AddTag)
 	r.Router.GET("/api/image/info", is.GetInfo)
+	r.Router.GET("/api/image/history", is.GetHistory)
 
 	ns := service.NewNetworkService(r.DockerClient)
 	r.Router.GET("/api/network/list", ns.GetList)

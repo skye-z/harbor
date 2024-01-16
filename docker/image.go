@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	"github.com/gin-gonic/gin"
 )
 
@@ -70,4 +71,14 @@ func (d Docker) GetImageInfo(id string) (types.ImageInspect, error) {
 	}
 
 	return info, nil
+}
+
+// 获取镜像构建历史
+func (d Docker) GetImageHistory(id string) ([]image.HistoryResponseItem, error) {
+	list, err := d.Session.ImageHistory(d.Context, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return list, nil
 }
