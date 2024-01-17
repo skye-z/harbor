@@ -3,18 +3,28 @@ package main
 import (
 	"embed"
 	"harbor/route"
+	"harbor/service"
+	"harbor/util"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	_ "modernc.org/sqlite"
+	"xorm.io/xorm"
 )
 
 //go:embed page/dist/*
 var page embed.FS
 
 func main() {
+	// 初始化系统配置
+	util.InitConfig()
+	// 初始化数据库
+	engine := loadDBEngine()
+	go service.InitDatabase(engine)
 	route := route.NewRoute(page)
-	route.Init()
+	route.Init(engine)
 
 	port := route.GetPort()
 	log.Println("[Core] service started, port is", port)
@@ -27,6 +37,15 @@ func main() {
 
 	// 等待中断信号以优雅关闭服务器
 	waitForInterrupt()
+}
+
+func loadDBEngine() *xorm.Engine {
+	log.Println("[Data] load engine")
+	engine, err := xorm.NewEngine("sqlite", "./local.store")
+	if err != nil {
+		panic(err)
+	}
+	return engine
 }
 
 func waitForInterrupt() {

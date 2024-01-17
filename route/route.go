@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"xorm.io/xorm"
 )
 
 type Route struct {
@@ -43,9 +44,13 @@ func newRoute(page embed.FS) *gin.Engine {
 }
 
 // 初始化路由
-func (r Route) Init() {
+func (r Route) Init(engine *xorm.Engine) {
 	r.addPublicRoute()
-	r.addPrivateRoute()
+	// 私有路由
+	private := r.Router.Group("").Use(service.AuthHandler())
+	{
+		r.addPrivateRoute(private, engine)
+	}
 }
 
 // 公共路由
@@ -54,6 +59,10 @@ func (r Route) addPublicRoute() {
 		ctx.Request.URL.Path = "/app"
 		r.Router.HandleContext(ctx)
 	})
+}
+
+// 私有路由
+func (r Route) addPrivateRoute(route gin.IRoutes, engine *xorm.Engine) {
 	ms := service.NewMonintorService(r.DockerClient)
 	r.Router.GET("/api/device/info", ms.GetDeviceInfo)
 	r.Router.GET("/api/system/use", ms.GetUse)
@@ -98,10 +107,6 @@ func (r Route) addPublicRoute() {
 	r.Router.GET("/api/volume/info", vs.GetInfo)
 	r.Router.GET("/api/volume/create", vs.Create)
 	r.Router.GET("/api/volume/remove", vs.Remove)
-}
-
-// 私有路由
-func (r Route) addPrivateRoute() {
 }
 
 // 获取端口号配置
