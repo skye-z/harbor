@@ -45,7 +45,7 @@ func newRoute(page embed.FS) *gin.Engine {
 
 // 初始化路由
 func (r Route) Init(engine *xorm.Engine) {
-	r.addPublicRoute()
+	r.addPublicRoute(engine)
 	// 私有路由
 	private := r.Router.Group("").Use(service.AuthHandler())
 	{
@@ -54,11 +54,14 @@ func (r Route) Init(engine *xorm.Engine) {
 }
 
 // 公共路由
-func (r Route) addPublicRoute() {
+func (r Route) addPublicRoute(engine *xorm.Engine) {
 	r.Router.GET("/", func(ctx *gin.Context) {
 		ctx.Request.URL.Path = "/app"
 		r.Router.HandleContext(ctx)
 	})
+
+	us := service.NewUserService(engine)
+	r.Router.POST("/api/user/login", us.Login)
 }
 
 // 私有路由
