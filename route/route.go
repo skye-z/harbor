@@ -45,6 +45,7 @@ func newRoute(page embed.FS) *gin.Engine {
 
 // 初始化路由
 func (r Route) Init(engine *xorm.Engine) {
+	r.addOAuth2Route(engine)
 	r.addPublicRoute(engine)
 	// 私有路由
 	private := r.Router.Group("").Use(service.AuthHandler())
@@ -110,6 +111,15 @@ func (r Route) addPrivateRoute(route gin.IRoutes, engine *xorm.Engine) {
 	route.GET("/api/volume/info", vs.GetInfo)
 	route.GET("/api/volume/create", vs.Create)
 	route.GET("/api/volume/remove", vs.Remove)
+}
+
+// 授权登陆路由
+func (r Route) addOAuth2Route(engine *xorm.Engine) {
+	as := service.NewAuthService(engine)
+	if as != nil {
+		r.Router.GET("/oauth2/login", as.Login)
+		r.Router.GET("/oauth2/callback", as.Callback)
+	}
 }
 
 // 获取端口号配置

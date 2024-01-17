@@ -2,15 +2,20 @@ package service
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"harbor/model"
 	"harbor/util"
+	"io"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/oauth2"
+	"xorm.io/xorm"
 )
 
 const IssuerName = "Skye>Quest.Auth"
@@ -113,4 +118,140 @@ func ValidateToken(code string) (bool, int, string, error) {
 		return false, 0, "", err
 	}
 	return true, uid, subs[0], nil
+}
+
+type AuthService struct {
+	Config *oauth2.Config
+	DB     *xorm.Engine
+}
+
+func NewAuthService(db *xorm.Engine) *AuthService {
+	as := new(AuthService)
+	as.DB = db
+	as.Config = GetOAuth2Config()
+	if as.Config == nil {
+		return nil
+	}
+	return as
+}
+
+func GetOAuth2Config() *oauth2.Config {
+	if !util.GetBool("oauth2.enable") {
+		return nil
+	}
+	scopes := util.GetString("oauth2.scopes")
+	return &oauth2.Config{
+		ClientID:     util.GetString("oauth2.clientId"),
+		ClientSecret: util.GetString("oauth2.clientSecret"),
+		RedirectURL:  util.GetString("oauth2.redirectUrl"),
+		Scopes:       strings.Split(scopes, ","),
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  util.GetString("oauth2.authUrl"),
+			TokenURL: util.GetString("oauth2.tokenUrl"),
+		},
+	}
+}
+
+func (as AuthService) Login(c *gin.Context) {
+	// 重定向到提供商的授权页面
+	url := as.Config.AuthCodeURL("state")
+	c.Redirect(http.StatusTemporaryRedirect, url)
+}
+
+func (as AuthService) Callback(c *gin.Context) {
+	// 处理提供商的回调并获取访问令牌
+	code := c.Query("code")
+	res, err := as.Config.Exchange(c, code)
+	if err != nil {
+		// 授权服务不可用
+		c.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=1")
+		return
+	}
+	// 换取授权信息
+	token := res.AccessToken
+	id, _, err := as.QueryUserInfo(token)
+	if err != nil || id == "" {
+		// 授权信息无效
+		c.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=2")
+		return
+	}
+	// 获取用户信息
+	um := &model.UserModel{
+		DB: as.DB,
+	}
+	user, err := um.GetOAuthUser(id)
+	if err != nil {
+		// 查询绑定用户失败
+		c.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=3")
+		return
+	}
+	if user == nil {
+		// 授权用户不存在
+		c.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=4")
+		return
+	}
+	// 签发令牌
+	token, exp, err := GenerateToken(user)
+	if err != nil {
+		// 令牌签发失败
+		c.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=5")
+		return
+	}
+	c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("/app/#/auth/jump?code=%s&exp=%v", token, exp))
+}
+
+func (as AuthService) QueryUserInfo(token string) (string, string, error) {
+	// 创建 HTTP 请求
+	req, err := http.NewRequest("GET", util.GetString("oauth2.userurl"), nil)
+	if err != nil {
+		return "", "", err
+	}
+
+	// 设置 Authorization 头部，带上 Bearer Token
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	// 发起 HTTP 请求
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", "", err
+	}
+	defer resp.Body.Close()
+
+	// 读取响应内容
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", "", err
+	}
+
+	// 使用 map 解析 JSON 数据
+	var result map[string]interface{}
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return "", "", err
+	}
+
+	idKey := util.GetString("oauth2.userIdKey")
+	nameKey := util.GetString("oauth2.userNameKey")
+
+	oauth2Id := ""
+	oauth2Name := ""
+
+	for key, value := range result {
+		if key == idKey {
+			if strVal, ok := value.(string); ok {
+				oauth2Id = strVal
+			} else if strVal, ok := value.(int16); ok {
+				oauth2Id = strconv.FormatInt(int64(strVal), 10)
+			} else if strVal, ok := value.(float64); ok {
+				oauth2Id = strconv.FormatFloat(float64(strVal), 'f', -1, 64)
+			}
+		}
+		if key == nameKey {
+			if strVal, ok := value.(string); ok {
+				oauth2Name = strVal
+			}
+		}
+	}
+	return oauth2Id, oauth2Name, err
 }

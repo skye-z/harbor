@@ -56,6 +56,17 @@ func GetInt32(key string) int32 {
 func createDefault() {
 	// 安装状态
 	viper.SetDefault("basic.install", "0")
+	// OAuth2
+	viper.SetDefault("oauth2.enable", "0")
+	viper.SetDefault("oauth2.clientId", "")
+	viper.SetDefault("oauth2.clientSecret", "")
+	viper.SetDefault("oauth2.redirectUrl", "")
+	viper.SetDefault("oauth2.authUrl", "")
+	viper.SetDefault("oauth2.tokenUrl", "")
+	viper.SetDefault("oauth2.userUrl", "")
+	viper.SetDefault("oauth2.scopes", "")
+	viper.SetDefault("oauth2.userIdKey", "")
+	viper.SetDefault("oauth2.userNameKey", "")
 	// 令牌密钥
 	secret, err := generateSecret()
 	if err != nil {

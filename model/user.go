@@ -7,11 +7,13 @@ import (
 )
 
 type User struct {
-	Id       int64  `json:"id"`
-	Nickname string `json:"nickname"`
-	Name     string `json:"name"`
-	Admin    bool   `json:"admin"`
-	Pass     string `json:"-"`
+	Id        int64  `json:"id"`
+	Nickname  string `json:"nickname"`
+	OAuthId   string `json:"-"`
+	OAuthName string `json:"oauthName"`
+	Name      string `json:"name"`
+	Admin     bool   `json:"admin"`
+	Pass      string `json:"-"`
 }
 
 type UserModel struct {
@@ -25,6 +27,21 @@ func (model UserModel) GetUser(user *User) error {
 		return err
 	}
 	return nil
+}
+
+// 获取授权用户
+func (model UserModel) GetOAuthUser(oauthId string) (*User, error) {
+	user := &User{
+		OAuthId: oauthId,
+	}
+	has, err := model.DB.Get(user)
+	if err != nil {
+		return nil, err
+	}
+	if !has {
+		return nil, nil
+	}
+	return user, nil
 }
 
 // 获取用户列表
