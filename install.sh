@@ -2,7 +2,7 @@
 
 # 设置服务名称和描述
 SERVICE_NAME="harbor"
-SERVICE_DESCRIPTION="Lightweight Local Docker Management"
+SERVICE_DESCRIPTION="Harbor"
 
 # 设置可执行文件的下载 URL 和版本
 HARBOR_VERSION=$(curl -sL https://api.github.com/repos/skye-z/harbor/releases/latest | grep '"tag_name":' | cut -d'"' -f4)
@@ -22,11 +22,9 @@ echo "Description=${SERVICE_DESCRIPTION}" >> $SERVICE_FILE
 echo "After=network.target" >> $SERVICE_FILE
 echo "" >> $SERVICE_FILE
 echo "[Service]" >> $SERVICE_FILE
-echo "ExecStart=${WORKING_DIRECTORY}/harbor" >> $SERVICE_FILE
+echo "ExecStart=${WORKING_DIRECTORY}/harbor >> /var/log/harbor.log 2>&1" >> $SERVICE_FILE
 echo "WorkingDirectory=${WORKING_DIRECTORY}" >> $SERVICE_FILE
 echo "Restart=always" >> $SERVICE_FILE
-echo "User=nobody" >> $SERVICE_FILE
-echo "Group=nogroup" >> $SERVICE_FILE
 echo "" >> $SERVICE_FILE
 echo "[Install]" >> $SERVICE_FILE
 echo "WantedBy=multi-user.target" >> $SERVICE_FILE
