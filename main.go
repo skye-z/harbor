@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"harbor/monitor"
 	"harbor/route"
 	"harbor/service"
 	"harbor/util"
@@ -25,7 +26,9 @@ func main() {
 	go service.InitDatabase(engine)
 	route := route.NewRoute(page)
 	route.Init(engine)
-
+	// 启动监控
+	runMonitor()
+	// 获取端口
 	port := route.GetPort()
 	log.Println("[Core] service started, port is", port)
 	// 启动服务
@@ -46,6 +49,10 @@ func loadDBEngine() *xorm.Engine {
 		panic(err)
 	}
 	return engine
+}
+
+func runMonitor() {
+	go monitor.ListenDockerEvents()
 }
 
 func waitForInterrupt() {
