@@ -67,6 +67,10 @@ func createDefault() {
 	viper.SetDefault("oauth2.scopes", "")
 	viper.SetDefault("oauth2.userIdKey", "")
 	viper.SetDefault("oauth2.userNameKey", "")
+	// 监控告警
+	viper.SetDefault("alarm.enable", "0")
+	viper.SetDefault("alarm.path", "")
+	viper.SetDefault("alarm.event", "")
 	// 令牌密钥
 	secret, err := generateSecret()
 	if err != nil {

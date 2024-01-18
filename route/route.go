@@ -116,6 +116,8 @@ func (r Route) addPrivateRoute(route gin.IRoutes, engine *xorm.Engine, us *servi
 	ss := service.NewSettingService()
 	route.GET("/api/setting/oauth2", ss.GetOAuth2Setting)
 	route.POST("/api/setting/oauth2", ss.UpdateOAuth2Setting)
+	route.GET("/api/setting/alarm", ss.GetAlarmSetting)
+	route.POST("/api/setting/alarm", ss.UpdateAlarmSetting)
 
 	r.Router.GET("/api/user/list", us.GetList)
 }

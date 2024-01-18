@@ -73,3 +73,35 @@ func (ss SettingService) UpdateOAuth2Setting(ctx *gin.Context) {
 
 	util.ReturnMessage(ctx, true, "更新成功")
 }
+
+type SettingAlarm struct {
+	Enable bool   `json:"enable"`
+	Path   string `json:"path"`
+	Event  string `json:"event"`
+}
+
+func (ss SettingService) GetAlarmSetting(ctx *gin.Context) {
+	config := &SettingAlarm{
+		Enable: util.GetBool("alarm.enable"),
+		Path:   util.GetString("alarm.path"),
+		Event:  util.GetString("alarm.event"),
+	}
+	util.ReturnData(ctx, true, config)
+}
+
+func (ss SettingService) UpdateAlarmSetting(ctx *gin.Context) {
+	var form SettingAlarm
+	if err := ctx.ShouldBindJSON(&form); err != nil {
+		util.ReturnMessage(ctx, false, "传入数据无效")
+		return
+	}
+	if form.Enable {
+		util.Set("alarm.enable", 1)
+	} else {
+		util.Set("alarm.enable", 0)
+	}
+	util.Set("alarm.path", form.Path)
+	util.Set("alarm.event", form.Event)
+
+	util.ReturnMessage(ctx, true, "更新成功")
+}
