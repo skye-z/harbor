@@ -76,3 +76,16 @@ func (us UserService) GetUserLoginInfo(name string, pass string) (*model.User, s
 
 	return &user, token, exp, nil
 }
+
+func (us UserService) State(ctx *gin.Context) {
+	util.ReturnMessage(ctx, util.GetBool("oauth2.enable"), "")
+}
+
+func (us UserService) GetList(ctx *gin.Context) {
+	list, err := us.UserModel.GetUserList("", "", 1, 10000)
+	if err != nil {
+		util.ReturnMessage(ctx, false, "获取用户列表失败")
+		return
+	}
+	util.ReturnData(ctx, true, list)
+}

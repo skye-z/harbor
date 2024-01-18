@@ -45,28 +45,29 @@ func newRoute(page embed.FS) *gin.Engine {
 
 // 初始化路由
 func (r Route) Init(engine *xorm.Engine) {
+	us := service.NewUserService(engine)
 	r.addOAuth2Route(engine)
-	r.addPublicRoute(engine)
+	r.addPublicRoute(engine, us)
 	// 私有路由
 	private := r.Router.Group("").Use(service.AuthHandler())
 	{
-		r.addPrivateRoute(private, engine)
+		r.addPrivateRoute(private, engine, us)
 	}
 }
 
 // 公共路由
-func (r Route) addPublicRoute(engine *xorm.Engine) {
+func (r Route) addPublicRoute(engine *xorm.Engine, us *service.UserService) {
 	r.Router.GET("/", func(ctx *gin.Context) {
 		ctx.Request.URL.Path = "/app"
 		r.Router.HandleContext(ctx)
 	})
 
-	us := service.NewUserService(engine)
 	r.Router.POST("/api/user/login", us.Login)
+	r.Router.GET("/api/oauth2/state", us.State)
 }
 
 // 私有路由
-func (r Route) addPrivateRoute(route gin.IRoutes, engine *xorm.Engine) {
+func (r Route) addPrivateRoute(route gin.IRoutes, engine *xorm.Engine, us *service.UserService) {
 	ms := service.NewMonintorService(r.DockerClient)
 	route.GET("/api/device/info", ms.GetDeviceInfo)
 	route.GET("/api/system/use", ms.GetUse)
@@ -111,6 +112,12 @@ func (r Route) addPrivateRoute(route gin.IRoutes, engine *xorm.Engine) {
 	route.GET("/api/volume/info", vs.GetInfo)
 	route.GET("/api/volume/create", vs.Create)
 	route.GET("/api/volume/remove", vs.Remove)
+
+	ss := service.NewSettingService()
+	route.GET("/api/setting/oauth2", ss.GetOAuth2Setting)
+	route.POST("/api/setting/oauth2", ss.UpdateOAuth2Setting)
+
+	r.Router.GET("/api/user/list", us.GetList)
 }
 
 // 授权登陆路由
