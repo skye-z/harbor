@@ -36,6 +36,7 @@ jobs:
           yarn install
       - name: Build with VitePress
         run: |
+          cd docs
           yarn docs:build 
           touch ./.vitepress/dist/.nojekyll
       - name: Upload artifact
