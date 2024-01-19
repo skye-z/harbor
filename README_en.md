@@ -6,7 +6,7 @@
 
 Harbor is a lightweight, local Docker management platform that accelerates the delivery of single-machine services and simplifies subsequent operations.
 
-## Features
+## Function
 
 * Engine: View engine information, listen to engine daemon events.
 * Container: container start/stop control, log view, web terminal, resource statistics, port shortcut.
