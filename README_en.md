@@ -27,7 +27,7 @@ Harbor is a lightweight, local Docker management platform that accelerates the d
 Please copy the following commands to your server terminal, the script provides installation, uninstallation and startup settings for Harbor.
 
 ```shell
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/skye-z/harbor/main/install.sh)"
+bash -c "$(curl -fsSL https://skye-z.github.io/harbor/install.sh)"
 ```
 
 After the installation is complete, Harbor will run automatically. The first time you run Harbor, it will automatically generate an administrative account, and the password will be output in the log, as shown below:
@@ -35,7 +35,6 @@ After the installation is complete, Harbor will run automatically. The first tim
 ```log
 2024/01/01 00:00:00 [Tips] create default admin, password is ..........
 ```
-
 
 ## Control
 
@@ -46,4 +45,10 @@ systemctl start harbor
 systemctl stop harbor
 # View Harbor status and logs
 systemctl status harbor
+```
+
+## Build
+
+```shell
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o harbor -ldflags '-s -w'
 ```

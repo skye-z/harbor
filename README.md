@@ -27,10 +27,11 @@ Harbor 是一个轻量级的本地 Docker 管理平台, 加快了单机服务的
 请复制下方命令到服务器终端中执行, 脚本提供了 Harbor 的安装、卸载于开启自启设置服务
 
 ```shell
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/skye-z/harbor/main/install.sh)"
+bash -c "$(curl -fsSL https://skye-z.github.io/harbor/install.sh)"
 ```
 
 安装完成后将会自动运行, 首次运行 Harbor 会自动生成管理账户, 密码将输出在日志中, 如下所示:
+
 ```log
 2024/01/01 00:00:00 [Tips] create default admin, password is ..........
 ```
@@ -44,4 +45,10 @@ systemctl start harbor
 systemctl stop harbor
 # 查看 Harbor 状态与日志
 systemctl status harbor
+```
+
+## 构建
+
+```shell
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o harbor -ldflags '-s -w'
 ```
