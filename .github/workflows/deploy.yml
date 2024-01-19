@@ -40,6 +40,8 @@ jobs:
           ls
           yarn docs:build 
           touch docs/.vitepress/dist/.nojekyll
+      - name: Copy Install Script
+        run: cp install.sh docs/docs/.vitepress/dist
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
