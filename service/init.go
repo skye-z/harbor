@@ -16,15 +16,21 @@ func InitDatabase(engine *xorm.Engine) {
 	}
 	if !util.GetBool("basic.install") {
 		userModel := model.UserModel{DB: engine}
-		adminUser := model.User{
-			Name:     "admin",
-			Nickname: "管理员",
-			Admin:    true,
-			Pass:     "21232f297a57a5a743894a0e4a801fc3",
-		}
-		userModel.AddUser(&adminUser)
+		adminUser := CreateDefaultUser()
+		userModel.AddUser(adminUser)
 		util.Set("basic.install", "1")
 		log.Println("[Data] init data")
 	}
 	log.Println("[Data] loading completed")
+}
+
+func CreateDefaultUser() *model.User {
+	pwd := util.GenerateRandomString(12)
+	log.Println("[Tips] create default admin, password is", pwd)
+	return &model.User{
+		Name:     "admin",
+		Nickname: "管理员",
+		Admin:    true,
+		Pass:     util.CalculateMD5(pwd),
+	}
 }

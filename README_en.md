@@ -30,6 +30,13 @@ Please copy the following commands to your server terminal, the script provides 
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/skye-z/harbor/main/install.sh)"
 ```
 
+After the installation is complete, Harbor will run automatically. The first time you run Harbor, it will automatically generate an administrative account, and the password will be output in the log, as shown below:
+
+```log
+2024/01/01 00:00:00 [Tips] create default admin, password is ..........
+```
+
+
 ## Control
 
 ```shell
