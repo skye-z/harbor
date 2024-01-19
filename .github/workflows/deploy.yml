@@ -21,7 +21,10 @@ jobs:
         with:
           fetch-depth: 0
       - name: Check Files
-        run:  ls && cd docs && ls
+        run:  |
+          ls
+          cd docs
+          ls
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
