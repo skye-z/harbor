@@ -38,7 +38,9 @@ jobs:
         run: |
           cd docs
           yarn docs:build 
-          touch ./.vitepress/dist/.nojekyll
+          cd .vitepress/dist/
+          ls
+          touch .nojekyll
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
