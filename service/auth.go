@@ -86,7 +86,7 @@ func GenerateToken(user *model.User) (string, int64, error) {
 		jwt.MapClaims{
 			"exp": exp,
 			"iss": IssuerName,
-			"sub": fmt.Sprintf("%s@%v@%v@%v", user.Name, user.Id, user.Admin),
+			"sub": fmt.Sprintf("%s@%v@%v", user.Name, user.Id, user.Admin),
 		},
 	)
 	key, _ := base64.StdEncoding.DecodeString(secret)

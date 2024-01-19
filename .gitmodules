@@ -1,3 +1,6 @@
 [submodule "page"]
 	path = page
 	url = https://github.com/skye-z/harbor-ui.git
+[submodule "docs"]
+	path = docs
+	url = https://github.com/skye-z/harbor-docs.git
