@@ -21,7 +21,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Checkout Submodule
-        run: git submodule update --init --recursive
+        run: git submodule update --init --recursive --remote docs
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
