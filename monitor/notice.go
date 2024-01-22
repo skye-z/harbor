@@ -8,6 +8,9 @@ import (
 )
 
 func SendNotice(msg string) bool {
+	if !util.GetBool("alarm.enable") {
+		return false
+	}
 	url := util.GetString("alarm.path") + msg
 	response, err := http.Get(url)
 	if err != nil {
@@ -33,21 +36,21 @@ func SendEventNotice(msg string, event string) bool {
 }
 
 func NoticeContainerStart(id string) bool {
-	return SendEventNotice("Harbor - 容器启动\n#"+id, "containerStart")
+	return SendEventNotice("Harbor - 容器启动\t#"+id, "containerStart")
 }
 
 func NoticeContainerStop(id string) bool {
-	return SendEventNotice("Harbor - 容器停止\n#"+id, "containerStop")
+	return SendEventNotice("Harbor - 容器停止\t#"+id, "containerStop")
 }
 
 func NoticeDaemonShutdown() bool {
-	return SendEventNotice("Harbor - 引擎下线\n警告!! Docker守护进程下线, Docker引擎停止服务!!!", "daemonShutdown")
+	return SendEventNotice("Harbor - 引擎下线\t警告!! Docker守护进程下线, Docker引擎停止服务!!!", "daemonShutdown")
 }
 
 func NoticeHighLoad() bool {
-	return SendEventNotice("Harbor - 突发高负载\n警告! 检测到负载过高, 请及时进行处理", "highLoad")
+	return SendEventNotice("Harbor - 突发高负载\t警告! 检测到负载过高, 请及时进行处理", "highLoad")
 }
 
 func NoticeRunOut(name string, number string) bool {
-	return SendEventNotice("Harbor - 资源即将耗尽\n警告! "+name+"已使用"+number+"%, 请及时进行处理", "runOut")
+	return SendEventNotice("Harbor - 资源即将耗尽\t警告! "+name+"已使用"+number+"%, 请及时进行处理", "runOut")
 }

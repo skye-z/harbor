@@ -53,6 +53,10 @@ func GetInt32(key string) int32 {
 	return viper.GetInt32(key)
 }
 
+func GetFloat64(key string) float64 {
+	return viper.GetFloat64(key)
+}
+
 func createDefault() {
 	// 安装状态
 	viper.SetDefault("basic.install", "0")
@@ -70,7 +74,11 @@ func createDefault() {
 	// 监控告警
 	viper.SetDefault("alarm.enable", "0")
 	viper.SetDefault("alarm.path", "")
+	viper.SetDefault("alarm.interval", "3")
 	viper.SetDefault("alarm.event", "")
+	viper.SetDefault("alarm.loadThreshold", "0.9")
+	viper.SetDefault("alarm.memoryThreshold", "90")
+	viper.SetDefault("alarm.diskThreshold", "90")
 	// 令牌密钥
 	secret, err := generateSecret()
 	if err != nil {

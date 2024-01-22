@@ -75,16 +75,24 @@ func (ss SettingService) UpdateOAuth2Setting(ctx *gin.Context) {
 }
 
 type SettingAlarm struct {
-	Enable bool   `json:"enable"`
-	Path   string `json:"path"`
-	Event  string `json:"event"`
+	Enable          bool    `json:"enable"`
+	Path            string  `json:"path"`
+	Interval        int     `json:"interval"`
+	Event           string  `json:"event"`
+	LoadThreshold   float64 `json:"loadThreshold"`
+	MemoryThreshold int     `json:"memoryThreshold"`
+	DiskThreshold   int     `json:"diskThreshold"`
 }
 
 func (ss SettingService) GetAlarmSetting(ctx *gin.Context) {
 	config := &SettingAlarm{
-		Enable: util.GetBool("alarm.enable"),
-		Path:   util.GetString("alarm.path"),
-		Event:  util.GetString("alarm.event"),
+		Enable:          util.GetBool("alarm.enable"),
+		Path:            util.GetString("alarm.path"),
+		Interval:        util.GetInt("alarm.interval"),
+		Event:           util.GetString("alarm.event"),
+		LoadThreshold:   util.GetFloat64("alarm.loadThreshold"),
+		MemoryThreshold: util.GetInt("alarm.memoryThreshold"),
+		DiskThreshold:   util.GetInt("alarm.diskThreshold"),
 	}
 	util.ReturnData(ctx, true, config)
 }
@@ -101,7 +109,11 @@ func (ss SettingService) UpdateAlarmSetting(ctx *gin.Context) {
 		util.Set("alarm.enable", 0)
 	}
 	util.Set("alarm.path", form.Path)
+	util.Set("alarm.interval", form.Interval)
 	util.Set("alarm.event", form.Event)
+	util.Set("alarm.loadThreshold", form.LoadThreshold)
+	util.Set("alarm.memoryThreshold", form.MemoryThreshold)
+	util.Set("alarm.diskThreshold", form.DiskThreshold)
 
 	util.ReturnMessage(ctx, true, "更新成功")
 }

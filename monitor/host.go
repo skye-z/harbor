@@ -1,7 +1,11 @@
 package monitor
 
 import (
+	"harbor/util"
+	"log"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
@@ -95,5 +99,55 @@ func GetUse() SystemUse {
 		Avg:    avg,
 		Memory: memInfo,
 		Disk:   diskUsage,
+	}
+}
+
+func ListenHostOverhead() {
+	noticeNumber := 0
+	init := true
+	for {
+		if init {
+			log.Println("[Monitor] start listening events for host")
+			init = false
+		} else {
+			interval := util.GetInt("alarm.interval") * 60
+			loadThreshold := util.GetFloat64("alarm.loadThreshold")
+			memoryThreshold := util.GetFloat64("alarm.memoryThreshold")
+			diskThreshold := util.GetFloat64("alarm.diskThreshold")
+
+			use := GetUse()
+			// 通知计数为0才检查
+			if noticeNumber == 0 {
+				for _, value := range use.CPU {
+					if value > loadThreshold {
+						log.Println("[Monitor] system load high")
+						NoticeHighLoad()
+						noticeNumber += 1
+						break
+					}
+				}
+				if use.Memory.UsedPercent > memoryThreshold {
+					log.Println("[Monitor] memory run out")
+					NoticeRunOut("内存", strconv.FormatFloat(use.Memory.UsedPercent, 'f', 2, 64))
+					noticeNumber += 1
+				}
+				if use.Disk.UsedPercent > diskThreshold {
+					log.Println("[Monitor] disk run out")
+					NoticeRunOut("磁盘", strconv.FormatFloat(use.Disk.UsedPercent, 'f', 2, 64))
+					noticeNumber += 1
+				}
+				// 每30分钟告警1次
+				if noticeNumber > 0 {
+					noticeNumber = interval
+				}
+			} else if noticeNumber > 0 {
+				noticeNumber--
+			} else if noticeNumber < 0 {
+				noticeNumber = 0
+			}
+			// 记录日志
+
+		}
+		time.Sleep(time.Minute)
 	}
 }
