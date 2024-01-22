@@ -145,7 +145,7 @@ func (d Docker) StopContainer(id string, timeout *int) error {
 
 // 关闭容器(发送信号通知容器关闭)
 func (d Docker) KillContainer(id string) error {
-	err := d.Session.ContainerKill(d.Context, id, "SIGTERM")
+	err := d.Session.ContainerKill(d.Context, id, "SIGKILL")
 	if err != nil {
 		return err
 	}

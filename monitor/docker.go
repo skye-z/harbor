@@ -50,14 +50,17 @@ func handleEvent(event events.Message) {
 		if event.Action == "start" {
 			// 容器启动
 			log.Println("[Monitor] docker container", event.ID, "start")
+			NoticeContainerStart(event.ID)
 		} else if event.Action == "die" {
 			// 容器停止
 			log.Println("[Monitor] docker container", event.ID, "die")
+			NoticeContainerStop(event.ID)
 		}
 	} else if event.Type == "daemon" {
 		if event.Action == "shutdown" {
 			// Docker 服务停止
 			log.Println("[Monitor] docker daemon shutdown")
+			NoticeDaemonShutdown()
 		}
 	}
 }
