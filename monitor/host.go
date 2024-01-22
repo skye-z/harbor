@@ -120,7 +120,7 @@ func ListenHostOverhead() {
 			if noticeNumber == 0 {
 				for _, value := range use.CPU {
 					if value > loadThreshold {
-						log.Println("[Monitor] system load high")
+						log.Printf("[Monitor] system load %f is high", value)
 						NoticeHighLoad()
 						noticeNumber += 1
 						break
