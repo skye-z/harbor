@@ -118,13 +118,11 @@ func ListenHostOverhead() {
 			use := GetUse()
 			// 通知计数为0才检查
 			if noticeNumber == 0 {
-				for _, value := range use.CPU {
-					if value > loadThreshold {
-						log.Printf("[Monitor] system load %f is high", value)
-						NoticeHighLoad()
-						noticeNumber += 1
-						break
-					}
+				if use.Avg.Load1 > loadThreshold || use.Avg.Load5 > loadThreshold || use.Avg.Load15 > loadThreshold {
+					log.Println("[Monitor] system load high")
+					NoticeHighLoad()
+					noticeNumber += 1
+					break
 				}
 				if use.Memory.UsedPercent > memoryThreshold {
 					log.Println("[Monitor] memory run out")
