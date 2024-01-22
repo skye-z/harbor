@@ -137,7 +137,7 @@ func (d Docker) StopContainer(id string, timeout *int) error {
 		Timeout: timeout,
 	})
 	if err != nil {
-		return err
+		return d.KillContainer(id)
 	}
 
 	return nil
