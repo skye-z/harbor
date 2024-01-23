@@ -21,6 +21,15 @@ func NewLogsService(engine *xorm.Engine) *LogsService {
 	return ls
 }
 
+func (ls LogsService) GetNumber(ctx *gin.Context) {
+	number, err := ls.LogModel.GetLogNumber()
+	if err != nil {
+		util.ReturnMessage(ctx, false, "获取日志数量失败")
+	} else {
+		util.ReturnData(ctx, true, number)
+	}
+}
+
 func (ls LogsService) GetLogs(ctx *gin.Context) {
 	page := ctx.Query("page")
 	iPage, err1 := strconv.Atoi(page)

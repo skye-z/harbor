@@ -51,3 +51,13 @@ func (model LogModel) GetLogs(page int, num int) ([]Log, error) {
 	}
 	return logs, nil
 }
+
+// 获取日志数量
+func (model LogModel) GetLogNumber() (int64, error) {
+	var logs Log
+	num, err := model.DB.Count(logs)
+	if err != nil {
+		return 0, err
+	}
+	return num, nil
+}
