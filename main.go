@@ -56,7 +56,7 @@ func loadDBEngine() *xorm.Engine {
 
 func runMonitor(engine *xorm.Engine) {
 	go monitor.ListenDockerEvents(engine)
-	go monitor.ListenHostOverhead()
+	go monitor.ListenHostOverhead(engine)
 }
 
 func waitForInterrupt(engine *xorm.Engine) {

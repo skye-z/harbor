@@ -200,7 +200,7 @@ func (as AuthService) Callback(ctx *gin.Context) {
 	logger := &model.LogModel{
 		DB: as.DB,
 	}
-	logger.AddLog("login", "oauth2", ctx.ClientIP())
+	logger.AddLog("platform", "oauth2", ctx.ClientIP())
 	ctx.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("/app/#/auth/jump?code=%s&exp=%v", token, exp))
 }
 

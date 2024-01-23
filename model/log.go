@@ -37,7 +37,7 @@ func (model LogModel) AddLog(_type string, action string, details interface{}) b
 		Details: detailsMsg,
 	}
 	currentTime := time.Now()
-	logs.Timestamp = currentTime.UnixNano()
+	logs.Timestamp = currentTime.UnixMilli()
 	_, err := model.DB.Insert(logs)
 	return err == nil
 }
@@ -45,7 +45,7 @@ func (model LogModel) AddLog(_type string, action string, details interface{}) b
 // 获取日志列表
 func (model LogModel) GetLogs(page int, num int) ([]Log, error) {
 	var logs []Log
-	err := model.DB.Limit(page*num, (page-1)*num).Find(&logs)
+	err := model.DB.Desc("id").Limit(page*num, (page-1)*num).Find(&logs)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,8 @@
 package monitor
 
 import (
+	"fmt"
+	"harbor/model"
 	"harbor/util"
 	"log"
 	"strconv"
@@ -12,6 +14,7 @@ import (
 	"github.com/shirou/gopsutil/v3/host"
 	"github.com/shirou/gopsutil/v3/load"
 	"github.com/shirou/gopsutil/v3/mem"
+	"xorm.io/xorm"
 )
 
 type DeviceInfo struct {
@@ -102,7 +105,10 @@ func GetUse() SystemUse {
 	}
 }
 
-func ListenHostOverhead() {
+func ListenHostOverhead(engine *xorm.Engine) {
+	logger := &model.LogModel{
+		DB: engine,
+	}
 	noticeNumber := 0
 	init := true
 	for {
@@ -120,19 +126,26 @@ func ListenHostOverhead() {
 			if noticeNumber == 0 {
 				if use.Avg.Load1 > loadThreshold || use.Avg.Load5 > loadThreshold || use.Avg.Load15 > loadThreshold {
 					log.Println("[Monitor] system load high")
-					NoticeHighLoad()
-					noticeNumber += 1
-					break
+					logger.AddLog("host", "highLoad", fmt.Sprintf("负载: %.2f %.2f %.2f", use.Avg.Load1, use.Avg.Load5, use.Avg.Load15))
+					if NoticeHighLoad() {
+						noticeNumber += 1
+					}
 				}
 				if use.Memory.UsedPercent > memoryThreshold {
 					log.Println("[Monitor] memory run out")
-					NoticeRunOut("内存", strconv.FormatFloat(use.Memory.UsedPercent, 'f', 2, 64))
-					noticeNumber += 1
+					num := strconv.FormatFloat(use.Memory.UsedPercent, 'f', 2, 64)
+					logger.AddLog("host", "runOut", "内存已使用"+num+"%")
+					if NoticeRunOut("内存", num) {
+						noticeNumber += 1
+					}
 				}
 				if use.Disk.UsedPercent > diskThreshold {
 					log.Println("[Monitor] disk run out")
-					NoticeRunOut("磁盘", strconv.FormatFloat(use.Disk.UsedPercent, 'f', 2, 64))
-					noticeNumber += 1
+					num := strconv.FormatFloat(use.Disk.UsedPercent, 'f', 2, 64)
+					logger.AddLog("host", "runOut", "磁盘已使用"+num+"%")
+					if NoticeRunOut("磁盘", num) {
+						noticeNumber += 1
+					}
 				}
 				// 每30分钟告警1次
 				if noticeNumber > 0 {
