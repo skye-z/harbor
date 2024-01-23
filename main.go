@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"harbor/model"
 	"harbor/monitor"
 	"harbor/route"
 	"harbor/service"
@@ -27,10 +28,12 @@ func main() {
 	route := route.NewRoute(page)
 	route.Init(engine)
 	// 启动监控
-	runMonitor()
+	runMonitor(engine)
 	// 获取端口
 	port := route.GetPort()
 	log.Println("[Core] service started, port is", port)
+	// 写入启动日志
+	addMainLog(engine, "start")
 	// 启动服务
 	go func() {
 		if err := route.Router.Run(":" + port); err != nil {
@@ -39,7 +42,7 @@ func main() {
 	}()
 
 	// 等待中断信号以优雅关闭服务器
-	waitForInterrupt()
+	waitForInterrupt(engine)
 }
 
 func loadDBEngine() *xorm.Engine {
@@ -51,20 +54,27 @@ func loadDBEngine() *xorm.Engine {
 	return engine
 }
 
-func runMonitor() {
-	go monitor.ListenDockerEvents()
+func runMonitor(engine *xorm.Engine) {
+	go monitor.ListenDockerEvents(engine)
 	go monitor.ListenHostOverhead()
 }
 
-func waitForInterrupt() {
+func waitForInterrupt(engine *xorm.Engine) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 
 	<-sigCh
 	log.Println("[Core] Shutting down server...")
 
-	// 在此处执行清理和关闭操作
-	// 例如，你可能需要关闭数据库连接等
+	addMainLog(engine, "stop")
+	defer engine.Close()
 
 	log.Println("[Core] Server gracefully stopped")
+}
+
+func addMainLog(engine *xorm.Engine, action string) {
+	logger := &model.LogModel{
+		DB: engine,
+	}
+	logger.AddLog("platform", action, "")
 }

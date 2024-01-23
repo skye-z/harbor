@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"context"
+	"harbor/model"
 	"log"
 	"sync"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/client"
+	"xorm.io/xorm"
 )
 
 var (
@@ -16,7 +18,10 @@ var (
 	errorLoggedMu sync.Mutex
 )
 
-func ListenDockerEvents() {
+func ListenDockerEvents(engine *xorm.Engine) {
+	logger := &model.LogModel{
+		DB: engine,
+	}
 	for {
 		cli, err := client.NewClientWithOpts(client.FromEnv)
 		if err != nil {
@@ -33,6 +38,7 @@ func ListenDockerEvents() {
 		for !reconnect {
 			select {
 			case event := <-eventChan:
+				logger.AddLog(event.Type, event.Action, event.Actor)
 				handleEvent(event)
 			case err := <-errChan:
 				handleError(err, cli, cancel)
@@ -49,12 +55,12 @@ func handleEvent(event events.Message) {
 	if event.Type == "container" {
 		if event.Action == "start" {
 			// 容器启动
-			log.Println("[Monitor] docker container", event.ID, "start")
-			NoticeContainerStart(event.ID)
+			log.Println("[Monitor] docker container", event.Actor.ID, "start")
+			NoticeContainerStart(event.Actor.ID)
 		} else if event.Action == "die" {
 			// 容器停止
-			log.Println("[Monitor] docker container", event.ID, "die")
-			NoticeContainerStop(event.ID)
+			log.Println("[Monitor] docker container", event.Actor.ID, "die")
+			NoticeContainerStop(event.Actor.ID)
 		}
 	} else if event.Type == "daemon" {
 		if event.Action == "shutdown" {

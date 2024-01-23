@@ -14,6 +14,10 @@ func InitDatabase(engine *xorm.Engine) {
 	if err != nil {
 		panic(err)
 	}
+	err = engine.Sync2(new(model.Log))
+	if err != nil {
+		panic(err)
+	}
 	if !util.GetBool("basic.install") {
 		userModel := model.UserModel{DB: engine}
 		adminUser := CreateDefaultUser()

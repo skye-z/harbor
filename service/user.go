@@ -57,6 +57,10 @@ func (us UserService) Login(ctx *gin.Context) {
 		util.ReturnMessage(ctx, false, "用户名或密码错误")
 		return
 	}
+	logger := &model.LogModel{
+		DB: us.UserModel.DB,
+	}
+	logger.AddLog("login", "password", ctx.ClientIP())
 	ctx.JSON(200, loginResponse{User: user, Token: token, Expire: exp, Time: time.Now().Unix()})
 }
 

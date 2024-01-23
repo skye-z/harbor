@@ -158,13 +158,13 @@ func (as AuthService) Login(c *gin.Context) {
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
-func (as AuthService) Callback(c *gin.Context) {
+func (as AuthService) Callback(ctx *gin.Context) {
 	// 处理提供商的回调并获取访问令牌
-	code := c.Query("code")
-	res, err := as.Config.Exchange(c, code)
+	code := ctx.Query("code")
+	res, err := as.Config.Exchange(ctx, code)
 	if err != nil {
 		// 授权服务不可用
-		c.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=1")
+		ctx.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=1")
 		return
 	}
 	// 换取授权信息
@@ -172,7 +172,7 @@ func (as AuthService) Callback(c *gin.Context) {
 	id, _, err := as.QueryUserInfo(token)
 	if err != nil || id == "" {
 		// 授权信息无效
-		c.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=2")
+		ctx.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=2")
 		return
 	}
 	// 获取用户信息
@@ -182,22 +182,26 @@ func (as AuthService) Callback(c *gin.Context) {
 	user, err := um.GetOAuthUser(id)
 	if err != nil {
 		// 查询绑定用户失败
-		c.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=3")
+		ctx.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=3")
 		return
 	}
 	if user == nil {
 		// 授权用户不存在
-		c.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=4")
+		ctx.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=4")
 		return
 	}
 	// 签发令牌
 	token, exp, err := GenerateToken(user)
 	if err != nil {
 		// 令牌签发失败
-		c.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=5")
+		ctx.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=5")
 		return
 	}
-	c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("/app/#/auth/jump?code=%s&exp=%v", token, exp))
+	logger := &model.LogModel{
+		DB: as.DB,
+	}
+	logger.AddLog("login", "oauth2", ctx.ClientIP())
+	ctx.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("/app/#/auth/jump?code=%s&exp=%v", token, exp))
 }
 
 func (as AuthService) QueryUserInfo(token string) (string, string, error) {

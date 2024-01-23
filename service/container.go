@@ -64,7 +64,7 @@ func (ds ContainerService) StartContainer(ctx *gin.Context) {
 // 重启容器
 func (ds ContainerService) RestartContainer(ctx *gin.Context) {
 	id := ctx.Query("id")
-	timeout := 60000
+	timeout := 30
 	err := ds.Client.RestartContainer(id, &timeout)
 	if err != nil {
 		util.ReturnMessage(ctx, false, "容器重启失败")
@@ -76,7 +76,7 @@ func (ds ContainerService) RestartContainer(ctx *gin.Context) {
 // 停止容器
 func (ds ContainerService) StopContainer(ctx *gin.Context) {
 	id := ctx.Query("id")
-	timeout := 60000
+	timeout := 30
 	err := ds.Client.StopContainer(id, &timeout)
 	if err != nil {
 		util.ReturnMessage(ctx, false, "容器停止失败")

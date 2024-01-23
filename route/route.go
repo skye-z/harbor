@@ -119,6 +119,9 @@ func (r Route) addPrivateRoute(route gin.IRoutes, engine *xorm.Engine, us *servi
 	route.GET("/api/setting/alarm", ss.GetAlarmSetting)
 	route.POST("/api/setting/alarm", ss.UpdateAlarmSetting)
 
+	ls := service.NewLogsService(engine)
+	route.GET("/api/log/list", ls.GetLogs)
+
 	r.Router.GET("/api/user/list", us.GetList)
 }
 
