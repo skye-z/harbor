@@ -7,7 +7,6 @@ import (
 	"harbor/model"
 	"harbor/util"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -28,17 +27,13 @@ func AuthHandler() gin.HandlerFunc {
 		if code == "" {
 			code = ctx.Query("token")
 		}
-
 		if code == "" {
 			util.ReturnError(ctx, util.Errors.NotLoginError)
 			return
 		}
-
-		log.Println(code == "")
 		if code != "" && strings.Contains(code, " ") {
 			code = code[strings.Index(code, " ")+1:]
 		}
-
 		info := jwt.MapClaims{}
 		// 密钥
 		secret := util.GetString(tokenKey)
