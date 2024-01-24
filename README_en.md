@@ -3,6 +3,8 @@
 [中文](README.md)
 
 [![CodeQL](https://github.com/skye-z/harbor/workflows/CodeQL/badge.svg)](https://github.com/skye-z/harbor/security/code-scanning)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=skye-z_harbor&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=skye-z_harbor)
+
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=skye-z_harbor&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=skye-z_harbor)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=skye-z_harbor&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=skye-z_harbor)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=skye-z_harbor&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=skye-z_harbor)
