@@ -20,7 +20,7 @@ type LogModel struct {
 }
 
 // 添加日志
-func (model LogModel) AddLog(_type string, action string, details interface{}) bool {
+func (model LogModel) AddLog(types string, action string, details interface{}) bool {
 	detailsMsg := ""
 	switch v := details.(type) {
 	case string:
@@ -32,7 +32,7 @@ func (model LogModel) AddLog(_type string, action string, details interface{}) b
 		}
 	}
 	logs := &Log{
-		Type:    _type,
+		Type:    types,
 		Action:  action,
 		Details: detailsMsg,
 	}

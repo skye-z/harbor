@@ -2,6 +2,13 @@
 
 [中文](README.md)
 
+[![CodeQL](https://github.com/skye-z/harbor/workflows/CodeQL/badge.svg)](https://github.com/skye-z/harbor/security/code-scanning)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=skye-z_harbor&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=skye-z_harbor)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=skye-z_harbor&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=skye-z_harbor)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=skye-z_harbor&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=skye-z_harbor)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=skye-z_harbor&metric=bugs)](https://sonarcloud.io/summary/new_code?id=skye-z_harbor)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=skye-z_harbor&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=skye-z_harbor)
+
 > Under development, not available at this time
 
 Harbor is a lightweight, local Docker management platform that accelerates the delivery of single-machine services and simplifies subsequent operations.

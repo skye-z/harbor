@@ -39,7 +39,6 @@ func AuthHandler() gin.HandlerFunc {
 			code = code[strings.Index(code, " ")+1:]
 		}
 
-		log.Println(code)
 		info := jwt.MapClaims{}
 		// 密钥
 		secret := util.GetString(tokenKey)
@@ -163,7 +162,7 @@ func GetOAuth2Config() *oauth2.Config {
 
 func (as AuthService) Login(c *gin.Context) {
 	// 重定向到提供商的授权页面
-	url := as.Config.AuthCodeURL("state")
+	url := as.Config.AuthCodeURL(util.GenerateRandomString(6))
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
