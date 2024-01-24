@@ -1,6 +1,7 @@
 package util
 
 import (
+	"harbor/model"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -44,4 +45,15 @@ func ReturnMessageData(ctx *gin.Context, state bool, message string, obj any) {
 		Time:    time.Now().Unix(),
 	})
 	ctx.Abort()
+}
+
+// 校验权限
+func CheckAuth(ctx *gin.Context) bool {
+	param, exists := ctx.Get("user")
+	if exists {
+		user := param.(model.User)
+		return user.Admin
+	} else {
+		return false
+	}
 }

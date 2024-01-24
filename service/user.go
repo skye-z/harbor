@@ -3,6 +3,7 @@ package service
 import (
 	"harbor/model"
 	"harbor/util"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -85,11 +86,178 @@ func (us UserService) State(ctx *gin.Context) {
 	util.ReturnMessage(ctx, util.GetBool("oauth2.enable"), "")
 }
 
+// 获取用户列表
 func (us UserService) GetList(ctx *gin.Context) {
+	if !util.CheckAuth(ctx) {
+		util.ReturnMessage(ctx, false, "权限不足")
+		return
+	}
 	list, err := us.UserModel.GetUserList("", "", 1, 10000)
 	if err != nil {
 		util.ReturnMessage(ctx, false, "获取用户列表失败")
 		return
 	}
 	util.ReturnData(ctx, true, list)
+}
+
+// 获取用户详情
+func (us UserService) GetInfo(ctx *gin.Context) {
+	var uid int64
+	var err error
+	id := ctx.Query("uid")
+	if id != "" {
+		uid, err = strconv.ParseInt(id, 10, 64)
+	}
+	if uid == 0 || err != nil {
+		obj, exist := ctx.Get("user")
+		if exist {
+			user := obj.(model.User)
+			uid = user.Id
+		} else {
+			util.ReturnMessage(ctx, false, "未指定要查询的用户")
+			return
+		}
+	}
+	if uid == 0 {
+		util.ReturnMessage(ctx, false, "未指定要查询的用户")
+		return
+	}
+	user := &model.User{
+		Id: uid,
+	}
+	err = us.UserModel.GetUser(user)
+	if err != nil {
+		util.ReturnMessage(ctx, false, "获取用户信息失败")
+	} else {
+		util.ReturnData(ctx, true, user)
+	}
+}
+
+type FormUser struct {
+	Id       int64  `json:"id"`
+	Nickname string `json:"nickname"`
+	Name     string `json:"name"`
+	Admin    bool   `json:"admin"`
+	Pass     string `json:"pass"`
+}
+
+// 添加用户
+func (us UserService) Add(ctx *gin.Context) {
+	if !util.CheckAuth(ctx) {
+		util.ReturnMessage(ctx, false, "权限不足")
+		return
+	}
+
+	var addObj FormUser
+	if err := ctx.ShouldBindJSON(&addObj); err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	var form model.User = model.User{
+		Nickname: addObj.Nickname,
+		Name:     addObj.Name,
+		Admin:    addObj.Admin,
+		Pass:     addObj.Pass,
+	}
+	if len(form.Name) == 0 {
+		util.ReturnMessage(ctx, false, "用户名不能为空")
+		return
+	}
+	user := model.User{
+		Name: form.Name,
+	}
+	us.UserModel.GetUser(&user)
+	if user.Id != 0 {
+		util.ReturnMessage(ctx, false, "用户已存在")
+		return
+	}
+	if len(form.Nickname) == 0 {
+		form.Nickname = form.Name
+	}
+	if len(form.Pass) == 0 {
+		util.ReturnMessage(ctx, false, "密码不能为空")
+		return
+	}
+	state := us.UserModel.AddUser(&form)
+	if state {
+		util.ReturnMessage(ctx, true, "用户添加成功")
+	} else {
+		util.ReturnMessage(ctx, true, "用户添加失败")
+	}
+}
+
+// 删除用户
+func (us UserService) Del(ctx *gin.Context) {
+	if !util.CheckAuth(ctx) {
+		util.ReturnMessage(ctx, false, "权限不足")
+		return
+	}
+
+	id := ctx.Query("uid")
+	if id == "" {
+		util.ReturnMessage(ctx, false, "请先指定用户")
+		return
+	}
+	uid, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		util.ReturnMessage(ctx, false, "请先指定用户")
+		return
+	}
+
+	state := us.UserModel.DelUser(&model.User{
+		Id: uid,
+	})
+	if state {
+		util.ReturnMessage(ctx, true, "用户删除成功")
+	} else {
+		util.ReturnMessage(ctx, true, "用户删除失败")
+	}
+}
+
+// 编辑用户
+func (us UserService) Edit(ctx *gin.Context) {
+	if !util.CheckAuth(ctx) {
+		util.ReturnMessage(ctx, false, "权限不足")
+		return
+	}
+
+	id := ctx.Param("id")
+	if len(id) == 0 {
+		util.ReturnMessage(ctx, false, "用户编号不能为空")
+		return
+	}
+	uid, _ := strconv.ParseInt(id, 10, 64)
+	var addObj FormUser
+	if err := ctx.ShouldBindJSON(&addObj); err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	var form model.User = model.User{
+		Nickname: addObj.Nickname,
+		Name:     addObj.Name,
+		Admin:    addObj.Admin,
+		Pass:     addObj.Pass,
+	}
+	if len(form.Name) == 0 {
+		util.ReturnMessage(ctx, false, "用户名不能为空")
+		return
+	}
+	user := model.User{
+		Name: form.Name,
+	}
+	us.UserModel.GetUser(&user)
+	if user.Id != 0 && user.Id != uid {
+		util.ReturnMessage(ctx, false, "用户名已存在")
+		return
+	}
+	if len(form.Nickname) == 0 {
+		form.Nickname = form.Name
+	}
+	form.Id = uid
+	state := us.UserModel.EditUser(&form)
+	if state {
+		util.ReturnMessage(ctx, true, "用户编辑成功")
+	} else {
+		util.ReturnMessage(ctx, true, "用户编辑失败")
+	}
 }
