@@ -216,44 +216,44 @@ func (us UserService) Del(ctx *gin.Context) {
 
 // 编辑用户
 func (us UserService) Edit(ctx *gin.Context) {
-	if !util.CheckAuth(ctx) {
-		util.ReturnMessage(ctx, false, "权限不足")
-		return
-	}
-
-	id := ctx.Param("id")
-	if len(id) == 0 {
-		util.ReturnMessage(ctx, false, "用户编号不能为空")
-		return
-	}
-	uid, _ := strconv.ParseInt(id, 10, 64)
 	var addObj FormUser
 	if err := ctx.ShouldBindJSON(&addObj); err != nil {
 		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
+
+	obj, exist := ctx.Get("user")
+	if !exist {
+		util.ReturnMessage(ctx, false, "请先登陆")
+		return
+	}
+	user := obj.(model.User)
+	if addObj.Id != user.Id && !user.Admin {
+		util.ReturnMessage(ctx, false, "权限不足")
+	}
+
 	var form model.User = model.User{
 		Nickname: addObj.Nickname,
 		Name:     addObj.Name,
 		Admin:    addObj.Admin,
 		Pass:     addObj.Pass,
 	}
-	if len(form.Name) == 0 {
-		util.ReturnMessage(ctx, false, "用户名不能为空")
-		return
+
+	if form.Name != "" {
+		user = model.User{
+			Name: form.Name,
+		}
+		us.UserModel.GetUser(&user)
+		if user.Id != 0 && user.Id != addObj.Id {
+			util.ReturnMessage(ctx, false, "用户名已存在")
+			return
+		}
+		if len(form.Nickname) == 0 {
+			form.Nickname = form.Name
+		}
 	}
-	user := model.User{
-		Name: form.Name,
-	}
-	us.UserModel.GetUser(&user)
-	if user.Id != 0 && user.Id != uid {
-		util.ReturnMessage(ctx, false, "用户名已存在")
-		return
-	}
-	if len(form.Nickname) == 0 {
-		form.Nickname = form.Name
-	}
-	form.Id = uid
+
+	form.Id = addObj.Id
 	state := us.UserModel.EditUser(&form)
 	if state {
 		util.ReturnMessage(ctx, true, "用户编辑成功")
