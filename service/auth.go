@@ -21,6 +21,7 @@ import (
 const IssuerName = "Skye>Quest.Auth"
 const tokenKey = "token.secret"
 
+// 鉴权服务
 func AuthHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		code := ctx.Request.Header.Get("Authorization")
@@ -78,6 +79,7 @@ func AuthHandler() gin.HandlerFunc {
 	}
 }
 
+// 生成令牌
 func GenerateToken(user *model.User) (string, int64, error) {
 	// 密钥
 	secret := util.GetString(tokenKey)
@@ -97,6 +99,7 @@ func GenerateToken(user *model.User) (string, int64, error) {
 	return token, exp, err
 }
 
+// 校验令牌
 func ValidateToken(code string) (bool, int, string, error) {
 	info := jwt.MapClaims{}
 	// 密钥
@@ -128,6 +131,7 @@ type AuthService struct {
 	DB     *xorm.Engine
 }
 
+// 创建鉴权服务
 func NewAuthService(db *xorm.Engine) *AuthService {
 	as := new(AuthService)
 	as.DB = db
@@ -138,6 +142,7 @@ func NewAuthService(db *xorm.Engine) *AuthService {
 	return as
 }
 
+// 获取 OAuth2 配置
 func GetOAuth2Config() *oauth2.Config {
 	if !util.GetBool("oauth2.enable") {
 		return nil
@@ -155,12 +160,22 @@ func GetOAuth2Config() *oauth2.Config {
 	}
 }
 
+// 发起 OAuth2 登陆
 func (as AuthService) Login(c *gin.Context) {
 	// 重定向到提供商的授权页面
 	url := as.Config.AuthCodeURL(util.GenerateRandomString(6))
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
+// 发起 OAuth2 绑定
+func (as AuthService) Bind(c *gin.Context) {
+	// 重定向到提供商的授权页面
+	url := as.Config.AuthCodeURL(util.GenerateRandomString(6))
+	url = strings.Replace(url, "/oauth2/callback", "/#/oauth2/bind", 1)
+	c.Redirect(http.StatusTemporaryRedirect, url)
+}
+
+// 处理 OAuth2 回调
 func (as AuthService) Callback(ctx *gin.Context) {
 	// 处理提供商的回调并获取访问令牌
 	code := ctx.Query("code")
@@ -207,6 +222,7 @@ func (as AuthService) Callback(ctx *gin.Context) {
 	ctx.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("/app/#/auth/jump?code=%s&exp=%v", token, exp))
 }
 
+// 查询 OAuth2 用户信息
 func (as AuthService) QueryUserInfo(token string) (string, string, error) {
 	// 创建 HTTP 请求
 	req, err := http.NewRequest("GET", util.GetString("oauth2.userurl"), nil)

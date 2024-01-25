@@ -123,17 +123,18 @@ func (r Route) addPrivateRoute(route gin.IRoutes, engine *xorm.Engine, us *servi
 	route.GET("/api/log/number", ls.GetNumber)
 	route.GET("/api/log/list", ls.GetLogs)
 
-	r.Router.GET("/api/user/list", us.GetList)
-	r.Router.GET("/api/user/info", us.GetInfo)
-	r.Router.POST("/api/user/add", us.Add)
-	r.Router.POST("/api/user/edit", us.Edit)
-	r.Router.GET("/api/user/remove", us.Del)
+	route.GET("/api/user/list", us.GetList)
+	route.GET("/api/user/info", us.GetInfo)
+	route.POST("/api/user/add", us.Add)
+	route.POST("/api/user/edit", us.Edit)
+	route.GET("/api/user/remove", us.Del)
 }
 
 // 授权登陆路由
 func (r Route) addOAuth2Route(engine *xorm.Engine) {
 	as := service.NewAuthService(engine)
 	if as != nil {
+		r.Router.GET("/oauth2/bind", as.Bind)
 		r.Router.GET("/oauth2/login", as.Login)
 		r.Router.GET("/oauth2/callback", as.Callback)
 	}
