@@ -204,6 +204,11 @@ func (us UserService) Del(ctx *gin.Context) {
 		return
 	}
 
+	if uid == 1 {
+		util.ReturnMessage(ctx, false, "禁止删除1号用户")
+		return
+	}
+
 	state := us.UserModel.DelUser(&model.User{
 		Id: uid,
 	})

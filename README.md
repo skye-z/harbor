@@ -9,7 +9,7 @@
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=skye-z_harbor&metric=bugs)](https://sonarcloud.io/summary/new_code?id=skye-z_harbor)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=skye-z_harbor&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=skye-z_harbor)
 
-> 正在开发中，暂时无法使用
+> Harbor 仍处于早期开发阶段, 部分功能暂不可用
 
 Harbor 是一个轻量级的本地 Docker 管理平台, 加快了单机服务的交付速度, 简化后续的运维工作.
 
