@@ -29,7 +29,7 @@ Harbor is a lightweight, local Docker management platform that accelerates the d
 
 * Small size: program body less than 30 MB
 * Fast Deployment: Provides one-click scripts for quick deployment.
-* Low overhead: ≈ 20 MB memory footprint
+* Low overhead: ≈ 30 MB memory footprint
 
 ## Installation
 
