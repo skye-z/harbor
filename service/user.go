@@ -61,7 +61,7 @@ func (us UserService) Login(ctx *gin.Context) {
 	logger := &model.LogModel{
 		DB: us.UserModel.DB,
 	}
-	logger.AddLog("platform", "password", ctx.ClientIP())
+	logger.AddLog("platform", "password", user.Nickname+" 从 "+ctx.ClientIP())
 	ctx.JSON(200, loginResponse{User: user, Token: token, Expire: exp, Time: time.Now().Unix()})
 }
 

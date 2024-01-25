@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	Enable = "alarm.enable"
+	OAuth2Enable = "oauth2.enable"
+	AlarmEnable  = "alarm.enable"
 )
 
 type SettingService struct {
@@ -38,7 +39,7 @@ func (ss SettingService) GetOAuth2Setting(ctx *gin.Context) {
 		clientSecret = "**********"
 	}
 	config := &SettingOAuth2{
-		Enable:       util.GetBool(Enable),
+		Enable:       util.GetBool(OAuth2Enable),
 		ClientID:     util.GetString("oauth2.clientId"),
 		ClientSecret: clientSecret,
 		RedirectURL:  util.GetString("oauth2.redirectUrl"),
@@ -59,9 +60,9 @@ func (ss SettingService) UpdateOAuth2Setting(ctx *gin.Context) {
 		return
 	}
 	if form.Enable {
-		util.Set(Enable, 1)
+		util.Set(OAuth2Enable, 1)
 	} else {
-		util.Set(Enable, 0)
+		util.Set(OAuth2Enable, 0)
 	}
 	util.Set("oauth2.clientId", form.ClientID)
 	if !strings.HasPrefix(form.ClientSecret, "*") && !strings.HasSuffix(form.ClientSecret, "*") {
@@ -90,7 +91,7 @@ type SettingAlarm struct {
 
 func (ss SettingService) GetAlarmSetting(ctx *gin.Context) {
 	config := &SettingAlarm{
-		Enable:          util.GetBool(Enable),
+		Enable:          util.GetBool(AlarmEnable),
 		Path:            util.GetString("alarm.path"),
 		Interval:        util.GetInt("alarm.interval"),
 		Event:           util.GetString("alarm.event"),
@@ -108,9 +109,9 @@ func (ss SettingService) UpdateAlarmSetting(ctx *gin.Context) {
 		return
 	}
 	if form.Enable {
-		util.Set(Enable, 1)
+		util.Set(AlarmEnable, 1)
 	} else {
-		util.Set(Enable, 0)
+		util.Set(AlarmEnable, 0)
 	}
 	util.Set("alarm.path", form.Path)
 	util.Set("alarm.interval", form.Interval)
