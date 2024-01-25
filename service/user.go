@@ -282,6 +282,6 @@ func (us UserService) Bind(ctx *gin.Context) {
 	if state {
 		util.ReturnMessage(ctx, true, "用户绑定成功")
 	} else {
-		util.ReturnMessage(ctx, true, "用户绑定失败")
+		util.ReturnMessage(ctx, false, "用户绑定失败")
 	}
 }
