@@ -29,7 +29,7 @@ echo "" >> $SERVICE_FILE
 echo "[Install]" >> $SERVICE_FILE
 echo "WantedBy=multi-user.target" >> $SERVICE_FILE
 
-install_harbor() {
+install_harbor_online() {
     # 创建工作目录
     sudo mkdir -p $WORKING_DIRECTORY
 
@@ -46,6 +46,28 @@ install_harbor() {
     sudo systemctl start $SERVICE_NAME
 
     echo "Harbor service installed successfully!"
+}
+
+install_harbor_offline() {
+    # 检查是否存在离线安装文件
+    if [ -f "harbor-linux-amd64" ]; then
+        # 复制离线安装文件到工作目录
+        cp harbor-linux-amd64 ${WORKING_DIRECTORY}/harbor
+
+        # 赋予可执行权限
+        chmod +x ${WORKING_DIRECTORY}/harbor
+
+        # 重载 Systemd 配置
+        sudo systemctl daemon-reload
+
+        # 启动服务
+        sudo systemctl start $SERVICE_NAME
+
+        echo "Harbor service installed successfully!"
+    else
+        echo "Error: Offline installation file 'harbor-linux-amd64' not found. Please download it manually to the current directory."
+        exit 1
+    fi
 }
 
 uninstall_harbor() {
@@ -83,17 +105,19 @@ disable_autostart() {
 
 # 显示选项
 echo "Select an option:"
-echo "1. Install Harbor"
-echo "2. Uninstall Harbor"
-echo "3. Enable Autostart"
-echo "4. Disable Autostart"
+echo "1. Install Harbor (Online)"
+echo "2. Install Harbor (Offline)"
+echo "3. Uninstall Harbor"
+echo "4. Enable Autostart"
+echo "5. Disable Autostart"
 read -p "Enter option number: " option
 
 # 根据选项执行相应操作
 case $option in
-    1) install_harbor;;
-    2) uninstall_harbor;;
-    3) enable_autostart;;
-    4) disable_autostart;;
+    1) install_harbor_online;;
+    2) install_harbor_offline;;
+    3) uninstall_harbor;;
+    4) enable_autostart;;
+    5) disable_autostart;;
     *) echo "Invalid option";;
 esac

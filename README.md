@@ -33,7 +33,7 @@ Harbor 是一个轻量级的本地 Docker 管理平台, 加快了单机服务的
 
 ## 安装
 
-请复制下方命令到服务器终端中执行, 脚本提供了 Harbor 的安装、卸载于开启自启设置服务
+请复制下方命令到服务器终端中执行, 脚本提供了 Harbor 的安装、卸载与开启自启设置服务
 
 ```shell
 bash -c "$(curl -fsSL https://skye-z.github.io/harbor/install.sh)"
