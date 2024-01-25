@@ -1,7 +1,5 @@
 # Harbor - 轻量级本地Docker管理平台
 
-[English](README_en.md)
-
 [![CodeQL](https://github.com/skye-z/harbor/workflows/CodeQL/badge.svg)](https://github.com/skye-z/harbor/security/code-scanning)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=skye-z_harbor&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=skye-z_harbor)
 
