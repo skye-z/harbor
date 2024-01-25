@@ -261,3 +261,27 @@ func (us UserService) Edit(ctx *gin.Context) {
 		util.ReturnMessage(ctx, true, "用户编辑失败")
 	}
 }
+
+// OAuth2绑定
+func (us UserService) Bind(ctx *gin.Context) {
+	id := ctx.Query("id")
+	name := ctx.Query("name")
+	obj, exist := ctx.Get("user")
+	if !exist {
+		util.ReturnMessage(ctx, false, "请先登陆")
+		return
+	}
+	user := obj.(model.User)
+
+	var form model.User = model.User{
+		Id:        user.Id,
+		OAuthId:   id,
+		OAuthName: name,
+	}
+	state := us.UserModel.EditUser(&form)
+	if state {
+		util.ReturnMessage(ctx, true, "用户绑定成功")
+	} else {
+		util.ReturnMessage(ctx, true, "用户绑定失败")
+	}
+}

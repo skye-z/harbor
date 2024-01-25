@@ -128,6 +128,7 @@ func (r Route) addPrivateRoute(route gin.IRoutes, engine *xorm.Engine, us *servi
 	route.POST("/api/user/add", us.Add)
 	route.POST("/api/user/edit", us.Edit)
 	route.GET("/api/user/remove", us.Del)
+	route.GET("/api/user/bind", us.Bind)
 }
 
 // 授权登陆路由

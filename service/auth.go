@@ -171,7 +171,7 @@ func (as AuthService) Login(c *gin.Context) {
 func (as AuthService) Bind(c *gin.Context) {
 	// 重定向到提供商的授权页面
 	url := as.Config.AuthCodeURL(util.GenerateRandomString(6))
-	url = strings.Replace(url, "/oauth2/callback", "/#/oauth2/bind", 1)
+	url = strings.Replace(url, "%2Foauth2%2Fcallback", "%2Foauth2%2Fcallback?bind=1", 1)
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
@@ -187,39 +187,45 @@ func (as AuthService) Callback(ctx *gin.Context) {
 	}
 	// 换取授权信息
 	token := res.AccessToken
-	id, _, err := as.QueryUserInfo(token)
+	id, name, err := as.QueryUserInfo(token)
 	if err != nil || id == "" {
 		// 授权信息无效
 		ctx.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=2")
 		return
 	}
-	// 获取用户信息
-	um := &model.UserModel{
-		DB: as.DB,
+	// 绑定模式
+	bind := ctx.Query("bind")
+	if bind == "1" {
+		ctx.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("/app/#/auth/bind?id=%s&name=%s", id, name))
+	} else {
+		// 获取用户信息
+		um := &model.UserModel{
+			DB: as.DB,
+		}
+		user, err := um.GetOAuthUser(id)
+		if err != nil {
+			// 查询绑定用户失败
+			ctx.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=3")
+			return
+		}
+		if user == nil {
+			// 授权用户不存在
+			ctx.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=4")
+			return
+		}
+		// 签发令牌
+		token, exp, err := GenerateToken(user)
+		if err != nil {
+			// 令牌签发失败
+			ctx.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=5")
+			return
+		}
+		logger := &model.LogModel{
+			DB: as.DB,
+		}
+		logger.AddLog("platform", "oauth2", user.Nickname+" 从 "+ctx.ClientIP())
+		ctx.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("/app/#/auth/jump?code=%s&exp=%v", token, exp))
 	}
-	user, err := um.GetOAuthUser(id)
-	if err != nil {
-		// 查询绑定用户失败
-		ctx.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=3")
-		return
-	}
-	if user == nil {
-		// 授权用户不存在
-		ctx.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=4")
-		return
-	}
-	// 签发令牌
-	token, exp, err := GenerateToken(user)
-	if err != nil {
-		// 令牌签发失败
-		ctx.Redirect(http.StatusTemporaryRedirect, "/app/#/auth/error?code=5")
-		return
-	}
-	logger := &model.LogModel{
-		DB: as.DB,
-	}
-	logger.AddLog("platform", "oauth2", user.Nickname+" 从 "+ctx.ClientIP())
-	ctx.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("/app/#/auth/jump?code=%s&exp=%v", token, exp))
 }
 
 // 查询 OAuth2 用户信息

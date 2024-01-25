@@ -9,8 +9,8 @@ import (
 type User struct {
 	Id        int64  `json:"id"`
 	Nickname  string `json:"nickname"`
-	OAuthId   string `json:"-"`
-	OAuthName string `json:"oauthName"`
+	OAuthId   string `json:"-" xorm:"'oauth_id'"`
+	OAuthName string `json:"oauthName" xorm:"'oauth_name' null"`
 	Name      string `json:"name"`
 	Admin     bool   `json:"admin"`
 	Pass      string `json:"-"`
