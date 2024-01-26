@@ -70,7 +70,7 @@ func (ns NetworkService) Connect(ctx *gin.Context) {
 	ipv6 := ctx.Query("ipv6")
 	err := ns.Client.ConnectNetwork(id, container, alias, ipv4, ipv6)
 	if err != nil {
-		util.ReturnMessage(ctx, false, "接入网络失败")
+		util.ReturnMessageData(ctx, false, "接入网络失败", err.Error())
 	} else {
 		util.ReturnMessage(ctx, true, "接入网络成功")
 	}
