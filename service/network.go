@@ -4,6 +4,8 @@ import (
 	"harbor/docker"
 	"harbor/util"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/network"
 	"github.com/gin-gonic/gin"
 )
 
@@ -36,15 +38,56 @@ func (ns NetworkService) GetInfo(ctx *gin.Context) {
 	}
 }
 
+type FormNewtork struct {
+	Id          int64  `json:"id"`
+	Name        string `json:"name"`
+	Driver      string `json:"driver"`
+	Internal    bool   `json:"internal"`
+	Attachable  bool   `json:"attachable"`
+	IPv4        bool   `json:"ipv4"`
+	IPv4Subnet  string `json:"ipv4Subnet"`
+	IPv4Gateway string `json:"ipv4Gateway"`
+	IPv4Range   string `json:"ipv4Range"`
+	IPv6        bool   `json:"ipv6"`
+	IPv6Subnet  string `json:"ipv6Subnet"`
+	IPv6Gateway string `json:"ipv6Gateway"`
+	IPv6Range   string `json:"ipv6Range"`
+}
+
 func (ns NetworkService) Create(ctx *gin.Context) {
-	name := ctx.Query("name")
-	driver := ctx.Query("driver")
-	ipv6 := ctx.Query("ipv6")
-	internal := ctx.Query("internal")
-	attachable := ctx.Query("attachable")
-	subnet := ctx.Query("subnet")
-	gateway := ctx.Query("gateway")
-	id, err := ns.Client.CreateNetwork(name, driver, ipv6 == "1", internal == "1", attachable == "1", subnet, gateway)
+	var addObj FormNewtork
+	if err := ctx.ShouldBindJSON(&addObj); err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	list := []network.IPAMConfig{}
+	if addObj.IPv4 {
+		list = append(list, network.IPAMConfig{
+			Subnet:  addObj.IPv4Subnet,
+			Gateway: addObj.IPv4Gateway,
+			IPRange: addObj.IPv4Range,
+		})
+	}
+	if addObj.IPv6 {
+		list = append(list, network.IPAMConfig{
+			Subnet:  addObj.IPv6Subnet,
+			Gateway: addObj.IPv6Gateway,
+			IPRange: addObj.IPv6Range,
+		})
+	}
+
+	id, err := ns.Client.CreateNetwork(addObj.Name, types.NetworkCreate{
+		CheckDuplicate: true,
+		Driver:         addObj.Driver,
+		EnableIPv6:     addObj.IPv6,
+		IPAM: &network.IPAM{
+			Driver: "default",
+			Config: list,
+		},
+		Internal:   addObj.Internal,
+		Attachable: addObj.Attachable,
+	})
 	if err != nil {
 		util.ReturnMessage(ctx, false, "创建网络失败")
 	} else {

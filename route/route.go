@@ -102,7 +102,7 @@ func (r Route) addPrivateRoute(route gin.IRoutes, engine *xorm.Engine, us *servi
 	ns := service.NewNetworkService(r.DockerClient)
 	route.GET("/api/network/list", ns.GetList)
 	route.GET("/api/network/info", ns.GetInfo)
-	route.GET("/api/network/create", ns.Create)
+	route.POST("/api/network/create", ns.Create)
 	route.GET("/api/network/remove", ns.Remove)
 	route.GET("/api/network/connect", ns.Connect)
 	route.GET("/api/network/disconnect", ns.Disconnect)

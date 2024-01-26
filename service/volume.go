@@ -38,7 +38,8 @@ func (vs VolumeService) GetInfo(ctx *gin.Context) {
 
 func (vs VolumeService) Create(ctx *gin.Context) {
 	name := ctx.Query("name")
-	err := vs.Client.CreateVolume(name)
+	driver := ctx.Query("driver")
+	err := vs.Client.CreateVolume(name, driver)
 	if err != nil {
 		util.ReturnMessage(ctx, false, "创建存储失败")
 	} else {

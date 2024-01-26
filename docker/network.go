@@ -28,23 +28,8 @@ func (d Docker) GetNetworkInfo(id string) (types.NetworkResource, error) {
 }
 
 // 创建网络
-func (d Docker) CreateNetwork(name string, driver string, ipv6 bool, internal bool, attachable bool, subnet string, gateway string) (string, error) {
-	networkResponse, err := d.Session.NetworkCreate(d.Context, name, types.NetworkCreate{
-		CheckDuplicate: true,
-		Driver:         driver,
-		EnableIPv6:     ipv6,
-		IPAM: &network.IPAM{
-			Driver: "default",
-			Config: []network.IPAMConfig{
-				{
-					Subnet:  subnet,
-					Gateway: gateway,
-				},
-			},
-		},
-		Internal:   internal,
-		Attachable: attachable,
-	})
+func (d Docker) CreateNetwork(name string, config types.NetworkCreate) (string, error) {
+	networkResponse, err := d.Session.NetworkCreate(d.Context, name, config)
 	if err != nil {
 		return "", err
 	}

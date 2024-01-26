@@ -23,9 +23,10 @@ func (d Docker) GetVolumeInfo(id string) (volume.Volume, error) {
 }
 
 // 创建存储
-func (d Docker) CreateVolume(name string) error {
+func (d Docker) CreateVolume(name string, driver string) error {
 	_, err := d.Session.VolumeCreate(d.Context, volume.CreateOptions{
-		Name: name,
+		Name:   name,
+		Driver: driver,
 	})
 	if err != nil {
 		return err
