@@ -1,6 +1,8 @@
 package docker
 
-import "github.com/docker/docker/api/types/volume"
+import (
+	"github.com/docker/docker/api/types/volume"
+)
 
 // 获取存储卷列表
 func (d Docker) GetVolumeList() ([]*volume.Volume, error) {

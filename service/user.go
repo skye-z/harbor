@@ -150,7 +150,7 @@ func (us UserService) Add(ctx *gin.Context) {
 
 	var addObj FormUser
 	if err := ctx.ShouldBindJSON(&addObj); err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
+		util.ReturnMessage(ctx, false, "传入数据无效")
 		return
 	}
 	var form model.User = model.User{
@@ -223,7 +223,7 @@ func (us UserService) Del(ctx *gin.Context) {
 func (us UserService) Edit(ctx *gin.Context) {
 	var addObj FormUser
 	if err := ctx.ShouldBindJSON(&addObj); err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
+		util.ReturnMessage(ctx, false, "传入数据无效")
 		return
 	}
 

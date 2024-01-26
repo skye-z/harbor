@@ -44,7 +44,7 @@ func (is ImageService) Remove(ctx *gin.Context) {
 func (is ImageService) Pull(ctx *gin.Context) {
 	var form docker.ImageBuild
 	if err := ctx.ShouldBindJSON(&form); err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
+		util.ReturnMessage(ctx, false, "传入数据无效")
 		return
 	}
 	if len(form.Store) == 0 {

@@ -57,7 +57,7 @@ type FormNewtork struct {
 func (ns NetworkService) Create(ctx *gin.Context) {
 	var addObj FormNewtork
 	if err := ctx.ShouldBindJSON(&addObj); err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
+		util.ReturnMessage(ctx, false, "传入数据无效")
 		return
 	}
 
