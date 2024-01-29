@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"harbor/util"
 	"io"
 	"log"
 	"net/http"
@@ -42,17 +43,22 @@ func (d Docker) PullImage(ctx *gin.Context, form ImageBuild) {
 	out, err := d.Session.ImagePull(d.Context, form.Store+"/"+form.Tag, types.ImagePullOptions{
 		Platform: form.Platform,
 	})
-	if err != nil {
+	if out == nil || err != nil {
+		util.ReturnMessageData(ctx, false, "镜像拉取失败", err.Error())
 		log.Println("[Image] pull failed:", err)
-		return
 	}
-	defer out.Close()
-	ctx.Header("Content-Type", "application/octet-stream")
+	defer func() {
+		if closeErr := out.Close(); closeErr != nil {
+			log.Println("[Image] close failed:", closeErr)
+		}
+	}()
 	ctx.Status(http.StatusOK)
 	_, err = io.Copy(ctx.Writer, out)
 	if err != nil {
+		util.ReturnMessageData(ctx, false, "镜像拉取失败", err.Error())
 		log.Printf("[Image] pull %s pulled failed\n", form.Tag)
 	} else {
+		util.ReturnMessage(ctx, true, "镜像拉取成功")
 		log.Printf("[Image] pull %s pulled successfully\n", form.Tag)
 	}
 }
