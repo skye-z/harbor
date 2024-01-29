@@ -74,6 +74,17 @@ func (is ImageService) AddTag(ctx *gin.Context) {
 	}
 }
 
+// 搜索镜像
+func (is ImageService) SearchImage(ctx *gin.Context) {
+	keyword := ctx.Query("keyword")
+	list, err := is.Client.SearchImage(keyword)
+	if err != nil {
+		util.ReturnMessage(ctx, false, "搜索镜像失败")
+	} else {
+		util.ReturnData(ctx, true, list)
+	}
+}
+
 // 获取镜像详情
 func (is ImageService) GetInfo(ctx *gin.Context) {
 	id := ctx.Query("id")
@@ -94,4 +105,10 @@ func (is ImageService) GetHistory(ctx *gin.Context) {
 	} else {
 		util.ReturnData(ctx, true, info)
 	}
+}
+
+// 导出镜像
+func (is ImageService) ExportImage(ctx *gin.Context) {
+	id := ctx.Query("id")
+	is.Client.ExportImage(ctx, id)
 }

@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"fmt"
 	"harbor/util"
 	"io"
 	"log"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/gin-gonic/gin"
 )
 
@@ -69,6 +71,17 @@ func (d Docker) AddImageTag(id string, tag string) error {
 	return err
 }
 
+// 搜索镜像
+func (d Docker) SearchImage(keyword string) ([]registry.SearchResult, error) {
+	list, err := d.Session.ImageSearch(d.Context, keyword, types.ImageSearchOptions{
+		Limit: 20,
+	})
+	if err != nil {
+		return []registry.SearchResult{}, err
+	}
+	return list, nil
+}
+
 // 获取镜像详情
 func (d Docker) GetImageInfo(id string) (types.ImageInspect, error) {
 	info, _, err := d.Session.ImageInspectWithRaw(d.Context, id)
@@ -87,4 +100,22 @@ func (d Docker) GetImageHistory(id string) ([]image.HistoryResponseItem, error) 
 	}
 
 	return list, nil
+}
+
+// 导出镜像
+func (d Docker) ExportImage(ctx *gin.Context, id string) error {
+	imageSaveReader, err := d.Session.ImageSave(d.Context, []string{id})
+	if err != nil {
+		util.ReturnMessage(ctx, false, "镜像导出失败")
+		return err
+	}
+	defer imageSaveReader.Close()
+	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s.tar", id))
+	ctx.Header("Content-Type", "application/octet-stream")
+	_, err = io.Copy(ctx.Writer, imageSaveReader)
+	if err != nil {
+		util.ReturnMessage(ctx, false, "镜像导出传输失败")
+		return err
+	}
+	return nil
 }
