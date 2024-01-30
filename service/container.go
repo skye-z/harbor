@@ -198,3 +198,25 @@ func (ds ContainerService) GetProcesses(ctx *gin.Context) {
 		util.ReturnData(ctx, true, list)
 	}
 }
+
+// 克隆容器
+func (ds ContainerService) CloneContainer(ctx *gin.Context) {
+	id := ctx.Query("id")
+	res, err := ds.Client.CloneContainer(id)
+	if err != nil {
+		util.ReturnMessageData(ctx, false, "容器克隆失败", err.Error())
+	} else {
+		util.ReturnMessageData(ctx, true, "容器克隆成功", res)
+	}
+}
+
+// 重建容器
+func (ds ContainerService) RecreateContainer(ctx *gin.Context) {
+	id := ctx.Query("id")
+	res, err := ds.Client.RecreateContainer(id)
+	if err != nil {
+		util.ReturnMessageData(ctx, false, "容器重建失败", err.Error())
+	} else {
+		util.ReturnMessageData(ctx, true, "容器重建成功", res)
+	}
+}

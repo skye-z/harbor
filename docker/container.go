@@ -283,3 +283,53 @@ func (d Docker) CreateTerminal(conn *websocket.Conn, containerID string, cmd str
 
 	return nil
 }
+
+// 克隆容器
+func (d Docker) CloneContainer(id string) (string, error) {
+	source, err := d.GetContainerInfo(id)
+	if err != nil {
+		return "", err
+	}
+	return d.BuildContainer(source, source.Name+"_copy")
+}
+
+// 重建容器
+func (d Docker) RecreateContainer(id string) (string, error) {
+	timeout := 3
+	// 提取容器信息
+	source, err := d.GetContainerInfo(id)
+	if err != nil {
+		return "", err
+	}
+	// 停止容器
+	err = d.StopContainer(id, &timeout)
+	if err != nil {
+		return "", err
+	}
+	// 删除旧容器
+	err = d.RemoveContainer(id, false, false, true)
+	if err != nil {
+		return "", err
+	}
+	// 构建新容器
+	return d.BuildContainer(source, source.Name)
+}
+
+// 构建容器
+func (d Docker) BuildContainer(source types.ContainerJSON, name string) (string, error) {
+	config := source.Config
+	config.Hostname = name
+	source.Name = name
+
+	resp, err := d.Session.ContainerCreate(
+		d.Context,
+		config, source.HostConfig,
+		&network.NetworkingConfig{EndpointsConfig: source.NetworkSettings.Networks},
+		nil,
+		name)
+	log.Println(resp)
+	if err != nil {
+		return "", err
+	}
+	return resp.ID, err
+}
