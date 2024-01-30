@@ -2,18 +2,25 @@ package service
 
 import (
 	"harbor/docker"
+	"harbor/model"
 	"harbor/util"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"xorm.io/xorm"
 )
 
 type ImageService struct {
-	Client *docker.Docker
+	Client     *docker.Docker
+	ImageModel model.ImageModel
 }
 
-func NewImageService(client *docker.Docker) *ImageService {
+func NewImageService(client *docker.Docker, engine *xorm.Engine) *ImageService {
 	is := new(ImageService)
 	is.Client = client
+	is.ImageModel = model.ImageModel{
+		DB: engine,
+	}
 	return is
 }
 
@@ -111,4 +118,121 @@ func (is ImageService) GetHistory(ctx *gin.Context) {
 func (is ImageService) ExportImage(ctx *gin.Context) {
 	id := ctx.Query("id")
 	is.Client.ExportImage(ctx, id)
+}
+
+// 构建镜像
+func (is ImageService) BuildImage(ctx *gin.Context) {
+	var form docker.ImageBuild
+	if err := ctx.ShouldBindJSON(&form); err != nil {
+		util.ReturnMessage(ctx, false, "传入数据无效")
+		return
+	}
+	if len(form.Tag) == 0 {
+		util.ReturnMessage(ctx, false, "镜像标签不能为空")
+		return
+	}
+	if len(form.Context) == 0 {
+		util.ReturnMessage(ctx, false, "镜像构建内容不能为空")
+		return
+	}
+	is.Client.BuildImage(form.Tag, form.Context)
+}
+
+// 添加构建模板
+func (is ImageService) AddImageBuild(ctx *gin.Context) {
+	var form model.Image
+	if err := ctx.ShouldBindJSON(&form); err != nil {
+		util.ReturnMessage(ctx, false, "传入数据无效")
+		return
+	}
+	if len(form.Name) == 0 {
+		util.ReturnMessage(ctx, false, "构建模板名称不能为空")
+		return
+	}
+	if len(form.Context) == 0 {
+		util.ReturnMessage(ctx, false, "构建模板内容不能为空")
+		return
+	}
+	state := is.ImageModel.AddImage(form.Name, form.Context)
+	if state {
+		util.ReturnMessage(ctx, true, "模板添加成功")
+	} else {
+		util.ReturnMessage(ctx, false, "模板添加失败")
+	}
+}
+
+// 编辑构建模板
+func (is ImageService) EditImageBuild(ctx *gin.Context) {
+	var form model.Image
+	if err := ctx.ShouldBindJSON(&form); err != nil {
+		util.ReturnMessage(ctx, false, "传入数据无效")
+		return
+	}
+	if len(form.Name) == 0 {
+		util.ReturnMessage(ctx, false, "构建模板名称不能为空")
+		return
+	}
+	if len(form.Context) == 0 {
+		util.ReturnMessage(ctx, false, "构建模板内容不能为空")
+		return
+	}
+
+	state := is.ImageModel.EditImage(&form)
+	if state {
+		util.ReturnMessage(ctx, true, "模板编辑成功")
+	} else {
+		util.ReturnMessage(ctx, false, "模板编辑失败")
+	}
+}
+
+// 删除构建模板
+func (is ImageService) DelImageBuild(ctx *gin.Context) {
+	id := ctx.Query("id")
+	if id == "" {
+		util.ReturnMessage(ctx, false, "请先指定模板")
+		return
+	}
+	tid, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		util.ReturnMessage(ctx, false, "请先指定模板")
+		return
+	}
+
+	state := is.ImageModel.DelImage(tid)
+	if state {
+		util.ReturnMessage(ctx, true, "模板删除成功")
+	} else {
+		util.ReturnMessage(ctx, false, "模板删除失败")
+	}
+}
+
+// 获取构建模板列表
+func (is ImageService) GetImageBuildList(ctx *gin.Context) {
+	list, err := is.ImageModel.GetImageList()
+	if err != nil {
+		util.ReturnMessage(ctx, false, "获取构建模板列表失败")
+		return
+	}
+	util.ReturnData(ctx, true, list)
+}
+
+// 获取构建模板详情
+func (is ImageService) GetImageBuildInfo(ctx *gin.Context) {
+	id := ctx.Query("id")
+	if id == "" {
+		util.ReturnMessage(ctx, false, "请先指定模板")
+		return
+	}
+	tid, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		util.ReturnMessage(ctx, false, "请先指定模板")
+		return
+	}
+
+	info, err := is.ImageModel.GetImageInfo(tid)
+	if err != nil {
+		util.ReturnMessage(ctx, false, "获取构建模板详情失败")
+	} else {
+		util.ReturnData(ctx, true, info)
+	}
 }

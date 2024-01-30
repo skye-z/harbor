@@ -91,7 +91,7 @@ func (r Route) addPrivateRoute(route gin.IRoutes, engine *xorm.Engine, us *servi
 	route.GET("/api/container/stat", cs.GetStat)
 	route.GET("/api/container/processes", cs.GetProcesses)
 
-	is := service.NewImageService(r.DockerClient)
+	is := service.NewImageService(r.DockerClient, engine)
 	route.GET("/api/image/list", is.GetList)
 	route.GET("/api/image/remove", is.Remove)
 	route.POST("/api/image/pull", is.Pull)
@@ -100,6 +100,12 @@ func (r Route) addPrivateRoute(route gin.IRoutes, engine *xorm.Engine, us *servi
 	route.GET("/api/image/info", is.GetInfo)
 	route.GET("/api/image/history", is.GetHistory)
 	route.GET("/api/image/export", is.ExportImage)
+
+	route.POST("/api/image/build/run", is.BuildImage)
+	route.POST("/api/image/build/add", is.AddImageBuild)
+	route.POST("/api/image/build/edit", is.EditImageBuild)
+	route.GET("/api/image/build/list", is.GetImageBuildList)
+	route.GET("/api/image/build/info", is.GetImageBuildInfo)
 
 	ns := service.NewNetworkService(r.DockerClient)
 	route.GET("/api/network/list", ns.GetList)

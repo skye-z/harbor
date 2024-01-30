@@ -182,7 +182,7 @@ func (us UserService) Add(ctx *gin.Context) {
 	if state {
 		util.ReturnMessage(ctx, true, "用户添加成功")
 	} else {
-		util.ReturnMessage(ctx, true, "用户添加失败")
+		util.ReturnMessage(ctx, false, "用户添加失败")
 	}
 }
 
@@ -215,7 +215,7 @@ func (us UserService) Del(ctx *gin.Context) {
 	if state {
 		util.ReturnMessage(ctx, true, "用户删除成功")
 	} else {
-		util.ReturnMessage(ctx, true, "用户删除失败")
+		util.ReturnMessage(ctx, false, "用户删除失败")
 	}
 }
 
@@ -263,7 +263,7 @@ func (us UserService) Edit(ctx *gin.Context) {
 	if state {
 		util.ReturnMessage(ctx, true, "用户编辑成功")
 	} else {
-		util.ReturnMessage(ctx, true, "用户编辑失败")
+		util.ReturnMessage(ctx, false, "用户编辑失败")
 	}
 }
 

@@ -1,11 +1,13 @@
 package docker
 
 import (
+	"bytes"
 	"fmt"
 	"harbor/util"
 	"io"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
@@ -18,6 +20,7 @@ type ImageBuild struct {
 	Tag      string `json:"tag"`
 	Store    string `json:"store"`
 	Platform string `json:"platform"`
+	Context  string `json:"context"`
 }
 
 // 获取镜像列表
@@ -115,6 +118,34 @@ func (d Docker) ExportImage(ctx *gin.Context, id string) error {
 	_, err = io.Copy(ctx.Writer, imageSaveReader)
 	if err != nil {
 		util.ReturnMessage(ctx, false, "镜像导出传输失败")
+		return err
+	}
+	return nil
+}
+
+// 构建镜像
+func (d Docker) BuildImage(tag, context string) error {
+	pr, pw := io.Pipe()
+	go func() {
+		defer pw.Close()
+		dockerfile := []byte(context)
+		_, err := io.Copy(pw, bytes.NewReader(dockerfile))
+		if err != nil {
+			fmt.Println("Error writing Dockerfile content to pipe:", err)
+			return
+		}
+	}()
+	build, err := d.Session.ImageBuild(d.Context, pr, types.ImageBuildOptions{
+		Dockerfile: "-",
+		Tags:       []string{tag},
+	})
+	if err != nil {
+		return err
+	}
+	defer build.Body.Close()
+	_, err = io.Copy(os.Stdout, build.Body)
+	if err != nil {
+		fmt.Println("Error copying build logs:", err)
 		return err
 	}
 	return nil
