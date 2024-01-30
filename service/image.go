@@ -4,6 +4,7 @@ import (
 	"harbor/docker"
 	"harbor/model"
 	"harbor/util"
+	"log"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -135,13 +136,19 @@ func (is ImageService) BuildImage(ctx *gin.Context) {
 		util.ReturnMessage(ctx, false, "镜像构建内容不能为空")
 		return
 	}
-	is.Client.BuildImage(form.Tag, form.Context)
+	log, err := is.Client.BuildImage(form.Tag, form.Context)
+	if err != nil {
+		util.ReturnMessageData(ctx, false, "镜像构建失败", err.Error())
+	} else {
+		util.ReturnMessageData(ctx, true, "镜像构建成功", log)
+	}
 }
 
 // 添加构建模板
 func (is ImageService) AddImageBuild(ctx *gin.Context) {
 	var form model.Image
 	if err := ctx.ShouldBindJSON(&form); err != nil {
+		log.Println(err)
 		util.ReturnMessage(ctx, false, "传入数据无效")
 		return
 	}

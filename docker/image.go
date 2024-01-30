@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
@@ -124,29 +125,32 @@ func (d Docker) ExportImage(ctx *gin.Context, id string) error {
 }
 
 // 构建镜像
-func (d Docker) BuildImage(tag, context string) error {
-	pr, pw := io.Pipe()
-	go func() {
-		defer pw.Close()
-		dockerfile := []byte(context)
-		_, err := io.Copy(pw, bytes.NewReader(dockerfile))
-		if err != nil {
-			fmt.Println("Error writing Dockerfile content to pipe:", err)
-			return
-		}
-	}()
-	build, err := d.Session.ImageBuild(d.Context, pr, types.ImageBuildOptions{
-		Dockerfile: "-",
+func (d Docker) BuildImage(tag, context string) (string, error) {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	cacheDir := filepath.Join(currentDir, "cache")
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		return "", err
+	}
+	dockerfilePath := filepath.Join(cacheDir, "Dockerfile")
+	if err := os.WriteFile(dockerfilePath, []byte(context), 0644); err != nil {
+		return "", err
+	}
+
+	build, err := d.Session.ImageBuild(d.Context, bytes.NewReader(nil), types.ImageBuildOptions{
+		Dockerfile: dockerfilePath,
 		Tags:       []string{tag},
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer build.Body.Close()
-	_, err = io.Copy(os.Stdout, build.Body)
+
+	buildResponse, err := io.ReadAll(build.Body)
 	if err != nil {
-		fmt.Println("Error copying build logs:", err)
-		return err
+		return "", err
 	}
-	return nil
+	return string(buildResponse), nil
 }
