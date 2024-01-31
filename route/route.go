@@ -74,6 +74,11 @@ func (r Route) addPrivateRoute(route gin.IRoutes, engine *xorm.Engine, us *servi
 
 	ds := service.NewDockerService(r.DockerClient)
 	route.GET("/api/docker/info", ds.GetInfo)
+	route.GET("/api/docker/use", ds.GetUsage)
+	route.GET("/api/docker/clean/cache", ds.CleanBuildCache)
+	route.GET("/api/docker/clean/image", ds.CleanImage)
+	route.GET("/api/docker/clean/network", ds.CleanNetworks)
+	route.GET("/api/docker/clean/volume", ds.CleanVolumes)
 
 	cs := service.NewContainerService(r.DockerClient)
 	route.GET("/api/container/list", cs.GetList)

@@ -34,6 +34,10 @@ type SettingOAuth2 struct {
 }
 
 func (ss SettingService) GetOAuth2Setting(ctx *gin.Context) {
+	if !util.CheckAuth(ctx) {
+		util.ReturnMessage(ctx, false, "权限不足")
+		return
+	}
 	clientSecret := util.GetString("oauth2.clientSecret")
 	if clientSecret != "" {
 		clientSecret = "**********"
@@ -54,6 +58,10 @@ func (ss SettingService) GetOAuth2Setting(ctx *gin.Context) {
 }
 
 func (ss SettingService) UpdateOAuth2Setting(ctx *gin.Context) {
+	if !util.CheckAuth(ctx) {
+		util.ReturnMessage(ctx, false, "权限不足")
+		return
+	}
 	var form SettingOAuth2
 	if err := ctx.ShouldBindJSON(&form); err != nil {
 		util.ReturnMessage(ctx, false, "传入数据无效")
@@ -90,6 +98,10 @@ type SettingAlarm struct {
 }
 
 func (ss SettingService) GetAlarmSetting(ctx *gin.Context) {
+	if !util.CheckAuth(ctx) {
+		util.ReturnMessage(ctx, false, "权限不足")
+		return
+	}
 	config := &SettingAlarm{
 		Enable:          util.GetBool(AlarmEnable),
 		Path:            util.GetString("alarm.path"),
@@ -103,6 +115,10 @@ func (ss SettingService) GetAlarmSetting(ctx *gin.Context) {
 }
 
 func (ss SettingService) UpdateAlarmSetting(ctx *gin.Context) {
+	if !util.CheckAuth(ctx) {
+		util.ReturnMessage(ctx, false, "权限不足")
+		return
+	}
 	var form SettingAlarm
 	if err := ctx.ShouldBindJSON(&form); err != nil {
 		util.ReturnMessage(ctx, false, "传入数据无效")

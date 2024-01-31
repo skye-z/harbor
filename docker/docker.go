@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 )
 
@@ -39,4 +40,35 @@ func NewDocker() (*Docker, error) {
 func (d Docker) Close() {
 	fmt.Println("docker session closed")
 	d.Session.Close()
+}
+
+// 清理构建缓存
+func (d Docker) GetUsage() (types.DiskUsage, error) {
+	return d.Session.DiskUsage(d.Context, types.DiskUsageOptions{})
+}
+
+// 清理构建缓存
+func (d Docker) CleanBuildCache() error {
+	_, err := d.Session.BuildCachePrune(d.Context, types.BuildCachePruneOptions{
+		All: true,
+	})
+	return err
+}
+
+// 清理未使用的镜像
+func (d Docker) CleanImage() error {
+	_, err := d.Session.ImagesPrune(d.Context, filters.NewArgs())
+	return err
+}
+
+// 清理未使用的网络
+func (d Docker) CleanNetworks() error {
+	_, err := d.Session.NetworksPrune(d.Context, filters.NewArgs())
+	return err
+}
+
+// 清理未使用的存储卷
+func (d Docker) CleanVolumes() error {
+	_, err := d.Session.VolumesPrune(d.Context, filters.NewArgs())
+	return err
 }
