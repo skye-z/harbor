@@ -29,6 +29,29 @@ func NewContainerService(client *docker.Docker) *ContainerService {
 	return ds
 }
 
+// 构建容器
+func (ds ContainerService) BuildContainer(ctx *gin.Context) {
+	var form util.BuildContainer
+	if err := ctx.ShouldBindJSON(&form); err != nil {
+		util.ReturnMessage(ctx, false, "传入数据无效")
+		return
+	}
+	if form.Name == "" {
+		util.ReturnMessage(ctx, false, "容器名称不能为空")
+		return
+	}
+	if form.Container.Image == "" {
+		util.ReturnMessage(ctx, false, "镜像不能为空")
+		return
+	}
+	log, err := ds.Client.CreateContainer(form)
+	if err != nil {
+		util.ReturnMessageData(ctx, false, "容器构建失败", err.Error())
+	} else {
+		util.ReturnMessageData(ctx, true, "容器构建成功", log)
+	}
+}
+
 // 获取容器列表
 func (ds ContainerService) GetList(ctx *gin.Context) {
 	list, err := ds.Client.GetContainerList()

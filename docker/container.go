@@ -10,7 +10,6 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/gorilla/websocket"
-	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // 获取容器列表
@@ -87,22 +86,37 @@ func (d Docker) GetContainerLogs(id string, tail string) ([]string, error) {
 }
 
 // 创建容器
-func (d Docker) CreateContainer(imageName string, containerName string, command []string) (string, error) {
-	// 创建容器配置
-	containerConfig := &container.Config{
-		Image:        imageName,
-		Cmd:          command,
-		Tty:          false,
-		AttachStdout: true,
-		AttachStderr: true,
-		Env:          []string{"KEY=VALUE"}, // 可以设置环境变量
+func (d Docker) CreateContainer(form util.BuildContainer) (string, error) {
+	hostConfig := &container.HostConfig{
+		Binds: form.Host.Binds,
+		LogConfig: container.LogConfig{
+			Type:   form.Host.LogConfig.Type,
+			Config: form.Host.LogConfig.Config,
+		},
+		NetworkMode:  container.NetworkMode(form.Host.NetworkMode),
+		PortBindings: form.Host.PortBindings,
+		RestartPolicy: container.RestartPolicy{
+			Name:              form.Host.RestartPolicy.Name,
+			MaximumRetryCount: form.Host.RestartPolicy.MaximumRetryCount,
+		},
+		AutoRemove:  form.Host.AutoRemove,
+		Annotations: form.Host.Annotations,
+		CapAdd:      form.Host.CapAdd,
+		CapDrop:     form.Host.CapDrop,
+		Privileged:  form.Host.Privileged,
+		Resources: container.Resources{
+			CPUShares: form.Host.Resources.CPU,
+			Memory:    form.Host.Resources.Memory,
+		},
+		Mounts: form.Host.Mounts,
 	}
-
-	hostConfig := &container.HostConfig{}
-	networkingConfig := &network.NetworkingConfig{}
-	platform := &v1.Platform{}
+	networkingConfig := &network.NetworkingConfig{
+		EndpointsConfig: map[string]*network.EndpointSettings{
+			form.Host.NetworkMode: &form.Network,
+		},
+	}
 	// 创建容器
-	resp, err := d.Session.ContainerCreate(d.Context, containerConfig, hostConfig, networkingConfig, platform, containerName)
+	resp, err := d.Session.ContainerCreate(d.Context, &form.Container, hostConfig, networkingConfig, nil, form.Name)
 	if err != nil {
 		return "", err
 	}
