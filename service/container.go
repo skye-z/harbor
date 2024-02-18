@@ -243,3 +243,15 @@ func (ds ContainerService) RecreateContainer(ctx *gin.Context) {
 		util.ReturnMessageData(ctx, true, "容器重建成功", res)
 	}
 }
+
+// 重命名容器
+func (ds ContainerService) RenameContainer(ctx *gin.Context) {
+	id := ctx.Query("id")
+	name := ctx.Query("name")
+	err := ds.Client.RenameContainer(id, name)
+	if err != nil {
+		util.ReturnMessage(ctx, false, "容器重命名失败")
+	} else {
+		util.ReturnMessage(ctx, true, "容器重命名成功")
+	}
+}
