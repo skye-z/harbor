@@ -26,6 +26,10 @@ func main() {
 	engine := loadDBEngine()
 	go service.InitDatabase(engine)
 	route := route.NewRoute(page)
+	if route == nil {
+		log.Println("[Core] please start docker first")
+		return
+	}
 	route.Init(engine)
 	// 启动监控
 	runMonitor(engine)
