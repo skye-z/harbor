@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# 检查是否以root用户执行
+if [ "$EUID" -ne 0 ]; then
+    echo "Error: This script must be run as root."
+    exit 1
+fi
+
 # 设置服务名称和描述
 SERVICE_NAME="harbor"
 SERVICE_DESCRIPTION="Harbor"
@@ -19,7 +25,7 @@ WORKING_DIRECTORY="/opt/harbor"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 echo "[Unit]" > $SERVICE_FILE
 echo "Description=${SERVICE_DESCRIPTION}" >> $SERVICE_FILE
-echo "After=network.target" >> $SERVICE_FILE
+echo "After=docker.service" >> $SERVICE_FILE
 echo "" >> $SERVICE_FILE
 echo "[Service]" >> $SERVICE_FILE
 echo "ExecStart=${WORKING_DIRECTORY}/harbor >> /var/log/harbor.log 2>&1" >> $SERVICE_FILE
