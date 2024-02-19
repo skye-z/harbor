@@ -138,3 +138,22 @@ func (ss SettingService) UpdateAlarmSetting(ctx *gin.Context) {
 
 	util.ReturnMessage(ctx, true, "更新成功")
 }
+
+func (ss SettingService) GetNewVersion(ctx *gin.Context) {
+	info := util.GetLatestReleaseVersion()
+	if info == nil {
+		util.ReturnMessage(ctx, false, "获取版本信息失败")
+	} else {
+		util.ReturnData(ctx, true, info)
+	}
+}
+
+func (ss SettingService) UpdateNewVersion(ctx *gin.Context) {
+	state := util.DownloadNewVersion()
+	if state {
+		util.ReturnMessage(ctx, true, "更新成功")
+		util.RestartWithSystemd()
+	} else {
+		util.ReturnMessage(ctx, false, "更新失败")
+	}
+}
