@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -62,6 +63,7 @@ func DownloadNewVersion() bool {
 		return false
 	}
 
+	log.Println("[Update] dwnload update file")
 	resp, err := http.Get(url)
 	if err != nil {
 		return false
@@ -77,6 +79,7 @@ func DownloadNewVersion() bool {
 	if _, err = io.Copy(out, resp.Body); err != nil {
 		return false
 	}
+	log.Println("[Update] apply update")
 	// 重命名文件
 	if err := os.Rename("update.cache", "harbor"); err != nil {
 		return false
@@ -85,6 +88,7 @@ func DownloadNewVersion() bool {
 }
 
 func RestartWithSystemd() error {
+	log.Println("[Core] reboot")
 	cmd := exec.Command("systemctl", "restart", "harbor")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
