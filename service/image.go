@@ -11,6 +11,11 @@ import (
 	"xorm.io/xorm"
 )
 
+const (
+	DATA_ERROR = "传入数据无效"
+	TEMP_ERROR = "请先指定模板"
+)
+
 type ImageService struct {
 	Client     *docker.Docker
 	ImageModel model.ImageModel
@@ -52,7 +57,7 @@ func (is ImageService) Remove(ctx *gin.Context) {
 func (is ImageService) Pull(ctx *gin.Context) {
 	var form docker.ImageBuild
 	if err := ctx.ShouldBindJSON(&form); err != nil {
-		util.ReturnMessage(ctx, false, "传入数据无效")
+		util.ReturnMessage(ctx, false, DATA_ERROR)
 		return
 	}
 	if len(form.Store) == 0 {
@@ -125,7 +130,7 @@ func (is ImageService) ExportImage(ctx *gin.Context) {
 func (is ImageService) BuildImage(ctx *gin.Context) {
 	var form docker.ImageBuild
 	if err := ctx.ShouldBindJSON(&form); err != nil {
-		util.ReturnMessage(ctx, false, "传入数据无效")
+		util.ReturnMessage(ctx, false, DATA_ERROR)
 		return
 	}
 	if len(form.Tag) == 0 {
@@ -149,7 +154,7 @@ func (is ImageService) AddImageBuild(ctx *gin.Context) {
 	var form model.Image
 	if err := ctx.ShouldBindJSON(&form); err != nil {
 		log.Println(err)
-		util.ReturnMessage(ctx, false, "传入数据无效")
+		util.ReturnMessage(ctx, false, DATA_ERROR)
 		return
 	}
 	if len(form.Name) == 0 {
@@ -172,7 +177,7 @@ func (is ImageService) AddImageBuild(ctx *gin.Context) {
 func (is ImageService) EditImageBuild(ctx *gin.Context) {
 	var form model.Image
 	if err := ctx.ShouldBindJSON(&form); err != nil {
-		util.ReturnMessage(ctx, false, "传入数据无效")
+		util.ReturnMessage(ctx, false, DATA_ERROR)
 		return
 	}
 	if len(form.Name) == 0 {
@@ -196,12 +201,12 @@ func (is ImageService) EditImageBuild(ctx *gin.Context) {
 func (is ImageService) DelImageBuild(ctx *gin.Context) {
 	id := ctx.Query("id")
 	if id == "" {
-		util.ReturnMessage(ctx, false, "请先指定模板")
+		util.ReturnMessage(ctx, false, TEMP_ERROR)
 		return
 	}
 	tid, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		util.ReturnMessage(ctx, false, "请先指定模板")
+		util.ReturnMessage(ctx, false, TEMP_ERROR)
 		return
 	}
 
@@ -227,12 +232,12 @@ func (is ImageService) GetImageBuildList(ctx *gin.Context) {
 func (is ImageService) GetImageBuildInfo(ctx *gin.Context) {
 	id := ctx.Query("id")
 	if id == "" {
-		util.ReturnMessage(ctx, false, "请先指定模板")
+		util.ReturnMessage(ctx, false, TEMP_ERROR)
 		return
 	}
 	tid, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		util.ReturnMessage(ctx, false, "请先指定模板")
+		util.ReturnMessage(ctx, false, TEMP_ERROR)
 		return
 	}
 

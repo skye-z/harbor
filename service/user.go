@@ -38,7 +38,7 @@ type loginResponse struct {
 func (us UserService) Login(ctx *gin.Context) {
 	var form loginRequest
 	if err := ctx.ShouldBindJSON(&form); err != nil {
-		util.ReturnMessage(ctx, false, "传入数据无效")
+		util.ReturnMessage(ctx, false, DATA_ERROR)
 		return
 	}
 	if len(form.Name) == 0 || len(form.Pass) == 0 {
@@ -150,7 +150,7 @@ func (us UserService) Add(ctx *gin.Context) {
 
 	var addObj FormUser
 	if err := ctx.ShouldBindJSON(&addObj); err != nil {
-		util.ReturnMessage(ctx, false, "传入数据无效")
+		util.ReturnMessage(ctx, false, DATA_ERROR)
 		return
 	}
 	var form model.User = model.User{
@@ -223,7 +223,7 @@ func (us UserService) Del(ctx *gin.Context) {
 func (us UserService) Edit(ctx *gin.Context) {
 	var addObj FormUser
 	if err := ctx.ShouldBindJSON(&addObj); err != nil {
-		util.ReturnMessage(ctx, false, "传入数据无效")
+		util.ReturnMessage(ctx, false, DATA_ERROR)
 		return
 	}
 

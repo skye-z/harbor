@@ -230,32 +230,8 @@ func (as AuthService) Callback(ctx *gin.Context) {
 
 // 查询 OAuth2 用户信息
 func (as AuthService) QueryUserInfo(token string) (string, string, error) {
-	// 创建 HTTP 请求
-	req, err := http.NewRequest("GET", util.GetString("oauth2.userurl"), nil)
-	if err != nil {
-		return "", "", err
-	}
-
-	// 设置 Authorization 头部，带上 Bearer Token
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	// 发起 HTTP 请求
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", "", err
-	}
-	defer resp.Body.Close()
-
-	// 读取响应内容
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", "", err
-	}
-
-	// 使用 map 解析 JSON 数据
-	var result map[string]interface{}
-	err = json.Unmarshal(body, &result)
+	// 获取用户信息
+	result, err := as.getUserInfo(token)
 	if err != nil {
 		return "", "", err
 	}
@@ -263,9 +239,9 @@ func (as AuthService) QueryUserInfo(token string) (string, string, error) {
 	idKey := util.GetString("oauth2.userIdKey")
 	nameKey := util.GetString("oauth2.userNameKey")
 
+	// 解析用户信息
 	oauth2Id := ""
 	oauth2Name := ""
-
 	for key, value := range result {
 		if key == idKey {
 			if strVal, ok := value.(string); ok {
@@ -283,4 +259,38 @@ func (as AuthService) QueryUserInfo(token string) (string, string, error) {
 		}
 	}
 	return oauth2Id, oauth2Name, err
+}
+
+// 获取 OAuth2 用户信息
+func (as AuthService) getUserInfo(token string) (map[string]interface{}, error) {
+	// 创建 HTTP 请求
+	req, err := http.NewRequest("GET", util.GetString("oauth2.userurl"), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// 设置 Authorization 头部，带上 Bearer Token
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	// 发起 HTTP 请求
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// 读取响应内容
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// 使用 map 解析 JSON 数据
+	var result map[string]interface{}
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
 }
