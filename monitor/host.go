@@ -54,18 +54,25 @@ func GetDeviceInfo() DeviceInfo {
 	swapTotal := s.Total / 1024 / 1024
 
 	var diskTotal uint64 = 0
-	// 获取磁盘的分区信息
-	diskInfo, _ := disk.Partitions(true)
-	if diskInfo[0].Mountpoint == "/" {
-		usage, _ := disk.Usage("/")
-		diskTotal += usage.Total
-	} else {
-		for i := 0; i < len(diskInfo); i++ {
-			usage, _ := disk.Usage(diskInfo[i].Mountpoint)
+	// 获取根目录使用情况
+	diskUsage, err := disk.Usage("/")
+	if err != nil {
+		// 获取磁盘的分区信息
+		diskInfo, _ := disk.Partitions(true)
+		if diskInfo[0].Mountpoint == "/" {
+			usage, _ := disk.Usage("/")
 			diskTotal += usage.Total
+		} else {
+			for i := 0; i < len(diskInfo); i++ {
+				usage, _ := disk.Usage(diskInfo[i].Mountpoint)
+				diskTotal += usage.Total
+			}
 		}
+		diskTotal = diskTotal / 1024 / 1024
+
+	} else {
+		diskTotal = diskUsage.Total / 1024 / 1024
 	}
-	diskTotal = diskTotal / 1024 / 1024
 
 	return DeviceInfo{
 		HostID:      info.HostID,
