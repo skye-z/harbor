@@ -1,10 +1,11 @@
 package monitor
 
 import (
-	"harbor/util"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/skye-z/harbor/util"
 )
 
 func SendNotice(msg string) bool {

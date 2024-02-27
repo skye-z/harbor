@@ -1,8 +1,9 @@
 package service
 
 import (
-	"harbor/util"
 	"strings"
+
+	"github.com/skye-z/harbor/util"
 
 	"github.com/gin-gonic/gin"
 )

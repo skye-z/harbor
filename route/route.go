@@ -2,12 +2,13 @@ package route
 
 import (
 	"embed"
-	"harbor/docker"
-	"harbor/service"
 	"io/fs"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/skye-z/harbor/docker"
+	"github.com/skye-z/harbor/service"
 
 	"github.com/gin-gonic/gin"
 	"xorm.io/xorm"

@@ -2,12 +2,13 @@ package monitor
 
 import (
 	"fmt"
-	"harbor/model"
-	"harbor/util"
 	"log"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/skye-z/harbor/model"
+	"github.com/skye-z/harbor/util"
 
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"

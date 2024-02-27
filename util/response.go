@@ -1,8 +1,9 @@
 package util
 
 import (
-	"harbor/model"
 	"time"
+
+	"github.com/skye-z/harbor/model"
 
 	"github.com/gin-gonic/gin"
 )

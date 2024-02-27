@@ -1,9 +1,10 @@
 package service
 
 import (
-	"harbor/model"
-	"harbor/util"
 	"strconv"
+
+	"github.com/skye-z/harbor/model"
+	"github.com/skye-z/harbor/util"
 
 	"github.com/gin-gonic/gin"
 	"xorm.io/xorm"

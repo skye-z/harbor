@@ -1,9 +1,10 @@
 package service
 
 import (
-	"harbor/model"
-	"harbor/util"
 	"log"
+
+	"github.com/skye-z/harbor/model"
+	"github.com/skye-z/harbor/util"
 
 	"xorm.io/xorm"
 )

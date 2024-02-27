@@ -2,15 +2,16 @@ package main
 
 import (
 	"embed"
-	"harbor/model"
-	"harbor/monitor"
-	"harbor/route"
-	"harbor/service"
-	"harbor/util"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/skye-z/harbor/model"
+	"github.com/skye-z/harbor/monitor"
+	"github.com/skye-z/harbor/route"
+	"github.com/skye-z/harbor/service"
+	"github.com/skye-z/harbor/util"
 
 	_ "modernc.org/sqlite"
 	"xorm.io/xorm"

@@ -2,10 +2,11 @@ package monitor
 
 import (
 	"context"
-	"harbor/model"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/skye-z/harbor/model"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"

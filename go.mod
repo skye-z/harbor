@@ -1,4 +1,4 @@
-module harbor
+module github.com/skye-z/harbor
 
 go 1.21.6
 

@@ -1,11 +1,12 @@
 package service
 
 import (
-	"harbor/docker"
-	"harbor/model"
-	"harbor/util"
 	"log"
 	"strconv"
+
+	"github.com/skye-z/harbor/docker"
+	"github.com/skye-z/harbor/model"
+	"github.com/skye-z/harbor/util"
 
 	"github.com/gin-gonic/gin"
 	"xorm.io/xorm"

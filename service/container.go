@@ -1,10 +1,11 @@
 package service
 
 import (
-	"harbor/docker"
-	"harbor/util"
 	"net/http"
 	"strconv"
+
+	"github.com/skye-z/harbor/docker"
+	"github.com/skye-z/harbor/util"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"

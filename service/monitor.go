@@ -1,9 +1,9 @@
 package service
 
 import (
-	"harbor/docker"
-	"harbor/monitor"
-	"harbor/util"
+	"github.com/skye-z/harbor/docker"
+	"github.com/skye-z/harbor/monitor"
+	"github.com/skye-z/harbor/util"
 
 	"github.com/gin-gonic/gin"
 )
