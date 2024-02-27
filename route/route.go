@@ -1,3 +1,10 @@
+/*
+HTTP 路由
+
+BetaX Harbor
+Copyright © 2024 SkyeZhang <skai-zhang@hotmail.com>
+*/
+
 package route
 
 import (

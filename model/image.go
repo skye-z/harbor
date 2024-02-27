@@ -1,3 +1,10 @@
+/*
+镜像数据模型
+
+BetaX Harbor
+Copyright © 2024 SkyeZhang <skai-zhang@hotmail.com>
+*/
+
 package model
 
 import (
