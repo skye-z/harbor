@@ -60,6 +60,34 @@ func (ds ContainerService) BuildContainer(ctx *gin.Context) {
 	}
 }
 
+// 更新容器
+func (ds ContainerService) UpdateContainer(ctx *gin.Context) {
+	id := ctx.Query("id")
+	if id == "" {
+		util.ReturnMessage(ctx, false, "容器编号不能为空")
+		return
+	}
+	var form util.BuildContainer
+	if err := ctx.ShouldBindJSON(&form); err != nil {
+		util.ReturnMessage(ctx, false, "传入数据无效")
+		return
+	}
+	if form.Name == "" {
+		util.ReturnMessage(ctx, false, "容器名称不能为空")
+		return
+	}
+	if form.Container.Image == "" {
+		util.ReturnMessage(ctx, false, "镜像不能为空")
+		return
+	}
+	log, err := ds.Client.UpdateContainer(id, form)
+	if err != nil {
+		util.ReturnMessageData(ctx, false, "容器更新失败", err.Error())
+	} else {
+		util.ReturnMessageData(ctx, true, "容器更新成功", log)
+	}
+}
+
 // 获取容器列表
 func (ds ContainerService) GetList(ctx *gin.Context) {
 	list, err := ds.Client.GetContainerList()

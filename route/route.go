@@ -107,6 +107,7 @@ func (r Route) addPrivateRoute(route gin.IRoutes, engine *xorm.Engine, us *servi
 	route.GET("/api/container/recreate", cs.RecreateContainer)
 	route.GET("/api/container/rename", cs.RenameContainer)
 	route.POST("/api/container/create", cs.BuildContainer)
+	route.POST("/api/container/update", cs.UpdateContainer)
 
 	is := service.NewImageService(r.DockerClient, engine)
 	route.GET("/api/image/list", is.GetList)

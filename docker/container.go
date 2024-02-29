@@ -315,6 +315,23 @@ func (d Docker) CloneContainer(id string) (string, error) {
 	return d.BuildContainer(source, source.Name+"_copy")
 }
 
+// 更新容器
+func (d Docker) UpdateContainer(id string, form util.BuildContainer) (string, error) {
+	timeout := 3
+	// 停止容器
+	err := d.StopContainer(id, &timeout)
+	if err != nil {
+		return "", err
+	}
+	// 删除旧容器
+	err = d.RemoveContainer(id, false, false, true)
+	if err != nil {
+		return "", err
+	}
+	// 构建新容器
+	return d.CreateContainer(form)
+}
+
 // 重建容器
 func (d Docker) RecreateContainer(id string) (string, error) {
 	timeout := 3
