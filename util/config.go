@@ -60,6 +60,8 @@ func GetFloat64(key string) float64 {
 func createDefault() {
 	// 安装状态
 	viper.SetDefault("basic.install", "0")
+	// 请求速率限制
+	viper.SetDefault("basic.qps", "10")
 	// OAuth2
 	viper.SetDefault("oauth2.enable", "0")
 	viper.SetDefault("oauth2.clientId", "")

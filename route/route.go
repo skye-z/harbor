@@ -13,9 +13,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/skye-z/harbor/docker"
 	"github.com/skye-z/harbor/service"
+	"github.com/skye-z/harbor/util"
+	"golang.org/x/time/rate"
 
 	"github.com/gin-gonic/gin"
 	"xorm.io/xorm"
@@ -48,6 +51,17 @@ func newRoute(page embed.FS) *gin.Engine {
 	log.Println("[Core] load page")
 	pageFile, _ := fs.Sub(page, "page/dist")
 	router.StaticFS("/app", http.FS(pageFile))
+
+	limiter := rate.NewLimiter(rate.Every(time.Second), util.GetInt("basic.qps"))
+	router.Use(func(ctx *gin.Context) {
+		if !limiter.Allow() {
+			util.ReturnMessage(ctx, false, "请求过于频繁")
+			ctx.Abort()
+			return
+		}
+		ctx.Next()
+	})
+
 	return router
 }
 

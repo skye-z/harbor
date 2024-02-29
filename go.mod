@@ -11,6 +11,7 @@ require (
 	github.com/shirou/gopsutil/v3 v3.23.12
 	github.com/spf13/viper v1.18.2
 	golang.org/x/oauth2 v0.16.0
+	golang.org/x/time v0.5.0
 	modernc.org/sqlite v1.28.0
 	xorm.io/xorm v1.3.6
 )
