@@ -69,7 +69,7 @@ func newRoute(page embed.FS) *gin.Engine {
 func (r Route) Init(engine *xorm.Engine) {
 	us := service.NewUserService(engine)
 	r.addOAuth2Route(engine)
-	r.addPublicRoute(engine, us)
+	r.addPublicRoute(us)
 	// 私有路由
 	private := r.Router.Group("").Use(service.AuthHandler())
 	{
@@ -78,7 +78,7 @@ func (r Route) Init(engine *xorm.Engine) {
 }
 
 // 公共路由
-func (r Route) addPublicRoute(engine *xorm.Engine, us *service.UserService) {
+func (r Route) addPublicRoute(us *service.UserService) {
 	r.Router.GET("/", func(ctx *gin.Context) {
 		ctx.Request.URL.Path = "/app"
 		r.Router.HandleContext(ctx)
