@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/skye-z/harbor/docker"
@@ -54,6 +55,11 @@ func newRoute(page embed.FS) *gin.Engine {
 
 	limiter := rate.NewLimiter(rate.Every(time.Second), util.GetInt("basic.qps"))
 	router.Use(func(ctx *gin.Context) {
+		// 静态资源请求，不进行速率限制
+		if strings.HasPrefix(ctx.Request.URL.Path, "/app/") {
+			ctx.Next()
+			return
+		}
 		if !limiter.Allow() {
 			util.ReturnMessage(ctx, false, "请求过于频繁")
 			ctx.Abort()
