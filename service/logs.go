@@ -57,3 +57,13 @@ func (ls LogsService) GetLogs(ctx *gin.Context) {
 		util.ReturnData(ctx, true, list)
 	}
 }
+
+func (ls LogsService) Clean(ctx *gin.Context) {
+	state := ls.LogModel.Clean()
+	if !state {
+		util.ReturnMessage(ctx, false, "清空日志失败")
+	} else {
+		ls.LogModel.AddLog("platform", "cleanLogs", "")
+		util.ReturnMessage(ctx, true, "清空日志成功")
+	}
+}

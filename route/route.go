@@ -170,6 +170,7 @@ func (r Route) addPrivateRoute(route gin.IRoutes, engine *xorm.Engine, us *servi
 	ls := service.NewLogsService(engine)
 	route.GET("/api/log/number", ls.GetNumber)
 	route.GET("/api/log/list", ls.GetLogs)
+	route.GET("/api/log/clean", ls.Clean)
 
 	route.GET("/api/user/list", us.GetList)
 	route.GET("/api/user/info", us.GetInfo)

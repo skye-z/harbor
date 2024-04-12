@@ -9,6 +9,7 @@ package model
 
 import (
 	"encoding/json"
+	"log"
 	"time"
 
 	"xorm.io/xorm"
@@ -67,4 +68,14 @@ func (model LogModel) GetLogNumber() (int64, error) {
 		return 0, err
 	}
 	return num, nil
+}
+
+// 清空日志
+func (model LogModel) Clean() bool {
+	_, err := model.DB.Exec("DELETE FROM log")
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return true
 }
