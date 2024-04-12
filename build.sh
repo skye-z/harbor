@@ -5,6 +5,7 @@ echo "Start packaging..."
 go mod download
 go mod tidy
 
+rm -rf ./out
 mkdir ./out
 
 generate(){
