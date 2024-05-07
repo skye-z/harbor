@@ -11,6 +11,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"log"
 
 	"github.com/spf13/viper"
 )
@@ -19,7 +20,7 @@ const Version = "1.0.1"
 
 func InitConfig() {
 	viper.SetConfigName("config")
-	viper.SetConfigType("ini")
+	viper.SetConfigType("json")
 	viper.AddConfigPath(".")
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -57,11 +58,35 @@ func GetFloat64(key string) float64 {
 	return viper.GetFloat64(key)
 }
 
+func CheckMapExist(key, value string) bool {
+	item := viper.GetStringMap(key)
+	return item != nil && item[value] != nil
+}
+
+func AddMap(key, value string, date int64) {
+	item := viper.GetStringMap(key)
+	if item == nil {
+		item = make(map[string]interface{})
+	}
+	item[value] = date
+	Set(key, item)
+}
+
+func DelMap(key, value string) {
+	item := viper.GetStringMap(key)
+	if item != nil {
+		delete(item, value)
+		Set(key, item)
+	}
+}
+
 func createDefault() {
+	log.Println("[Config] init default config")
 	// 安装状态
 	viper.SetDefault("basic.install", "0")
-	// 请求速率限制
-	viper.SetDefault("basic.qps", "10")
+	// 安全防护
+	viper.SetDefault("secure.qps", "10")
+	viper.SetDefault("secure.blacklist", "")
 	// OAuth2
 	viper.SetDefault("oauth2.enable", "0")
 	viper.SetDefault("oauth2.clientId", "")

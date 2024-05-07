@@ -53,7 +53,7 @@ func newRoute(page embed.FS) *gin.Engine {
 	pageFile, _ := fs.Sub(page, "page/dist")
 	router.StaticFS("/app", http.FS(pageFile))
 
-	limiter := rate.NewLimiter(rate.Every(time.Second), util.GetInt("basic.qps"))
+	limiter := rate.NewLimiter(rate.Every(time.Second), util.GetInt("secure.qps"))
 	router.Use(func(ctx *gin.Context) {
 		// 静态资源请求，不进行速率限制
 		if strings.HasPrefix(ctx.Request.URL.Path, "/app/") {

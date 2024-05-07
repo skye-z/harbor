@@ -19,7 +19,8 @@ import (
 )
 
 type UserService struct {
-	UserModel model.UserModel
+	UserModel  model.UserModel
+	ErrorCount map[string][]time.Time
 }
 
 func NewUserService(engine *xorm.Engine) *UserService {
@@ -27,6 +28,7 @@ func NewUserService(engine *xorm.Engine) *UserService {
 	us.UserModel = model.UserModel{
 		DB: engine,
 	}
+	us.ErrorCount = make(map[string][]time.Time)
 	return us
 }
 
@@ -44,6 +46,10 @@ type loginResponse struct {
 
 // 登录
 func (us UserService) Login(ctx *gin.Context) {
+	if util.CheckMapExist("secure.blacklist", ctx.ClientIP()) {
+		util.ReturnMessage(ctx, false, "IP已被封禁")
+		return
+	}
 	var form loginRequest
 	if err := ctx.ShouldBindJSON(&form); err != nil {
 		util.ReturnMessage(ctx, false, DATA_ERROR)
@@ -64,6 +70,7 @@ func (us UserService) Login(ctx *gin.Context) {
 	}
 	if user == nil {
 		util.ReturnMessage(ctx, false, "用户名或密码错误")
+		us.increaseErrorCount(ctx.ClientIP())
 		return
 	}
 	logger := &model.LogModel{
@@ -71,6 +78,20 @@ func (us UserService) Login(ctx *gin.Context) {
 	}
 	logger.AddLog("platform", "password", user.Nickname+" 从 "+ctx.ClientIP())
 	ctx.JSON(200, loginResponse{User: user, Token: token, Expire: exp, Time: time.Now().Unix()})
+}
+
+func (us UserService) increaseErrorCount(ip string) {
+	us.ErrorCount[ip] = append(us.ErrorCount[ip], time.Now())
+
+	expiryTime := time.Now().Add(-5 * time.Minute)
+	for len(us.ErrorCount[ip]) > 0 && us.ErrorCount[ip][0].Before(expiryTime) {
+		us.ErrorCount[ip] = us.ErrorCount[ip][1:]
+	}
+
+	if len(us.ErrorCount[ip]) >= 3 {
+		util.AddMap("secure.blacklist", ip, time.Now().Unix())
+		delete(us.ErrorCount, ip)
+	}
 }
 
 func (us UserService) GetUserLoginInfo(name string, pass string) (*model.User, string, int64, error) {
