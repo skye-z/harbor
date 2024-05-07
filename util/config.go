@@ -58,6 +58,10 @@ func GetFloat64(key string) float64 {
 	return viper.GetFloat64(key)
 }
 
+func GetStringMap(key string) map[string]any {
+	return viper.GetStringMap(key)
+}
+
 func CheckMapExist(key, value string) bool {
 	item := viper.GetStringMap(key)
 	return item != nil && item[value] != nil

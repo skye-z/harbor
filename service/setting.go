@@ -8,6 +8,7 @@ Copyright © 2024 SkyeZhang <skai-zhang@hotmail.com>
 package service
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/skye-z/harbor/util"
@@ -143,6 +144,53 @@ func (ss SettingService) UpdateAlarmSetting(ctx *gin.Context) {
 	util.Set("alarm.loadThreshold", form.LoadThreshold)
 	util.Set("alarm.memoryThreshold", form.MemoryThreshold)
 	util.Set("alarm.diskThreshold", form.DiskThreshold)
+
+	util.ReturnMessage(ctx, true, "更新成功")
+}
+
+type SettingSecure struct {
+	Qps       string `json:"qps"`
+	BlackList string `json:"blacklist"`
+}
+
+func (ss SettingService) GetSecureSetting(ctx *gin.Context) {
+	if !util.CheckAuth(ctx) {
+		util.ReturnMessage(ctx, false, "权限不足")
+		return
+	}
+	blacklist, err := json.Marshal(util.GetStringMap("secure.blacklist"))
+	if err != nil {
+		util.ReturnMessage(ctx, false, "数据错误")
+		return
+	}
+
+	config := &SettingSecure{
+		Qps:       util.GetString("secure.qps"),
+		BlackList: string(blacklist),
+	}
+	util.ReturnData(ctx, true, config)
+}
+
+func (ss SettingService) UpdateSecureSetting(ctx *gin.Context) {
+	if !util.CheckAuth(ctx) {
+		util.ReturnMessage(ctx, false, "权限不足")
+		return
+	}
+	var form SettingSecure
+	if err := ctx.ShouldBindJSON(&form); err != nil {
+		util.ReturnMessage(ctx, false, "传入数据无效")
+		return
+	}
+
+	var blacklist map[string]interface{}
+	err := json.Unmarshal([]byte(form.BlackList), &blacklist)
+	if err != nil {
+		util.ReturnMessage(ctx, false, "传入数据非法")
+		return
+	}
+
+	util.Set("secure.qps", form.Qps)
+	util.Set("secure.blacklist", blacklist)
 
 	util.ReturnMessage(ctx, true, "更新成功")
 }
