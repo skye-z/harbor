@@ -182,7 +182,7 @@ func (ss SettingService) UpdateSecureSetting(ctx *gin.Context) {
 		return
 	}
 
-	var blacklist map[string]interface{}
+	var blacklist = make(map[string]interface{})
 	err := json.Unmarshal([]byte(form.BlackList), &blacklist)
 	if err != nil {
 		util.ReturnMessage(ctx, false, "传入数据非法")

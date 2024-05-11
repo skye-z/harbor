@@ -35,7 +35,10 @@ func InitConfig() {
 
 func Set(key string, value interface{}) {
 	viper.Set(key, value)
-	viper.WriteConfig()
+	err := viper.WriteConfig()
+	if err != nil {
+		log.Println("[Config] save error,", err.Error())
+	}
 }
 
 func GetBool(key string) bool {
