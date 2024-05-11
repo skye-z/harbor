@@ -9,8 +9,10 @@ package service
 
 import (
 	"encoding/json"
+	"os/exec"
 	"strings"
 
+	githubreleases "github.com/skye-z/github-releases"
 	"github.com/skye-z/harbor/util"
 
 	"github.com/gin-gonic/gin"
@@ -22,10 +24,18 @@ const (
 )
 
 type SettingService struct {
+	Version *githubreleases.Versioning
 }
 
 func NewSettingService() *SettingService {
 	ss := new(SettingService)
+	ss.Version = &githubreleases.Versioning{
+		Author: "skye-z",
+		Store:  "harbor",
+		Name:   "harbor",
+		Cmd:    exec.Command("systemctl", "restart", "harbor"),
+		Proxy:  "https://mirror.ghproxy.com/",
+	}
 	return ss
 }
 
@@ -196,7 +206,7 @@ func (ss SettingService) UpdateSecureSetting(ctx *gin.Context) {
 }
 
 func (ss SettingService) GetNewVersion(ctx *gin.Context) {
-	info := util.GetLatestReleaseVersion()
+	info := ss.Version.GetLatestReleaseVersion()
 	if info == nil {
 		util.ReturnMessage(ctx, false, "获取版本信息失败")
 	} else {
@@ -205,10 +215,10 @@ func (ss SettingService) GetNewVersion(ctx *gin.Context) {
 }
 
 func (ss SettingService) UpdateNewVersion(ctx *gin.Context) {
-	state := util.DownloadNewVersion()
+	state := ss.Version.DownloadNewVersion()
 	if state {
 		util.ReturnMessage(ctx, true, "更新成功")
-		util.RestartWithSystemd()
+		ss.Version.RestartWithSystemd()
 	} else {
 		util.ReturnMessage(ctx, false, "更新失败")
 	}

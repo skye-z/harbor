@@ -1,6 +1,6 @@
 module github.com/skye-z/harbor
 
-go 1.21.6
+go 1.22.2
 
 require (
 	github.com/docker/docker v24.0.9+incompatible
@@ -9,6 +9,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/shirou/gopsutil/v3 v3.23.12
+	github.com/skye-z/github-releases v0.0.6
 	github.com/spf13/viper v1.18.2
 	golang.org/x/oauth2 v0.16.0
 	golang.org/x/time v0.5.0

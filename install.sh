@@ -16,7 +16,7 @@ if [ -z "$HARBOR_VERSION" ]; then
     echo "Failed to retrieve the latest Harbor version."
     exit 1
 fi
-HARBOR_DOWNLOAD_URL="https://github.com/skye-z/harbor/releases/download/${HARBOR_VERSION}/harbor-linux-amd64"
+HARBOR_DOWNLOAD_URL="https://github.com/skye-z/harbor/releases/download/${HARBOR_VERSION}/harbor_linux_amd64"
 
 # 设置工作目录
 WORKING_DIRECTORY="/opt/harbor"
@@ -56,9 +56,9 @@ install_harbor_online() {
 
 install_harbor_offline() {
     # 检查是否存在离线安装文件
-    if [ -f "harbor-linux-amd64" ]; then
+    if [ -f "harbor_linux_amd64" ]; then
         # 复制离线安装文件到工作目录
-        cp harbor-linux-amd64 ${WORKING_DIRECTORY}/harbor
+        cp harbor_linux_amd64 ${WORKING_DIRECTORY}/harbor
 
         # 赋予可执行权限
         chmod +x ${WORKING_DIRECTORY}/harbor
@@ -71,7 +71,7 @@ install_harbor_offline() {
 
         echo "Harbor service installed successfully!"
     else
-        echo "Error: Offline installation file 'harbor-linux-amd64' not found. Please download it manually to the current directory."
+        echo "Error: Offline installation file 'harbor_linux_amd64' not found. Please download it manually to the current directory."
         exit 1
     fi
 }
