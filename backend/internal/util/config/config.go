@@ -59,14 +59,8 @@ func GetStringSlice(key string) []string {
 func createDefault() {
 	viper.SetDefault("server.port", 8080)
 	viper.SetDefault("server.mode", "release")
-
 	viper.SetDefault("cors.origins", "")
-
 	viper.SetDefault("docker.socket", "/var/run/docker.sock")
-
-	viper.SetDefault("log.level", "info")
-	viper.SetDefault("log.rotate_days", 7)
-	viper.SetDefault("log.keep_count", 10)
 
 	secret, err := generateSecret()
 	if err != nil {
