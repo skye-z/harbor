@@ -2,8 +2,11 @@ package docker
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 
+	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/client"
 )
 
@@ -165,4 +168,77 @@ func (c *Client) OperationContainer(id string, aciton int) error {
 		return fmt.Errorf("failed to start container: %w", err)
 	}
 	return nil
+}
+
+// 获取容器日志
+func (c *Client) GetContainerLogs(ctx context.Context, id string, tail string) (io.ReadCloser, error) {
+	resp, err := c.cli.ContainerLogs(ctx, id, client.ContainerLogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Tail:       tail,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get container logs: %w", err)
+	}
+
+	return resp, nil
+}
+
+// ContainerStats 简化后的容器统计信息
+type ContainerStats struct {
+	CPU       float64 `json:"cpu"`
+	Memory    float64 `json:"memory"`
+	NetworkRx float64 `json:"networkRx"`
+	NetworkTx float64 `json:"networkTx"`
+}
+
+// 获取容器统计信息
+func (c *Client) GetContainerStats(id string) (*ContainerStats, error) {
+	ctx := context.Background()
+	result, err := c.cli.ContainerStats(ctx, id, client.ContainerStatsOptions{Stream: false})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get container stats: %w", err)
+	}
+	defer result.Body.Close()
+
+	var stats container.StatsResponse
+	if err := json.NewDecoder(result.Body).Decode(&stats); err != nil {
+		return nil, fmt.Errorf("failed to decode stats: %w", err)
+	}
+
+	// 计算 CPU 使用率
+	var cpuPercent = 0.0
+	cpuDelta := float64(stats.CPUStats.CPUUsage.TotalUsage) - float64(stats.PreCPUStats.CPUUsage.TotalUsage)
+	systemDelta := float64(stats.CPUStats.SystemUsage) - float64(stats.PreCPUStats.SystemUsage)
+	onlineCPUs := float64(stats.CPUStats.OnlineCPUs)
+	if onlineCPUs == 0.0 {
+		onlineCPUs = float64(len(stats.CPUStats.CPUUsage.PercpuUsage))
+	}
+
+	if systemDelta > 0.0 && cpuDelta > 0.0 {
+		cpuPercent = (cpuDelta / systemDelta) * onlineCPUs * 100.0
+	}
+
+	// 计算内存使用量
+	// 兼容不同版本的 Docker API，有些版本可能没有 Stats 字段
+	var memoryUsage = float64(stats.MemoryStats.Usage)
+	if cache, ok := stats.MemoryStats.Stats["cache"]; ok {
+		memoryUsage = memoryUsage - float64(cache)
+	} else if inactiveFile, ok := stats.MemoryStats.Stats["inactive_file"]; ok {
+		memoryUsage = memoryUsage - float64(inactiveFile)
+	}
+
+	// 计算网络流量
+	var networkRx, networkTx float64
+	for _, net := range stats.Networks {
+		networkRx += float64(net.RxBytes)
+		networkTx += float64(net.TxBytes)
+	}
+
+	return &ContainerStats{
+		CPU:       cpuPercent,
+		Memory:    memoryUsage,
+		NetworkRx: networkRx,
+		NetworkTx: networkTx,
+	}, nil
 }
