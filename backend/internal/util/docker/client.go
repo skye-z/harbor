@@ -47,10 +47,7 @@ func NewClient() (*Client, error) {
 		host = socket
 	}
 
-	cli, err := client.NewClientWithOpts(
-		client.WithHost(host),
-		client.WithAPIVersionNegotiation(),
-	)
+	cli, err := client.New(client.WithHost(host))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create docker client: %w", err)
 	}
@@ -128,7 +125,7 @@ func (c *Client) GetContainerDetails(ctx context.Context, id string) (map[string
 		return nil, fmt.Errorf("failed to inspect container: %w", err)
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"id":    inspect.Container.ID,
 		"name":  strings.TrimPrefix(inspect.Container.Name, "/"),
 		"image": inspect.Container.Config.Image,

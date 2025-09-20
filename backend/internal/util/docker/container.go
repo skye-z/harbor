@@ -184,7 +184,7 @@ func (c *Client) GetContainerLogs(ctx context.Context, id string, tail string) (
 	return resp, nil
 }
 
-// ContainerStats 简化后的容器统计信息
+// 容器统计信息
 type ContainerStats struct {
 	CPU       float64 `json:"cpu"`
 	Memory    float64 `json:"memory"`
@@ -241,4 +241,28 @@ func (c *Client) GetContainerStats(id string) (*ContainerStats, error) {
 		NetworkRx: networkRx,
 		NetworkTx: networkTx,
 	}, nil
+}
+
+// 获取容器进程信息
+func (c *Client) GetContainerProcesses(ctx context.Context, id string) (client.ContainerTopResult, error) {
+	resp, err := c.cli.ContainerTop(ctx, id, client.ContainerTopOptions{
+		Arguments: []string{"pid", "ppid", "user", "cmd"},
+	})
+	if err != nil {
+		return client.ContainerTopResult{}, fmt.Errorf("failed to get container logs: %w", err)
+	}
+
+	return resp, nil
+}
+
+// 获取容器目录结构
+func (c *Client) ListContainerDir(ctx context.Context, id string, path string) (client.ContainerStatPathResult, error) {
+	resp, err := c.cli.ContainerStatPath(ctx, id, client.ContainerStatPathOptions{
+		Path: path,
+	})
+	if err != nil {
+		return client.ContainerStatPathResult{}, fmt.Errorf("failed to get container logs: %w", err)
+	}
+
+	return resp, nil
 }
