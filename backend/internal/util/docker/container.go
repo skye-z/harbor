@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/client"
@@ -144,6 +147,30 @@ func (c *Client) ListContainers() ([]*Container, error) {
 	return containers, nil
 }
 
+// 获取容器的详细信息
+func (c *Client) GetContainerInfo(ctx context.Context, id string) (*client.ContainerInspectResult, error) {
+	inspect, err := c.cli.ContainerInspect(ctx, id, client.ContainerInspectOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to inspect container: %w", err)
+	}
+
+	return &inspect, nil
+}
+
+// 获取容器基础信息
+func (c *Client) GetContainerDetails(ctx context.Context, id string) (map[string]interface{}, error) {
+	inspect, err := c.cli.ContainerInspect(ctx, id, client.ContainerInspectOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to inspect container: %w", err)
+	}
+
+	return map[string]any{
+		"id":    inspect.Container.ID,
+		"name":  strings.TrimPrefix(inspect.Container.Name, "/"),
+		"image": inspect.Container.Config.Image,
+	}, nil
+}
+
 // 操作容器
 func (c *Client) OperationContainer(id string, aciton int) error {
 	ctx := context.Background()
@@ -265,4 +292,110 @@ func (c *Client) ListContainerDir(ctx context.Context, id string, path string) (
 	}
 
 	return resp, nil
+}
+
+// TODO 从容器复制文件到./tmp/{容器id}/
+func (c *Client) CopyFromContainer(ctx context.Context, containerID, srcPath, dstPath string) error {
+	result, err := c.cli.CopyFromContainer(ctx, containerID, client.CopyFromContainerOptions{
+		SourcePath: srcPath,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to copy from container: %w", err)
+	}
+	defer result.Content.Close()
+
+	dstDir := filepath.Join(dstPath, containerID)
+	if err := os.MkdirAll(dstDir, 0755); err != nil {
+		return fmt.Errorf("failed to create destination directory: %w", err)
+	}
+
+	dstFile := filepath.Join(dstDir, filepath.Base(srcPath))
+	file, err := os.Create(dstFile)
+	if err != nil {
+		return fmt.Errorf("failed to create destination file: %w", err)
+	}
+	defer file.Close()
+
+	_, err = io.Copy(file, result.Content)
+	if err != nil {
+		return fmt.Errorf("failed to write file: %w", err)
+	}
+
+	return nil
+}
+
+// TODO 从./tmp/{容器id}/复制文件到容器
+func (c *Client) CopyToContainer(ctx context.Context, containerID, srcPath, dstPath string) error {
+	file, err := os.Open(srcPath)
+	if err != nil {
+		return fmt.Errorf("failed to open source file: %w", err)
+	}
+	defer file.Close()
+
+	content, err := io.ReadAll(file)
+	if err != nil {
+		return fmt.Errorf("failed to read file content: %w", err)
+	}
+
+	_, err = c.cli.CopyToContainer(ctx, containerID, client.CopyToContainerOptions{
+		DestinationPath:           dstPath,
+		Content:                   strings.NewReader(string(content)),
+		AllowOverwriteDirWithFile: true,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to copy to container: %w", err)
+	}
+
+	return nil
+}
+
+// 在容器内创建执行实例
+func (c *Client) CreateExec(ctx context.Context, containerID string, config *ContainerCreateConfig) (string, error) {
+	execConfig := client.ExecCreateOptions{
+		Cmd:          config.Cmd,
+		Env:          config.Env,
+		WorkingDir:   config.WorkingDir,
+		User:         config.User,
+		AttachStdin:  config.AttachStdin,
+		AttachStdout: config.AttachStdout,
+		AttachStderr: config.AttachStderr,
+		TTY:          config.Tty,
+	}
+
+	resp, err := c.cli.ExecCreate(ctx, containerID, execConfig)
+	if err != nil {
+		return "", fmt.Errorf("failed to create exec: %w", err)
+	}
+
+	return resp.ID, nil
+}
+
+// 附加到执行实例
+func (c *Client) AttachToExec(ctx context.Context, execID string, detach bool) (*ExecResult, error) {
+	hijackedResp, err := c.cli.ExecAttach(ctx, execID, client.ExecAttachOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to attach to exec: %w", err)
+	}
+
+	return &ExecResult{
+		Reader: hijackedResp.Reader,
+		Conn:   hijackedResp.Conn,
+	}, nil
+}
+
+// 调整执行实例的终端大小
+func (c *Client) ExecResize(ctx context.Context, execID string, rows, cols int) error {
+	_, err := c.cli.ExecResize(ctx, execID, client.ExecResizeOptions{
+		Height: uint(rows),
+		Width:  uint(cols),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to resize exec: %w", err)
+	}
+	return nil
+}
+
+// 关闭执行实例
+func (c *Client) CloseExec(ctx context.Context, execID string) error {
+	return nil
 }

@@ -52,12 +52,12 @@ func InitDBTable(engine *xorm.Engine) {
 
 var Engine *xorm.Engine
 
-// GetDB 获取数据库引擎
+// 获取数据库引擎
 func GetDB() *xorm.Engine {
 	return Engine
 }
 
-// Close 关闭数据库连接
+// 关闭数据库连接
 func Close() error {
 	if Engine != nil {
 		return Engine.Close()
