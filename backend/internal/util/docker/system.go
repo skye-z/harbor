@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/moby/moby/client"
@@ -35,6 +36,26 @@ type SystemInfo struct {
 	ServerVersion     string        `json:"server_version"`
 	SecurityOptions   []string      `json:"security_options"`
 	Labels            []string      `json:"labels"`
+	Version           VersionInfo   `json:"version"`
+}
+
+type VersionInfo struct {
+	Platform struct {
+		Name string `json:"name"`
+	} `json:"Platform"`
+	Components []struct {
+		Name    string `json:"name"`
+		Version string `json:"version"`
+		Details any    `json:"details"`
+	} `json:"Components"`
+	Version       string `json:"Version"`
+	GitCommit     string `json:"GitCommit"`
+	GoVersion     string `json:"GoVersion"`
+	Os            string `json:"Os"`
+	Arch          string `json:"Arch"`
+	KernelVersion string `json:"KernelVersion"`
+	Experimental  bool   `json:"Experimental"`
+	BuildTime     string `json:"BuildTime"`
 }
 
 // 检测 Docker 状态
@@ -58,6 +79,20 @@ func (c *Client) GetInfo() (*SystemInfo, error) {
 	driverStatus := make([]interface{}, len(result.Info.DriverStatus))
 	for i, status := range result.Info.DriverStatus {
 		driverStatus[i] = status
+	}
+
+	versionResult, err := c.cli.ServerVersion(ctx, client.ServerVersionOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get docker version: %w", err)
+	}
+
+	var version VersionInfo
+	data, err := json.Marshal(versionResult)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal version: %w", err)
+	}
+	if err := json.Unmarshal(data, &version); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal version: %w", err)
 	}
 
 	return &SystemInfo{
@@ -88,34 +123,35 @@ func (c *Client) GetInfo() (*SystemInfo, error) {
 		ServerVersion:     result.Info.ServerVersion,
 		SecurityOptions:   result.Info.SecurityOptions,
 		Labels:            result.Info.Labels,
+		Version:           version,
 	}, nil
 }
 
 // 清理未使用的容器
 func (c *Client) PruneContainers(ctx context.Context) (int64, error) {
-	_, err := c.cli.ContainerPrune(ctx, client.ContainerPruneOptions{})
+	result, err := c.cli.ContainerPrune(ctx, client.ContainerPruneOptions{})
 	if err != nil {
 		return 0, fmt.Errorf("failed to prune containers: %w", err)
 	}
-	return 0, nil
+	return int64(result.Report.SpaceReclaimed), nil
 }
 
 // 清理未使用的镜像
 func (c *Client) PruneImages(ctx context.Context) (int64, error) {
-	_, err := c.cli.ImagePrune(ctx, client.ImagePruneOptions{})
+	result, err := c.cli.ImagePrune(ctx, client.ImagePruneOptions{})
 	if err != nil {
 		return 0, fmt.Errorf("failed to prune images: %w", err)
 	}
-	return 0, nil
+	return int64(result.Report.SpaceReclaimed), nil
 }
 
 // 清理未使用的卷
 func (c *Client) PruneVolumes(ctx context.Context) (int64, error) {
-	_, err := c.cli.VolumePrune(ctx, client.VolumePruneOptions{})
+	result, err := c.cli.VolumePrune(ctx, client.VolumePruneOptions{})
 	if err != nil {
 		return 0, fmt.Errorf("failed to prune volumes: %w", err)
 	}
-	return 0, nil
+	return int64(result.Report.SpaceReclaimed), nil
 }
 
 // 清理未使用的网络

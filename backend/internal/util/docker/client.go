@@ -2,7 +2,6 @@ package docker
 
 import (
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/moby/moby/client"
@@ -11,24 +10,6 @@ import (
 
 type Client struct {
 	cli *client.Client
-}
-
-// 执行结果
-type ExecResult struct {
-	Reader io.Reader          // 输出读取器
-	Conn   io.ReadWriteCloser // 读写连接
-}
-
-// 容器创建配置
-type ContainerCreateConfig struct {
-	Cmd          []string // 执行命令
-	Env          []string // 环境变量
-	WorkingDir   string   // 工作目录
-	User         string   // 执行用户
-	AttachStdin  bool     // 是否附加标准输入
-	AttachStdout bool     // 是否附加标准输出
-	AttachStderr bool     // 是否附加标准错误输出
-	Tty          bool     // 是否使用 TTY（终端）
 }
 
 // 创建新的 Docker 客户端
@@ -54,4 +35,12 @@ func NewClient() (*Client, error) {
 	return &Client{
 		cli: cli,
 	}, nil
+}
+
+// 关闭 Docker 客户端连接
+func (c *Client) Close() error {
+	if c.cli != nil {
+		c.cli.Close()
+	}
+	return nil
 }

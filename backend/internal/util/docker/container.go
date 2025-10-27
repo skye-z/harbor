@@ -71,6 +71,32 @@ type Mount struct {
 	Propagation string `json:"propagation"`
 }
 
+// 容器统计信息
+type ContainerStats struct {
+	CPU       float64 `json:"cpu"`
+	Memory    float64 `json:"memory"`
+	NetworkRx float64 `json:"networkRx"`
+	NetworkTx float64 `json:"networkTx"`
+}
+
+// 执行结果
+type ExecResult struct {
+	Reader io.Reader          // 输出读取器
+	Conn   io.ReadWriteCloser // 读写连接
+}
+
+// 容器创建配置
+type ContainerCreateConfig struct {
+	Cmd          []string // 执行命令
+	Env          []string // 环境变量
+	WorkingDir   string   // 工作目录
+	User         string   // 执行用户
+	AttachStdin  bool     // 是否附加标准输入
+	AttachStdout bool     // 是否附加标准输出
+	AttachStderr bool     // 是否附加标准错误输出
+	Tty          bool     // 是否使用 TTY（终端）
+}
+
 // 获取容器列表
 func (c *Client) ListContainers() ([]*Container, error) {
 	ctx := context.Background()
@@ -211,14 +237,6 @@ func (c *Client) GetContainerLogs(ctx context.Context, id string, tail string) (
 	return resp, nil
 }
 
-// 容器统计信息
-type ContainerStats struct {
-	CPU       float64 `json:"cpu"`
-	Memory    float64 `json:"memory"`
-	NetworkRx float64 `json:"networkRx"`
-	NetworkTx float64 `json:"networkTx"`
-}
-
 // 获取容器统计信息
 func (c *Client) GetContainerStats(id string) (*ContainerStats, error) {
 	ctx := context.Background()
@@ -294,7 +312,7 @@ func (c *Client) ListContainerDir(ctx context.Context, id string, path string) (
 	return resp, nil
 }
 
-// TODO 从容器复制文件到./tmp/{容器id}/
+// 从容器复制文件
 func (c *Client) CopyFromContainer(ctx context.Context, containerID, srcPath, dstPath string) error {
 	result, err := c.cli.CopyFromContainer(ctx, containerID, client.CopyFromContainerOptions{
 		SourcePath: srcPath,
@@ -324,7 +342,7 @@ func (c *Client) CopyFromContainer(ctx context.Context, containerID, srcPath, ds
 	return nil
 }
 
-// TODO 从./tmp/{容器id}/复制文件到容器
+// 复制文件到容器
 func (c *Client) CopyToContainer(ctx context.Context, containerID, srcPath, dstPath string) error {
 	file, err := os.Open(srcPath)
 	if err != nil {
