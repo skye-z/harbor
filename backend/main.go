@@ -1,15 +1,20 @@
 package main
 
 import (
+	"embed"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/skye-z/harbor/internal/api"
 	"github.com/skye-z/harbor/internal/data"
 	"github.com/skye-z/harbor/internal/util/config"
 	"xorm.io/xorm"
 )
+
+//go:embed ../frontend/dist/*
+var page embed.FS
 
 func main() {
 	// 初始化系统配置
@@ -22,21 +27,21 @@ func main() {
 
 	// 设置 GIN
 	// TODO 下面是从v1 copy的
-	// route := route.NewRoute(page)
-	// if route == nil {
-	// 	log.Println("[Core] please start docker first")
-	// 	return
-	// }
-	// route.Init(engine)
-	// // 获取端口
-	// port := route.GetPort()
-	// log.Println("[Core] service started, port is", port)
-	// // 启动服务
-	// go func() {
-	// 	if err := route.Router.Run(":" + port); err != nil {
-	// 		log.Fatalf("Error starting server: %v", err)
-	// 	}
-	// }()
+	route := api.NewRoute(page)
+	if route == nil {
+		log.Println("[Core] please start docker first")
+		return
+	}
+	route.Init(engine)
+	// 获取端口
+	port := route.GetPort()
+	log.Println("[Core] service started, port is", port)
+	// 启动服务
+	go func() {
+		if err := route.Router.Run(":" + port); err != nil {
+			log.Fatalf("Error starting server: %v", err)
+		}
+	}()
 
 	// 等待中断信号以优雅关闭服务器
 	waitForInterrupt(engine)
