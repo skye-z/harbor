@@ -198,11 +198,11 @@ func (c *Client) GetContainerDetails(ctx context.Context, id string) (map[string
 }
 
 // 操作容器
-func (c *Client) OperationContainer(id string, aciton int) error {
+func (c *Client) OperationContainer(id string, action int) error {
 	ctx := context.Background()
 
 	var err error = nil
-	switch aciton {
+	switch action {
 	case 1:
 		// 启动容器
 		_, err = c.cli.ContainerStart(ctx, id, client.ContainerStartOptions{})
@@ -215,10 +215,16 @@ func (c *Client) OperationContainer(id string, aciton int) error {
 	case 4:
 		// 删除容器
 		_, err = c.cli.ContainerRemove(ctx, id, client.ContainerRemoveOptions{})
+	case 5:
+		// 暂停容器
+		_, err = c.cli.ContainerPause(ctx, id, client.ContainerPauseOptions{})
+	case 6:
+		// 恢复容器
+		_, err = c.cli.ContainerUnpause(ctx, id, client.ContainerUnpauseOptions{})
 	}
 
 	if err != nil {
-		return fmt.Errorf("failed to start container: %w", err)
+		return fmt.Errorf("failed to operate container: %w", err)
 	}
 	return nil
 }

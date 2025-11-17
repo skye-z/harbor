@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -43,4 +44,18 @@ func (c *Client) Close() error {
 		c.cli.Close()
 	}
 	return nil
+}
+
+// CommitContainer 将容器打包为镜像
+func (c *Client) CommitContainer(containerID, repo, tag string) (string, error) {
+	ctx := context.Background()
+
+	resp, err := c.cli.ContainerCommit(ctx, containerID, client.ContainerCommitOptions{
+		Reference: fmt.Sprintf("%s:%s", repo, tag),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to commit container: %w", err)
+	}
+
+	return resp.ID, nil
 }
