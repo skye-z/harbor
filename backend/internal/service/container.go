@@ -8,17 +8,17 @@ import (
 	"github.com/skye-z/harbor/internal/util/response"
 )
 
-// ContainerService 容器管理服务
+// 容器管理服务
 type ContainerService struct {
 	client *docker.Client
 }
 
-// NewContainerService 创建容器服务实例
+// 创建容器服务实例
 func NewContainerService(client *docker.Client) *ContainerService {
 	return &ContainerService{client: client}
 }
 
-// GetList 获取容器列表
+// 获取容器列表
 func (s *ContainerService) GetList(c *gin.Context) {
 	containers, err := s.client.ListContainers()
 	if err != nil {
@@ -28,7 +28,7 @@ func (s *ContainerService) GetList(c *gin.Context) {
 	response.Success(c, containers)
 }
 
-// GetInfo 获取容器的详细信息
+// 获取容器的详细信息
 func (s *ContainerService) GetInfo(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
@@ -44,7 +44,7 @@ func (s *ContainerService) GetInfo(c *gin.Context) {
 	response.Success(c, info)
 }
 
-// Operation 容器操作
+// 容器操作
 func (s *ContainerService) Operation(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
@@ -82,7 +82,7 @@ func (s *ContainerService) Operation(c *gin.Context) {
 	response.SuccessWithMessage(c, "操作成功", gin.H{"action": action})
 }
 
-// GetLogs 获取容器日志
+// 获取容器日志
 func (s *ContainerService) GetLogs(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
@@ -102,7 +102,7 @@ func (s *ContainerService) GetLogs(c *gin.Context) {
 	c.String(200, "日志获取成功，请使用WebSocket获取实时日志")
 }
 
-// GetStat 获取容器统计信息
+// 获取容器统计信息
 func (s *ContainerService) GetStat(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
@@ -118,7 +118,7 @@ func (s *ContainerService) GetStat(c *gin.Context) {
 	response.Success(c, stats)
 }
 
-// GetProcesses 获取容器进程信息
+// 获取容器进程信息
 func (s *ContainerService) GetProcesses(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
@@ -134,7 +134,7 @@ func (s *ContainerService) GetProcesses(c *gin.Context) {
 	response.Success(c, processes)
 }
 
-// GetDiff 获取容器文件目录
+// 获取容器文件目录
 func (s *ContainerService) GetDiff(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
@@ -151,7 +151,7 @@ func (s *ContainerService) GetDiff(c *gin.Context) {
 	response.Success(c, result)
 }
 
-// CopyFromContainer 从容器复制文件
+// 从容器复制文件
 func (s *ContainerService) CopyFromContainer(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
@@ -174,7 +174,7 @@ func (s *ContainerService) CopyFromContainer(c *gin.Context) {
 	response.SuccessWithMessage(c, "文件已复制到本地", nil)
 }
 
-// CopyToContainer 复制文件到容器
+// 复制文件到容器
 func (s *ContainerService) CopyToContainer(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
@@ -202,7 +202,7 @@ func (s *ContainerService) CopyToContainer(c *gin.Context) {
 	response.SuccessWithMessage(c, "文件已上传到容器", nil)
 }
 
-// ConnectTerminal 打开容器终端
+// 打开容器终端
 func (s *ContainerService) ConnectTerminal(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
@@ -229,7 +229,7 @@ func (s *ContainerService) ConnectTerminal(c *gin.Context) {
 	})
 }
 
-// TerminalWebSocket 终端WebSocket连接
+// 终端WebSocket连接
 func (s *ContainerService) TerminalWebSocket(c *gin.Context) {
 	execID := c.Query("exec_id")
 	if execID == "" {
@@ -242,7 +242,7 @@ func (s *ContainerService) TerminalWebSocket(c *gin.Context) {
 	})
 }
 
-// ResizeTerminal 调整终端大小
+// 调整终端大小
 func (s *ContainerService) ResizeTerminal(c *gin.Context) {
 	execID := c.Query("exec_id")
 	if execID == "" {
@@ -261,7 +261,7 @@ func (s *ContainerService) ResizeTerminal(c *gin.Context) {
 	response.SuccessWithMessage(c, "终端大小已调整", nil)
 }
 
-// CloseTerminal 关闭容器终端
+// 关闭容器终端
 func (s *ContainerService) CloseTerminal(c *gin.Context) {
 	execID := c.Query("exec_id")
 	if execID == "" {
@@ -277,7 +277,7 @@ func (s *ContainerService) CloseTerminal(c *gin.Context) {
 	response.SuccessWithMessage(c, "终端已关闭", nil)
 }
 
-// CommitContainer 将容器打包为镜像
+// 将容器打包为镜像
 func (s *ContainerService) CommitContainer(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
