@@ -1,85 +1,250 @@
 package api
 
 import (
+	"crypto/rand"
 	"embed"
+	"encoding/hex"
 	"io/fs"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
-	"github.com/skye-z/harbor/internal/util/docker"
-
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
+	"github.com/skye-z/harbor/internal/service"
+	"github.com/skye-z/harbor/internal/util/docker"
 	"xorm.io/xorm"
 )
 
+// 路由结构体
 type Route struct {
 	Router       *gin.Engine
 	DockerClient *docker.Client
+	Engine       *xorm.Engine
 }
 
-// 创建路由
+// 创建路由实例
 func NewRoute(page embed.FS) *Route {
 	gin.SetMode(gin.ReleaseMode)
 	route := new(Route)
-	route.Router = newRoute(page)
+
+	router, err := newRoute(page)
+	if err != nil {
+		log.Printf("[Core] 加载静态文件失败: %v", err)
+		router = gin.Default()
+	}
+	route.Router = router
 
 	client, err := docker.NewClient()
 	if err != nil {
+		log.Printf("[Core] 连接Docker失败: %v", err)
 		return nil
 	}
 	route.DockerClient = client
 	return route
 }
 
-// 创建路由
-func newRoute(page embed.FS) *gin.Engine {
+// 创建Gin引擎
+func newRoute(page embed.FS) (*gin.Engine, error) {
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
-	log.Println("[Core] load page")
-	pageFile, _ := fs.Sub(page, "page/dist")
+	log.Println("[Core] 加载页面")
+	pageFile, err := fs.Sub(page, "page/dist")
+	if err != nil {
+		return nil, err
+	}
 	router.StaticFS("/app", http.FS(pageFile))
-	return router
+	return router, nil
 }
 
 // 初始化路由
 func (r Route) Init(engine *xorm.Engine) {
-	// us := service.NewUserService(engine)
+	r.Engine = engine
 	r.addPublicRoute()
-	// 私有路由
 	private := r.Router.Group("")
-	// .Use(service.AuthHandler())
+	private.Use(AuthMiddleware())
 	{
 		r.addPrivateRoute(private)
 	}
 }
 
-// 公共路由
+// 添加公共路由
 func (r Route) addPublicRoute() {
 	r.Router.GET("/", func(ctx *gin.Context) {
 		ctx.Request.URL.Path = "/app"
 		r.Router.HandleContext(ctx)
 	})
 
-	// r.Router.POST("/api/user/login", us.Login)
-	// r.Router.GET("/api/oauth2/state", us.State)
+	as := service.NewAuthService(r.Engine)
+	r.Router.POST("/api/user/login", func(c *gin.Context) {
+		var req service.LoginRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(400, gin.H{"error": "请求参数错误"})
+			return
+		}
+		resp, err := as.Login(&req)
+		if err != nil {
+			c.JSON(401, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, resp)
+	})
 }
 
-// 私有路由
+// 添加私有路由
 func (r Route) addPrivateRoute(route gin.IRoutes) {
-	// Docker 系统管理路由
-	// route.GET("/api/docker/close", ds.Close)
-	// route.GET("/api/docker/prune/containers", ds.PruneContainers)
-	// route.GET("/api/docker/prune/images", ds.PruneImages)
-	// route.GET("/api/docker/prune/volumes", ds.PruneVolumes)
-	// route.GET("/api/docker/prune/networks", ds.PruneNetworks)
-	// route.GET("/api/docker/prune/all", ds.PruneAll)
+	ds := service.NewDockerService(r.DockerClient)
+	route.GET("/api/docker/info", ds.GetInfo)
+	route.GET("/api/docker/close", ds.Close)
+	route.GET("/api/docker/prune/containers", ds.PruneContainers)
+	route.GET("/api/docker/prune/images", ds.PruneImages)
+	route.GET("/api/docker/prune/volumes", ds.PruneVolumes)
+	route.GET("/api/docker/prune/networks", ds.PruneNetworks)
+	route.GET("/api/docker/prune/all", ds.PruneAll)
+
+	is := service.NewImageService(r.DockerClient)
+	route.GET("/api/image/list", is.GetList)
+	route.GET("/api/image/pull", is.PullImage)
+	route.GET("/api/image/remove", is.RemoveImage)
+	route.GET("/api/image/inspect", is.GetInspect)
+	route.GET("/api/image/build", is.BuildImage)
+	route.GET("/api/image/tag", is.TagImage)
+	route.GET("/api/image/push", is.PushImage)
+
+	ns := service.NewNetworkService(r.DockerClient)
+	route.GET("/api/network/list", ns.GetList)
+	route.GET("/api/network/create", ns.Create)
+	route.GET("/api/network/remove", ns.Remove)
+	route.GET("/api/network/connect", ns.ConnectContainer)
+	route.GET("/api/network/disconnect", ns.DisconnectContainer)
+
+	vs := service.NewVolumeService(r.DockerClient)
+	route.GET("/api/volume/list", vs.GetList)
+	route.GET("/api/volume/create", vs.Create)
+	route.GET("/api/volume/remove", vs.Remove)
+
+	cs := service.NewContainerService(r.DockerClient)
+	route.GET("/api/container/list", cs.GetList)
+	route.GET("/api/container/info", cs.GetInfo)
+	route.GET("/api/container/logs", cs.GetLogs)
+	route.GET("/api/container/operation", cs.Operation)
+	route.GET("/api/container/stat", cs.GetStat)
+	route.GET("/api/container/processes", cs.GetProcesses)
+	route.GET("/api/container/diff", cs.GetDiff)
+	route.GET("/api/container/copy/from", cs.CopyFromContainer)
+	route.GET("/api/container/copy/to", cs.CopyToContainer)
+	route.GET("/api/container/terminal", cs.ConnectTerminal)
+	route.GET("/api/container/terminal/ws", cs.TerminalWebSocket)
+	route.GET("/api/container/terminal/resize", cs.ResizeTerminal)
+	route.GET("/api/container/terminal/close", cs.CloseTerminal)
+	route.GET("/api/container/commit", cs.CommitContainer)
+	route.GET("/api/container/create", cs.CreateContainer)
+	route.GET("/api/container/rename", cs.RenameContainer)
 }
 
-// 获取端口号配置
+// 获取服务端口
 func (r Route) GetPort() string {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "12800"
 	}
 	return port
+}
+
+// 认证中间件
+func AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := c.GetHeader("Authorization")
+		if token == "" {
+			token = c.Query("token")
+		}
+
+		if token == "" {
+			c.JSON(401, gin.H{"error": "未授权访问"})
+			c.Abort()
+			return
+		}
+
+		payload, err := service.ParseToken(token)
+		if err != nil {
+			c.JSON(401, gin.H{"error": "无效的认证令牌"})
+			c.Abort()
+			return
+		}
+		c.Set("user_id", payload.UserID)
+		c.Set("username", payload.Username)
+		c.Set("is_admin", payload.IsAdmin)
+		c.Next()
+	}
+}
+
+// 跨域中间件
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Authorization, Accept, X-Requested-With, Token")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
+}
+
+// Gzip压缩中间件
+func GzipMiddleware() gin.HandlerFunc {
+	return gzip.Gzip(gzip.DefaultCompression)
+}
+
+// 恢复中间件
+func RecoveryMiddleware() gin.HandlerFunc {
+	return gin.Recovery()
+}
+
+// 日志中间件
+func LoggerMiddleware() gin.HandlerFunc {
+	return gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
+		return ""
+	})
+}
+
+// 超时中间件
+func TimeoutMiddleware(timeout time.Duration) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set("timeout_start", time.Now())
+		c.Next()
+	}
+}
+
+// 请求ID中间件
+func RequestIDMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		requestID := c.GetHeader("X-Request-ID")
+		if requestID == "" {
+			requestID = generateRequestID()
+		}
+		c.Set("request_id", requestID)
+		c.Writer.Header().Set("X-Request-ID", requestID)
+		c.Next()
+	}
+}
+
+// 生成请求ID
+func generateRequestID() string {
+	return time.Now().Format("20060102150405") + "-" + randomString(8)
+}
+
+// 生成随机字符串
+func randomString(length int) string {
+	b := make([]byte, length)
+	_, err := rand.Read(b)
+	if err != nil {
+		return ""
+	}
+	return hex.EncodeToString(b)[:length]
 }

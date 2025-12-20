@@ -9,52 +9,63 @@ import (
 
 	"github.com/skye-z/harbor/internal/api"
 	"github.com/skye-z/harbor/internal/data"
+	"github.com/skye-z/harbor/internal/service"
 	"github.com/skye-z/harbor/internal/util/config"
 	"xorm.io/xorm"
 )
 
-//go:embed ../frontend/dist/*
+//go:embed dist/*
 var page embed.FS
 
 func main() {
-	// 初始化系统配置
 	config.InitConfig()
 
-	// 初始化数据库
-	// 初始化数据库
-	engine := data.InitDB()
-	go data.InitDBTable(engine)
+	engine, err := data.InitDB()
+	if err != nil {
+		log.Fatalf("[Core] 初始化数据库失败: %v", err)
+	}
 
-	// 设置 GIN
-	// TODO 下面是从v1 copy的
+	err = data.InitDBTable(engine)
+	if err != nil {
+		log.Fatalf("[Core] 初始化数据库表失败: %v", err)
+	}
+
+	logService := service.NewLogService(engine)
+	if err := logService.LogSystemStartup(); err != nil {
+		log.Printf("[Core] 记录系统启动日志失败: %v", err)
+	}
+
 	route := api.NewRoute(page)
 	if route == nil {
-		log.Println("[Core] please start docker first")
+		logService.Log(service.LogTypeSystem, service.LogLevelError, "startup", "system", "", "Docker未运行，无法启动服务", "", 0)
+		log.Println("[Core] 请先启动Docker")
 		return
 	}
 	route.Init(engine)
-	// 获取端口
 	port := route.GetPort()
-	log.Println("[Core] service started, port is", port)
-	// 启动服务
+	log.Println("[Core] 服务已启动，端口为", port)
+	logService.Log(service.LogTypeSystem, service.LogLevelInfo, "startup", "system", "", "Harbor服务已启动，端口: "+port, "", 0)
 	go func() {
 		if err := route.Router.Run(":" + port); err != nil {
-			log.Fatalf("Error starting server: %v", err)
+			log.Fatalf("[Core] 启动服务器失败: %v", err)
 		}
 	}()
 
-	// 等待中断信号以优雅关闭服务器
-	waitForInterrupt(engine)
+	waitForInterrupt(engine, logService)
 }
 
-func waitForInterrupt(engine *xorm.Engine) {
+func waitForInterrupt(engine *xorm.Engine, logService *service.LogService) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 
 	<-sigCh
-	log.Println("[Core] Shutting down server...")
+	log.Println("[Core] 正在关闭服务器...")
+
+	if logService != nil {
+		logService.LogSystemShutdown()
+	}
 
 	defer engine.Close()
 
-	log.Println("[Core] Server gracefully stopped")
+	log.Println("[Core] 服务器已优雅关闭")
 }
