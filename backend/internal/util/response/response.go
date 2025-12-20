@@ -6,14 +6,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Response 统一响应结构
+// 统一响应结构
 type Response struct {
 	Code    int         `json:"code"`    // 状态码
-	Message string      `json:"message"` // 消息
-	Data    interface{} `json:"data"`    // 数据
+	Message string      `json:"message"` // 提示信息
+	Data    interface{} `json:"data"`    // 响应数据
 }
 
-// Success 成功响应
+// 成功响应
 func Success(c *gin.Context, data interface{}) {
 	c.JSON(http.StatusOK, Response{
 		Code:    0,
@@ -22,7 +22,7 @@ func Success(c *gin.Context, data interface{}) {
 	})
 }
 
-// SuccessWithMessage 成功响应带消息
+// 成功响应带消息
 func SuccessWithMessage(c *gin.Context, message string, data interface{}) {
 	c.JSON(http.StatusOK, Response{
 		Code:    0,
@@ -31,7 +31,7 @@ func SuccessWithMessage(c *gin.Context, message string, data interface{}) {
 	})
 }
 
-// Error 错误响应
+// 错误响应
 func Error(c *gin.Context, message string) {
 	c.JSON(http.StatusOK, Response{
 		Code:    -1,
@@ -40,7 +40,7 @@ func Error(c *gin.Context, message string) {
 	})
 }
 
-// ErrorWithCode 错误响应带状态码
+// 错误响应带状态码
 func ErrorWithCode(c *gin.Context, code int, message string) {
 	c.JSON(http.StatusOK, Response{
 		Code:    code,
@@ -49,7 +49,7 @@ func ErrorWithCode(c *gin.Context, code int, message string) {
 	})
 }
 
-// BadRequest 请求参数错误
+// 请求参数错误
 func BadRequest(c *gin.Context, message string) {
 	c.JSON(http.StatusBadRequest, Response{
 		Code:    400,
@@ -58,7 +58,7 @@ func BadRequest(c *gin.Context, message string) {
 	})
 }
 
-// Unauthorized 未授权
+// 未授权访问
 func Unauthorized(c *gin.Context, message string) {
 	c.JSON(http.StatusUnauthorized, Response{
 		Code:    401,
@@ -67,7 +67,7 @@ func Unauthorized(c *gin.Context, message string) {
 	})
 }
 
-// Forbidden 禁止访问
+// 禁止访问
 func Forbidden(c *gin.Context, message string) {
 	c.JSON(http.StatusForbidden, Response{
 		Code:    403,
@@ -76,7 +76,7 @@ func Forbidden(c *gin.Context, message string) {
 	})
 }
 
-// NotFound 资源不存在
+// 资源不存在
 func NotFound(c *gin.Context, message string) {
 	c.JSON(http.StatusNotFound, Response{
 		Code:    404,
@@ -85,7 +85,7 @@ func NotFound(c *gin.Context, message string) {
 	})
 }
 
-// ServerError 服务器错误
+// 服务器错误
 func ServerError(c *gin.Context, message string) {
 	c.JSON(http.StatusInternalServerError, Response{
 		Code:    500,

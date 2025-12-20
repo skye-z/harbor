@@ -13,7 +13,7 @@ type Client struct {
 	cli *client.Client
 }
 
-// 创建新的 Docker 客户端
+// 创建新的客户端
 func NewClient() (*Client, error) {
 	socket := config.GetString("docker.socket")
 
@@ -38,7 +38,7 @@ func NewClient() (*Client, error) {
 	}, nil
 }
 
-// 关闭 Docker 客户端连接
+// 关闭客户端连接
 func (c *Client) Close() error {
 	if c.cli != nil {
 		c.cli.Close()
@@ -46,7 +46,7 @@ func (c *Client) Close() error {
 	return nil
 }
 
-// CommitContainer 将容器打包为镜像
+// 将容器打包为镜像
 func (c *Client) CommitContainer(containerID, repo, tag string) (string, error) {
 	ctx := context.Background()
 

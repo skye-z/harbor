@@ -22,6 +22,6 @@ type SystemLog struct {
 	Message   string    `json:"message"`    // 日志消息
 	UserID    int       `json:"user_id"`    // 操作用户ID
 	Username  string    `json:"username"`   // 操作用户名
-	IPAddress string    `json:"ip_address"` // IP地址
+	IPAddress string    `json:"ip_address"` // 客户端IP
 	CreatedAt time.Time `json:"created_at"` // 创建时间
 }

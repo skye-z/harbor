@@ -1,9 +1,13 @@
 package service
 
 import (
+	"io"
+	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/skye-z/harbor/internal/util/docker"
 	"github.com/skye-z/harbor/internal/util/response"
 )
@@ -98,8 +102,9 @@ func (s *ContainerService) GetLogs(c *gin.Context) {
 	}
 	defer logs.Close()
 
-	c.Header("Content-Type", "text/plain")
-	c.String(200, "日志获取成功，请使用WebSocket获取实时日志")
+	content, _ := io.ReadAll(logs)
+	c.Header("Content-Type", "text/plain; charset=utf-8")
+	c.String(200, string(content))
 }
 
 // 获取容器统计信息
@@ -229,6 +234,14 @@ func (s *ContainerService) ConnectTerminal(c *gin.Context) {
 	})
 }
 
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
 // 终端WebSocket连接
 func (s *ContainerService) TerminalWebSocket(c *gin.Context) {
 	execID := c.Query("exec_id")
@@ -236,10 +249,39 @@ func (s *ContainerService) TerminalWebSocket(c *gin.Context) {
 		response.BadRequest(c, "缺少执行实例ID")
 		return
 	}
-	response.Success(c, gin.H{
-		"message": "WebSocket连接已建立",
-		"exec_id": execID,
-	})
+
+	result, err := s.client.AttachToExec(c.Request.Context(), execID, false)
+	if err != nil {
+		response.Error(c, err.Error())
+		return
+	}
+	defer result.Conn.Close()
+
+	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		return
+	}
+	defer ws.Close()
+
+	go func() {
+		buf := make([]byte, 1024)
+		for {
+			n, err := result.Reader.Read(buf)
+			if err != nil {
+				break
+			}
+			ws.WriteMessage(websocket.TextMessage, buf[:n])
+		}
+		ws.Close()
+	}()
+
+	for {
+		_, data, err := ws.ReadMessage()
+		if err != nil {
+			break
+		}
+		result.Conn.Write(data)
+	}
 }
 
 // 调整终端大小
@@ -298,5 +340,61 @@ func (s *ContainerService) CommitContainer(c *gin.Context) {
 		"id":   imageID,
 		"repo": repo,
 		"tag":  tag,
+	})
+}
+
+// 创建容器
+func (s *ContainerService) CreateContainer(c *gin.Context) {
+	imageName := c.Query("image")
+	if imageName == "" {
+		response.BadRequest(c, "缺少镜像名称")
+		return
+	}
+
+	containerName := c.DefaultQuery("name", "")
+	cmdStr := c.DefaultQuery("cmd", "")
+	var cmd []string
+	if cmdStr != "" {
+		cmd = strings.Split(cmdStr, " ")
+	}
+
+	envStr := c.DefaultQuery("env", "")
+	var env []string
+	if envStr != "" {
+		env = strings.Split(envStr, ",")
+	}
+
+	container, err := s.client.CreateContainer(imageName, containerName, cmd, env)
+	if err != nil {
+		response.Error(c, err.Error())
+		return
+	}
+
+	response.SuccessWithMessage(c, "容器创建成功", container)
+}
+
+// 重命名容器
+func (s *ContainerService) RenameContainer(c *gin.Context) {
+	id := c.Query("id")
+	if id == "" {
+		response.BadRequest(c, "缺少容器ID")
+		return
+	}
+
+	newName := c.Query("name")
+	if newName == "" {
+		response.BadRequest(c, "缺少新名称")
+		return
+	}
+
+	err := s.client.RenameContainer(id, newName)
+	if err != nil {
+		response.Error(c, err.Error())
+		return
+	}
+
+	response.SuccessWithMessage(c, "容器重命名成功", gin.H{
+		"id":      id,
+		"newName": newName,
 	})
 }

@@ -4,10 +4,14 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
 
 	"github.com/moby/moby/client"
 )
 
+// 镜像结构体
 type Image struct {
 	ID          string            `json:"id"`
 	ParentID    string            `json:"parent_id"`
@@ -31,8 +35,12 @@ func (c *Client) ListImages() ([]*Image, error) {
 
 	images := make([]*Image, 0, len(result.Items))
 	for _, img := range result.Items {
+		id := img.ID
+		if len(id) > 12 {
+			id = id[:12]
+		}
 		images = append(images, &Image{
-			ID:          img.ID[:12],
+			ID:          id,
 			ParentID:    img.ParentID,
 			RepoTags:    img.RepoTags,
 			RepoDigests: img.RepoDigests,
@@ -66,7 +74,29 @@ func (c *Client) PullImage(tag string) error {
 
 // 构建镜像
 func (c *Client) BuildImage(imageName, dockerfileContent string) error {
-	return fmt.Errorf("none")
+	ctx := context.Background()
+
+	tmpDir, err := os.MkdirTemp("", "docker-build")
+	if err != nil {
+		return fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	dockerfilePath := filepath.Join(tmpDir, "Dockerfile")
+	if err := os.WriteFile(dockerfilePath, []byte(dockerfileContent), 0644); err != nil {
+		return fmt.Errorf("failed to write Dockerfile: %w", err)
+	}
+
+	cmd := exec.CommandContext(ctx, "docker", "build", "-t", imageName, "-f", dockerfilePath, tmpDir)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to build image: %w", err)
+	}
+
+	return nil
 }
 
 // 删除镜像
@@ -79,7 +109,7 @@ func (c *Client) RemoveImage(id string) error {
 	return nil
 }
 
-// 获取镜像详情
+// 查看镜像详情
 func (c *Client) InspectImage(id string) (*client.ImageInspectResult, error) {
 	ctx := context.Background()
 	result, err := c.cli.ImageInspect(ctx, id)
@@ -88,4 +118,34 @@ func (c *Client) InspectImage(id string) (*client.ImageInspectResult, error) {
 	}
 
 	return &result, nil
+}
+
+// 打标签
+func (c *Client) TagImage(imageID, tag string) error {
+	ctx := context.Background()
+	_, err := c.cli.ImageTag(ctx, client.ImageTagOptions{
+		Source: imageID,
+		Target: tag,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to tag image: %w", err)
+	}
+	return nil
+}
+
+// 推送镜像
+func (c *Client) PushImage(tag string) error {
+	ctx := context.Background()
+	resp, err := c.cli.ImagePush(ctx, tag, client.ImagePushOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to push image: %w", err)
+	}
+	defer resp.Close()
+
+	_, err = io.Copy(io.Discard, resp)
+	if err != nil {
+		return fmt.Errorf("failed to read push output: %w", err)
+	}
+
+	return nil
 }

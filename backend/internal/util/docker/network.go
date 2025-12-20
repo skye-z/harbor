@@ -3,11 +3,14 @@ package docker
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"time"
 
+	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/client"
 )
 
+// 网络结构体
 type Network struct {
 	Name       string            `json:"name"`
 	ID         string            `json:"id"`
@@ -26,12 +29,14 @@ type Network struct {
 	Labels     map[string]string `json:"labels"`
 }
 
+// IPAM配置
 type IPAM struct {
 	Driver  string            `json:"driver"`
 	Config  []IPAMConfig      `json:"config"`
 	Options map[string]string `json:"options"`
 }
 
+// IPAM配置项
 type IPAMConfig struct {
 	Subnet     string            `json:"subnet"`
 	IPRange    string            `json:"ip_range"`
@@ -93,14 +98,40 @@ func (c *Client) ListNetworks() ([]*Network, error) {
 // 创建网络
 func (c *Client) CreateNetwork(name, driver, subnet, gateway string) (*Network, error) {
 	ctx := context.Background()
-	_, err := c.cli.NetworkCreate(ctx, name, client.NetworkCreateOptions{})
+
+	var ipamConfig network.IPAMConfig
+	if subnet != "" {
+		if prefix, err := netip.ParsePrefix(subnet); err == nil {
+			ipamConfig.Subnet = prefix
+		}
+	}
+	if gateway != "" {
+		if addr, err := netip.ParseAddr(gateway); err == nil {
+			ipamConfig.Gateway = addr
+		}
+	}
+
+	opts := client.NetworkCreateOptions{
+		Driver: driver,
+		IPAM: &network.IPAM{
+			Driver: "default",
+			Config: []network.IPAMConfig{ipamConfig},
+		},
+	}
+
+	resp, err := c.cli.NetworkCreate(ctx, name, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create network: %w", err)
 	}
 
+	id := resp.ID
+	if len(id) > 12 {
+		id = id[:12]
+	}
+
 	return &Network{
 		Name:   name,
-		ID:     name[:12],
+		ID:     id,
 		Driver: driver,
 	}, nil
 }
@@ -111,6 +142,49 @@ func (c *Client) RemoveNetwork(id string) error {
 	_, err := c.cli.NetworkRemove(ctx, id, client.NetworkRemoveOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to remove network: %w", err)
+	}
+
+	return nil
+}
+
+// 连接容器到网络
+func (c *Client) ConnectContainer(networkID, containerID string, ipv4 string) error {
+	ctx := context.Background()
+
+	var endpointConfig *network.EndpointSettings
+	if ipv4 != "" {
+		addr, err := netip.ParseAddr(ipv4)
+		if err != nil {
+			return fmt.Errorf("invalid IPv4 address: %w", err)
+		}
+		endpointConfig = &network.EndpointSettings{
+			IPAMConfig: &network.EndpointIPAMConfig{
+				IPv4Address: addr,
+			},
+		}
+	}
+
+	_, err := c.cli.NetworkConnect(ctx, networkID, client.NetworkConnectOptions{
+		Container:      containerID,
+		EndpointConfig: endpointConfig,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to connect container to network: %w", err)
+	}
+
+	return nil
+}
+
+// 断开容器与网络的连接
+func (c *Client) DisconnectContainer(networkID, containerID string) error {
+	ctx := context.Background()
+
+	_, err := c.cli.NetworkDisconnect(ctx, networkID, client.NetworkDisconnectOptions{
+		Container: containerID,
+		Force:     false,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to disconnect container from network: %w", err)
 	}
 
 	return nil

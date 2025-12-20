@@ -71,7 +71,6 @@ type Mount struct {
 	Propagation string `json:"propagation"`
 }
 
-// 容器统计信息
 type ContainerStats struct {
 	CPU       float64 `json:"cpu"`
 	Memory    float64 `json:"memory"`
@@ -79,25 +78,22 @@ type ContainerStats struct {
 	NetworkTx float64 `json:"networkTx"`
 }
 
-// 执行结果
 type ExecResult struct {
-	Reader io.Reader          // 输出读取器
-	Conn   io.ReadWriteCloser // 读写连接
+	Reader io.Reader
+	Conn   io.ReadWriteCloser
 }
 
-// 容器创建配置
 type ContainerCreateConfig struct {
-	Cmd          []string // 执行命令
-	Env          []string // 环境变量
-	WorkingDir   string   // 工作目录
-	User         string   // 执行用户
-	AttachStdin  bool     // 是否附加标准输入
-	AttachStdout bool     // 是否附加标准输出
-	AttachStderr bool     // 是否附加标准错误输出
-	Tty          bool     // 是否使用 TTY（终端）
+	Cmd          []string
+	Env          []string
+	WorkingDir   string
+	User         string
+	AttachStdin  bool
+	AttachStdout bool
+	AttachStderr bool
+	Tty          bool
 }
 
-// 获取容器列表
 func (c *Client) ListContainers() ([]*Container, error) {
 	ctx := context.Background()
 	result, err := c.cli.ContainerList(ctx, client.ContainerListOptions{All: true})
@@ -107,6 +103,11 @@ func (c *Client) ListContainers() ([]*Container, error) {
 
 	containers := make([]*Container, 0, len(result.Items))
 	for _, cont := range result.Items {
+		id := cont.ID
+		if len(id) > 12 {
+			id = id[:12]
+		}
+
 		ports := make([]Port, 0, len(cont.Ports))
 		for _, p := range cont.Ports {
 			ports = append(ports, Port{
@@ -118,7 +119,7 @@ func (c *Client) ListContainers() ([]*Container, error) {
 		}
 
 		container := &Container{
-			ID:         cont.ID[:12],
+			ID:         id,
 			Names:      cont.Names,
 			Image:      cont.Image,
 			ImageID:    cont.ImageID,
@@ -173,7 +174,6 @@ func (c *Client) ListContainers() ([]*Container, error) {
 	return containers, nil
 }
 
-// 获取容器的详细信息
 func (c *Client) GetContainerInfo(ctx context.Context, id string) (*client.ContainerInspectResult, error) {
 	inspect, err := c.cli.ContainerInspect(ctx, id, client.ContainerInspectOptions{})
 	if err != nil {
@@ -183,7 +183,6 @@ func (c *Client) GetContainerInfo(ctx context.Context, id string) (*client.Conta
 	return &inspect, nil
 }
 
-// 获取容器基础信息
 func (c *Client) GetContainerDetails(ctx context.Context, id string) (map[string]interface{}, error) {
 	inspect, err := c.cli.ContainerInspect(ctx, id, client.ContainerInspectOptions{})
 	if err != nil {
@@ -197,29 +196,22 @@ func (c *Client) GetContainerDetails(ctx context.Context, id string) (map[string
 	}, nil
 }
 
-// 操作容器
 func (c *Client) OperationContainer(id string, action int) error {
 	ctx := context.Background()
 
 	var err error = nil
 	switch action {
 	case 1:
-		// 启动容器
 		_, err = c.cli.ContainerStart(ctx, id, client.ContainerStartOptions{})
 	case 2:
-		// 停止容器
 		_, err = c.cli.ContainerStop(ctx, id, client.ContainerStopOptions{})
 	case 3:
-		// 重启容器
 		_, err = c.cli.ContainerRestart(ctx, id, client.ContainerRestartOptions{})
 	case 4:
-		// 删除容器
 		_, err = c.cli.ContainerRemove(ctx, id, client.ContainerRemoveOptions{})
 	case 5:
-		// 暂停容器
 		_, err = c.cli.ContainerPause(ctx, id, client.ContainerPauseOptions{})
 	case 6:
-		// 恢复容器
 		_, err = c.cli.ContainerUnpause(ctx, id, client.ContainerUnpauseOptions{})
 	}
 
@@ -229,7 +221,6 @@ func (c *Client) OperationContainer(id string, action int) error {
 	return nil
 }
 
-// 获取容器日志
 func (c *Client) GetContainerLogs(ctx context.Context, id string, tail string) (io.ReadCloser, error) {
 	resp, err := c.cli.ContainerLogs(ctx, id, client.ContainerLogsOptions{
 		ShowStdout: true,
@@ -243,7 +234,6 @@ func (c *Client) GetContainerLogs(ctx context.Context, id string, tail string) (
 	return resp, nil
 }
 
-// 获取容器统计信息
 func (c *Client) GetContainerStats(id string) (*ContainerStats, error) {
 	ctx := context.Background()
 	result, err := c.cli.ContainerStats(ctx, id, client.ContainerStatsOptions{Stream: false})
@@ -257,7 +247,6 @@ func (c *Client) GetContainerStats(id string) (*ContainerStats, error) {
 		return nil, fmt.Errorf("failed to decode stats: %w", err)
 	}
 
-	// 计算 CPU 使用率
 	var cpuPercent = 0.0
 	cpuDelta := float64(stats.CPUStats.CPUUsage.TotalUsage) - float64(stats.PreCPUStats.CPUUsage.TotalUsage)
 	systemDelta := float64(stats.CPUStats.SystemUsage) - float64(stats.PreCPUStats.SystemUsage)
@@ -270,8 +259,6 @@ func (c *Client) GetContainerStats(id string) (*ContainerStats, error) {
 		cpuPercent = (cpuDelta / systemDelta) * onlineCPUs * 100.0
 	}
 
-	// 计算内存使用量
-	// 兼容不同版本的 Docker API，有些版本可能没有 Stats 字段
 	var memoryUsage = float64(stats.MemoryStats.Usage)
 	if cache, ok := stats.MemoryStats.Stats["cache"]; ok {
 		memoryUsage = memoryUsage - float64(cache)
@@ -279,7 +266,6 @@ func (c *Client) GetContainerStats(id string) (*ContainerStats, error) {
 		memoryUsage = memoryUsage - float64(inactiveFile)
 	}
 
-	// 计算网络流量
 	var networkRx, networkTx float64
 	for _, net := range stats.Networks {
 		networkRx += float64(net.RxBytes)
@@ -294,7 +280,6 @@ func (c *Client) GetContainerStats(id string) (*ContainerStats, error) {
 	}, nil
 }
 
-// 获取容器进程信息
 func (c *Client) GetContainerProcesses(ctx context.Context, id string) (client.ContainerTopResult, error) {
 	resp, err := c.cli.ContainerTop(ctx, id, client.ContainerTopOptions{
 		Arguments: []string{"pid", "ppid", "user", "cmd"},
@@ -306,7 +291,6 @@ func (c *Client) GetContainerProcesses(ctx context.Context, id string) (client.C
 	return resp, nil
 }
 
-// 获取容器目录结构
 func (c *Client) ListContainerDir(ctx context.Context, id string, path string) (client.ContainerStatPathResult, error) {
 	resp, err := c.cli.ContainerStatPath(ctx, id, client.ContainerStatPathOptions{
 		Path: path,
@@ -318,8 +302,11 @@ func (c *Client) ListContainerDir(ctx context.Context, id string, path string) (
 	return resp, nil
 }
 
-// 从容器复制文件
 func (c *Client) CopyFromContainer(ctx context.Context, containerID, srcPath, dstPath string) error {
+	if containsPathTraversal(srcPath) {
+		return fmt.Errorf("invalid source path: potential path traversal")
+	}
+
 	result, err := c.cli.CopyFromContainer(ctx, containerID, client.CopyFromContainerOptions{
 		SourcePath: srcPath,
 	})
@@ -333,7 +320,12 @@ func (c *Client) CopyFromContainer(ctx context.Context, containerID, srcPath, ds
 		return fmt.Errorf("failed to create destination directory: %w", err)
 	}
 
-	dstFile := filepath.Join(dstDir, filepath.Base(srcPath))
+	baseName := filepath.Base(srcPath)
+	if containsPathTraversal(baseName) {
+		return fmt.Errorf("invalid filename: potential path traversal")
+	}
+
+	dstFile := filepath.Join(dstDir, baseName)
 	file, err := os.Create(dstFile)
 	if err != nil {
 		return fmt.Errorf("failed to create destination file: %w", err)
@@ -348,7 +340,14 @@ func (c *Client) CopyFromContainer(ctx context.Context, containerID, srcPath, ds
 	return nil
 }
 
-// 复制文件到容器
+func containsPathTraversal(path string) bool {
+	cleaned := filepath.Clean(path)
+	return cleaned != path ||
+		path == ".." ||
+		len(path) >= 3 && (path[:3] == "../" || path[len(path)-3:] == "/..") ||
+		len(path) >= 4 && (path[:4] == "/../" || path[len(path)-4:] == "/..")
+}
+
 func (c *Client) CopyToContainer(ctx context.Context, containerID, srcPath, dstPath string) error {
 	file, err := os.Open(srcPath)
 	if err != nil {
@@ -373,7 +372,6 @@ func (c *Client) CopyToContainer(ctx context.Context, containerID, srcPath, dstP
 	return nil
 }
 
-// 在容器内创建执行实例
 func (c *Client) CreateExec(ctx context.Context, containerID string, config *ContainerCreateConfig) (string, error) {
 	execConfig := client.ExecCreateOptions{
 		Cmd:          config.Cmd,
@@ -394,7 +392,6 @@ func (c *Client) CreateExec(ctx context.Context, containerID string, config *Con
 	return resp.ID, nil
 }
 
-// 附加到执行实例
 func (c *Client) AttachToExec(ctx context.Context, execID string, detach bool) (*ExecResult, error) {
 	hijackedResp, err := c.cli.ExecAttach(ctx, execID, client.ExecAttachOptions{})
 	if err != nil {
@@ -407,7 +404,6 @@ func (c *Client) AttachToExec(ctx context.Context, execID string, detach bool) (
 	}, nil
 }
 
-// 调整执行实例的终端大小
 func (c *Client) ExecResize(ctx context.Context, execID string, rows, cols int) error {
 	_, err := c.cli.ExecResize(ctx, execID, client.ExecResizeOptions{
 		Height: uint(rows),
@@ -419,7 +415,52 @@ func (c *Client) ExecResize(ctx context.Context, execID string, rows, cols int) 
 	return nil
 }
 
-// 关闭执行实例
 func (c *Client) CloseExec(ctx context.Context, execID string) error {
+	_, err := c.cli.ExecInspect(ctx, execID, client.ExecInspectOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to inspect exec: %w", err)
+	}
+	return nil
+}
+
+func (c *Client) CreateContainer(imageName, containerName string, cmd []string, env []string) (*Container, error) {
+	ctx := context.Background()
+
+	config := &container.Config{
+		Image: imageName,
+		Cmd:   cmd,
+		Env:   env,
+	}
+
+	hostConfig := &container.HostConfig{}
+
+	resp, err := c.cli.ContainerCreate(ctx, client.ContainerCreateOptions{
+		Config:     config,
+		HostConfig: hostConfig,
+		Name:       containerName,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create container: %w", err)
+	}
+
+	id := resp.ID
+	if len(id) > 12 {
+		id = id[:12]
+	}
+
+	return &Container{
+		ID:    id,
+		Image: imageName,
+	}, nil
+}
+
+func (c *Client) RenameContainer(containerID, newName string) error {
+	ctx := context.Background()
+	_, err := c.cli.ContainerRename(ctx, containerID, client.ContainerRenameOptions{
+		NewName: newName,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to rename container: %w", err)
+	}
 	return nil
 }

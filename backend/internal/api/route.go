@@ -45,7 +45,7 @@ func NewRoute(page embed.FS) *Route {
 	return route
 }
 
-// 创建Gin引擎
+// 创建引擎实例
 func newRoute(page embed.FS) (*gin.Engine, error) {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
@@ -196,7 +196,7 @@ func CORSMiddleware() gin.HandlerFunc {
 	}
 }
 
-// Gzip压缩中间件
+// 压缩
 func GzipMiddleware() gin.HandlerFunc {
 	return gzip.Gzip(gzip.DefaultCompression)
 }
