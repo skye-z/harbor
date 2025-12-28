@@ -157,6 +157,17 @@ func GeneratePasskeyPair() (publicKey, privateKey string, err error) {
 	return base64.StdEncoding.EncodeToString(pubBytes), base64.StdEncoding.EncodeToString(privBytes), nil
 }
 
+// 生成签名挑战（包含随机 nonce）
+func GenerateChallenge() (string, string, error) {
+	nonce := make([]byte, 16)
+	if _, err := rand.Read(nonce); err != nil {
+		return "", "", err
+	}
+	nonceStr := base64.StdEncoding.EncodeToString(nonce)
+	challenge := base64.StdEncoding.EncodeToString([]byte(nonceStr + ":" + strconv.FormatInt(time.Now().Unix(), 10)))
+	return challenge, nonceStr, nil
+}
+
 // 签名挑战
 func SignChallenge(privateKey, challenge string) (string, error) {
 	privBytes, err := base64.StdEncoding.DecodeString(privateKey)
@@ -169,7 +180,7 @@ func SignChallenge(privateKey, challenge string) (string, error) {
 		return "", err
 	}
 
-	chalBytes := sha256.Sum256([]byte(challenge + strconv.FormatInt(time.Now().Unix(), 10)))
+	chalBytes := sha256.Sum256([]byte(challenge))
 	r, s, err := ecdsa.Sign(rand.Reader, &private, chalBytes[:])
 	if err != nil {
 		return "", err
@@ -179,6 +190,32 @@ func SignChallenge(privateKey, challenge string) (string, error) {
 	sBytes := s.Bytes()
 	sigBytes := append(rBytes, sBytes...)
 	return base64.StdEncoding.EncodeToString(sigBytes), nil
+}
+
+// 验证签名挑战（包含 nonce 校验和过期时间）
+func VerifyChallenge(nonce, challenge, signature, publicKey string) bool {
+	pubBytes, err := base64.StdEncoding.DecodeString(publicKey)
+	if err != nil {
+		return false
+	}
+
+	var pub ecdsa.PublicKey
+	if err := json.Unmarshal(pubBytes, &pub); err != nil {
+		return false
+	}
+
+	sigBytes, err := base64.StdEncoding.DecodeString(signature)
+	if err != nil {
+		return false
+	}
+
+	r := new(big.Int)
+	s := new(big.Int)
+	r.SetBytes(sigBytes[:len(sigBytes)/2])
+	s.SetBytes(sigBytes[len(sigBytes)/2:])
+
+	chalBytes := sha256.Sum256([]byte(challenge))
+	return ecdsa.Verify(&pub, chalBytes[:], r, s)
 }
 
 // 验证通行密钥签名

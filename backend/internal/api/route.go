@@ -27,7 +27,7 @@ type Route struct {
 // 创建路由实例
 func NewRoute(page embed.FS) *Route {
 	gin.SetMode(gin.ReleaseMode)
-	route := new(Route)
+	route := &Route{}
 
 	router, err := newRoute(page)
 	if err != nil {
@@ -39,9 +39,10 @@ func NewRoute(page embed.FS) *Route {
 	client, err := docker.NewClient()
 	if err != nil {
 		log.Printf("[Core] 连接Docker失败: %v", err)
-		return nil
+		route.DockerClient = nil
+	} else {
+		route.DockerClient = client
 	}
-	route.DockerClient = client
 	return route
 }
 
