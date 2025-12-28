@@ -1,3 +1,7 @@
-backend/harbor
 backend/dist/
+
 .DS_Store
+
+config.yaml
+harbor.db
+harbor

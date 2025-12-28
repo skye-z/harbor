@@ -199,6 +199,11 @@ func (s *ContainerService) CopyToContainer(c *gin.Context) {
 		return
 	}
 
+	if strings.Contains(dstPath, "..") || strings.HasPrefix(dstPath, "/") {
+		response.BadRequest(c, "非法的目标路径")
+		return
+	}
+
 	err := s.client.CopyToContainer(c.Request.Context(), id, srcPath, dstPath)
 	if err != nil {
 		response.Error(c, err.Error())

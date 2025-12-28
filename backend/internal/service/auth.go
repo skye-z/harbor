@@ -95,7 +95,7 @@ func (s *AuthService) loginWithPasskey(req *LoginRequest, user *data.User) (*Log
 	signature := req.Passkey
 	var matched *PasskeyCredential
 	for i := range credentials {
-		if verifyPasskeySignature(credentials[i].PublicKey, signature) {
+		if verifyPasskeySignature(credentials[i].PublicKey, signature, req.Username) {
 			matched = &credentials[i]
 			break
 		}
@@ -182,7 +182,7 @@ func SignChallenge(privateKey, challenge string) (string, error) {
 }
 
 // 验证通行密钥签名
-func verifyPasskeySignature(publicKey, signature string) bool {
+func verifyPasskeySignature(publicKey, signature, data string) bool {
 	pubBytes, err := base64.StdEncoding.DecodeString(publicKey)
 	if err != nil {
 		return false
@@ -203,7 +203,7 @@ func verifyPasskeySignature(publicKey, signature string) bool {
 	r.SetBytes(sigBytes[:len(sigBytes)/2])
 	s.SetBytes(sigBytes[len(sigBytes)/2:])
 
-	return ecdsa.Verify(&pub, []byte(publicKey), r, s)
+	return ecdsa.Verify(&pub, []byte(data), r, s)
 }
 
 // 添加通行密钥
