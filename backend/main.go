@@ -18,7 +18,7 @@ import (
 var page embed.FS
 
 func main() {
-	config.InitConfig()
+	config.InitConfigWithPath("/opt/harbor")
 
 	engine, err := data.InitDB()
 	if err != nil {

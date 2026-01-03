@@ -7,12 +7,25 @@ import (
 	"github.com/spf13/viper"
 )
 
-const Version = "0.1.0"
+const Version = "2.0.0"
+
+var ConfigPath = "."
 
 func InitConfig() {
+	InitConfigWithPath(".")
+}
+
+func InitConfigWithPath(path string) {
+	ConfigPath = path
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
+	viper.AddConfigPath(path)
 	viper.AddConfigPath(".")
+
+	if path != "." {
+		viper.AddConfigPath("/opt/harbor")
+	}
+
 	err := viper.ReadInConfig()
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -71,8 +84,13 @@ func createDefault() {
 		panic("Failed to generate secret: " + err.Error())
 	}
 	viper.SetDefault("jwt.secret", secret)
+	viper.SetDefault("jwt.expiration", "24h")
 
-	viper.SafeWriteConfig()
+	if ConfigPath == "/opt/harbor" || ConfigPath == "." {
+		viper.SafeWriteConfigAs("/opt/harbor/config.yaml")
+	} else {
+		viper.SafeWriteConfig()
+	}
 }
 
 func generateSecret() (string, error) {
