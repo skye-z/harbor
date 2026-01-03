@@ -160,7 +160,7 @@ func (c *Client) PruneNetworks(ctx context.Context) (int64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("failed to prune networks: %w", err)
 	}
-	return 0, nil
+	return 1, nil
 }
 
 // 清理所有未使用的资源

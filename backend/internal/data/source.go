@@ -39,14 +39,8 @@ func InitDBTable(engine *xorm.Engine) error {
 		return errors.New("统计用户数量失败: " + err.Error())
 	}
 	if count == 0 {
-		// 默认密码 "harbor-skye"
-		defaultPasswordMD5 := "58c823f11203f20fda6b4deb81d30b3b"
-
-		if len(defaultPasswordMD5) != 32 {
-			return errors.New("默认密码必须是32位MD5哈希值")
-		}
-
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(defaultPasswordMD5), bcrypt.DefaultCost)
+		defaultPassword := "HarborAdmin2026!"
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(defaultPassword), bcrypt.DefaultCost)
 		if err != nil {
 			return errors.New("加密默认密码失败: " + err.Error())
 		}

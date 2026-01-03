@@ -48,6 +48,16 @@ func (s *ContainerService) GetInfo(c *gin.Context) {
 	response.Success(c, info)
 }
 
+// 容器操作常量
+const (
+	ContainerActionStart   = 1
+	ContainerActionStop    = 2
+	ContainerActionRestart = 3
+	ContainerActionRemove  = 4
+	ContainerActionPause   = 5
+	ContainerActionUnpause = 6
+)
+
 // 容器操作
 func (s *ContainerService) Operation(c *gin.Context) {
 	id := c.Query("id")
@@ -61,17 +71,17 @@ func (s *ContainerService) Operation(c *gin.Context) {
 	var actionCode int
 	switch action {
 	case "start":
-		actionCode = 1
+		actionCode = ContainerActionStart
 	case "stop":
-		actionCode = 2
+		actionCode = ContainerActionStop
 	case "restart":
-		actionCode = 3
+		actionCode = ContainerActionRestart
 	case "remove":
-		actionCode = 4
+		actionCode = ContainerActionRemove
 	case "pause":
-		actionCode = 5
+		actionCode = ContainerActionPause
 	case "unpause":
-		actionCode = 6
+		actionCode = ContainerActionUnpause
 	default:
 		response.BadRequest(c, "不支持的操作类型，支持: start/stop/restart/remove/pause/unpause")
 		return
@@ -297,10 +307,18 @@ func (s *ContainerService) ResizeTerminal(c *gin.Context) {
 		return
 	}
 
-	rows, _ := strconv.Atoi(c.DefaultQuery("rows", "24"))
-	cols, _ := strconv.Atoi(c.DefaultQuery("cols", "80"))
+	rowsStr := c.DefaultQuery("rows", "24")
+	colsStr := c.DefaultQuery("cols", "80")
+	rows, err := strconv.Atoi(rowsStr)
+	if err != nil || rows <= 0 {
+		rows = 24
+	}
+	cols, err := strconv.Atoi(colsStr)
+	if err != nil || cols <= 0 {
+		cols = 80
+	}
 
-	err := s.client.ExecResize(c.Request.Context(), execID, rows, cols)
+	err = s.client.ExecResize(c.Request.Context(), execID, rows, cols)
 	if err != nil {
 		response.Error(c, err.Error())
 		return

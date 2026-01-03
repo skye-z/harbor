@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/skye-z/harbor/internal/service"
 	"github.com/skye-z/harbor/internal/util/docker"
+	"github.com/skye-z/harbor/internal/util/response"
 	"xorm.io/xorm"
 )
 
@@ -81,12 +82,12 @@ func (r Route) addPublicRoute() {
 	r.Router.POST("/api/user/login", func(c *gin.Context) {
 		var req service.LoginRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(400, gin.H{"error": "请求参数错误"})
+			response.BadRequest(c, "请求参数错误")
 			return
 		}
 		resp, err := as.Login(&req)
 		if err != nil {
-			c.JSON(401, gin.H{"error": err.Error()})
+			response.Unauthorized(c, err.Error())
 			return
 		}
 		c.JSON(200, resp)
