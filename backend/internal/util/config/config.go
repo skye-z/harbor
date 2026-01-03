@@ -23,8 +23,12 @@ func InitConfig() {
 	}
 }
 
-func Reload() {
-	viper.ReadInConfig()
+func Reload() error {
+	err := viper.ReadInConfig()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func Set(key string, value interface{}) {

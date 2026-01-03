@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/gin-contrib/gzip"
@@ -15,6 +16,7 @@ import (
 	"github.com/skye-z/harbor/internal/service"
 	"github.com/skye-z/harbor/internal/util/docker"
 	"github.com/skye-z/harbor/internal/util/response"
+	"github.com/spf13/viper"
 	"xorm.io/xorm"
 )
 
@@ -147,6 +149,9 @@ func (r Route) addPrivateRoute(route gin.IRoutes) {
 
 // 获取服务端口
 func (r Route) GetPort() string {
+	if viper.IsSet("server.port") {
+		return strconv.Itoa(viper.GetInt("server.port"))
+	}
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "12800"

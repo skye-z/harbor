@@ -11,6 +11,7 @@ import (
 
 // 全局数据库引擎
 var Engine *xorm.Engine
+var initialized bool
 
 // 初始化数据库连接
 func InitDB() (*xorm.Engine, error) {
@@ -24,6 +25,11 @@ func InitDB() (*xorm.Engine, error) {
 
 // 初始化数据库表
 func InitDBTable(engine *xorm.Engine) error {
+	if initialized {
+		return nil
+	}
+	initialized = true
+
 	err := engine.Sync2(new(User))
 	if err != nil {
 		return errors.New("同步数据库表失败: " + err.Error())

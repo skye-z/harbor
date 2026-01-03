@@ -13,6 +13,18 @@ type LogService struct {
 	engine *xorm.Engine
 }
 
+var logChannel chan *data.SystemLog
+var logBufferSize = 100
+
+func init() {
+	logChannel = make(chan *data.SystemLog, logBufferSize)
+	go func() {
+		for log := range logChannel {
+			_, _ = data.Engine.Insert(log)
+		}
+	}()
+}
+
 // 创建日志服务实例
 func NewLogService(engine *xorm.Engine) *LogService {
 	return &LogService{engine: engine}
@@ -44,8 +56,11 @@ func (s *LogService) LogSystemStartup() error {
 		Message:   "Harbor Docker 管理面板已启动",
 		CreatedAt: time.Now(),
 	}
-	_, err := s.engine.Insert(log)
-	return err
+	select {
+	case logChannel <- log:
+	default:
+	}
+	return nil
 }
 
 // 记录系统关闭日志
@@ -58,8 +73,11 @@ func (s *LogService) LogSystemShutdown() error {
 		Message:   "Harbor Docker 管理面板已关闭",
 		CreatedAt: time.Now(),
 	}
-	_, err := s.engine.Insert(log)
-	return err
+	select {
+	case logChannel <- log:
+	default:
+	}
+	return nil
 }
 
 // 记录容器操作日志
@@ -76,8 +94,11 @@ func (s *LogService) LogContainerAction(action string, containerName string, con
 		UserID:    userID,
 		CreatedAt: time.Now(),
 	}
-	_, err := s.engine.Insert(log)
-	return err
+	select {
+	case logChannel <- log:
+	default:
+	}
+	return nil
 }
 
 // 记录镜像操作日志
@@ -93,8 +114,11 @@ func (s *LogService) LogImageAction(action string, imageName string, username st
 		UserID:    userID,
 		CreatedAt: time.Now(),
 	}
-	_, err := s.engine.Insert(log)
-	return err
+	select {
+	case logChannel <- log:
+	default:
+	}
+	return nil
 }
 
 // 记录网络操作日志
@@ -111,8 +135,11 @@ func (s *LogService) LogNetworkAction(action string, networkName string, network
 		UserID:    userID,
 		CreatedAt: time.Now(),
 	}
-	_, err := s.engine.Insert(log)
-	return err
+	select {
+	case logChannel <- log:
+	default:
+	}
+	return nil
 }
 
 // 记录卷操作日志
@@ -128,8 +155,11 @@ func (s *LogService) LogVolumeAction(action string, volumeName string, username 
 		UserID:    userID,
 		CreatedAt: time.Now(),
 	}
-	_, err := s.engine.Insert(log)
-	return err
+	select {
+	case logChannel <- log:
+	default:
+	}
+	return nil
 }
 
 // 记录通用日志
@@ -145,8 +175,11 @@ func (s *LogService) Log(logType string, level string, action string, target str
 		UserID:    userID,
 		CreatedAt: time.Now(),
 	}
-	_, err := s.engine.Insert(log)
-	return err
+	select {
+	case logChannel <- log:
+	default:
+	}
+	return nil
 }
 
 // 获取日志列表
@@ -154,14 +187,16 @@ func (s *LogService) GetList(logType string, page int, pageSize int) ([]*data.Sy
 	var logs []*data.SystemLog
 	var total int64
 
-	query := s.engine.Where("1=1")
+	var query *xorm.Session
 
 	if logType != "" {
-		query = query.Where("type = ?", logType)
+		query = s.engine.Where("type = ?", logType)
+	} else {
+		query = s.engine.Table(&data.SystemLog{})
 	}
 
 	// 统计总数
-	count, err := query.Count(&data.SystemLog{})
+	count, err := query.Count()
 	if err != nil {
 		return nil, 0, err
 	}
