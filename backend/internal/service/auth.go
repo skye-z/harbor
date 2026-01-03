@@ -107,6 +107,8 @@ func (s *AuthService) loginWithPasskey(req *LoginRequest, user *data.User) (*Log
 	return s.generateToken(user)
 }
 
+const DefaultTokenExpiration = 24 * time.Hour
+
 // 生成认证令牌
 func (s *AuthService) generateToken(user *data.User) (*LoginResponse, error) {
 	secretKey := config.GetString("jwt.secret")
@@ -114,11 +116,20 @@ func (s *AuthService) generateToken(user *data.User) (*LoginResponse, error) {
 		return nil, errors.New("JWT secret not configured")
 	}
 
+	expiration := DefaultTokenExpiration
+	if expStr := config.GetString("jwt.expiration"); expStr != "" {
+		if parsed, err := time.ParseDuration(expStr); err == nil {
+			expiration = parsed
+		}
+	}
+
+	expiresAt := time.Now().Add(expiration)
+
 	claims := jwt.MapClaims{
 		"user_id":  user.ID,
 		"username": user.Username,
 		"is_admin": user.IsAdmin,
-		"exp":      time.Now().Add(24 * time.Hour).Unix(),
+		"exp":      expiresAt.Unix(),
 		"iat":      time.Now().Unix(),
 	}
 
@@ -133,7 +144,7 @@ func (s *AuthService) generateToken(user *data.User) (*LoginResponse, error) {
 		UserID:    user.ID,
 		Username:  user.Username,
 		IsAdmin:   user.IsAdmin,
-		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
+		ExpiresAt: expiresAt.Unix(),
 	}, nil
 }
 

@@ -56,7 +56,9 @@ func newRoute(page embed.FS) (*gin.Engine, error) {
 	log.Println("[Core] 加载页面")
 	pageFile, err := fs.Sub(page, "page/dist")
 	if err != nil {
-		return nil, err
+		log.Printf("[Core] 警告: 加载静态文件失败: %v", err)
+		router = gin.Default()
+		return router, nil
 	}
 	router.StaticFS("/app", http.FS(pageFile))
 	return router, nil

@@ -14,12 +14,29 @@ import (
 
 // 容器管理服务
 type ContainerService struct {
-	client *docker.Client
+	client   *docker.Client
+	upgrader websocket.Upgrader
 }
 
 // 创建容器服务实例
 func NewContainerService(client *docker.Client) *ContainerService {
-	return &ContainerService{client: client}
+	return &ContainerService{
+		client: client,
+		upgrader: websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				origin := r.Header.Get("Origin")
+				allowedOrigins := []string{"http://localhost:12800", "http://127.0.0.1:12800"}
+				for _, allowed := range allowedOrigins {
+					if origin == allowed {
+						return true
+					}
+				}
+				return false
+			},
+		},
+	}
 }
 
 // 获取容器列表
@@ -249,14 +266,6 @@ func (s *ContainerService) ConnectTerminal(c *gin.Context) {
 	})
 }
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
 // 终端WebSocket连接
 func (s *ContainerService) TerminalWebSocket(c *gin.Context) {
 	execID := c.Query("exec_id")
@@ -272,6 +281,8 @@ func (s *ContainerService) TerminalWebSocket(c *gin.Context) {
 	}
 	defer result.Conn.Close()
 
+	upgrader := s.upgrader
+
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		return
@@ -279,23 +290,27 @@ func (s *ContainerService) TerminalWebSocket(c *gin.Context) {
 	defer ws.Close()
 
 	go func() {
+		defer ws.Close()
 		buf := make([]byte, 1024)
 		for {
 			n, err := result.Reader.Read(buf)
 			if err != nil {
-				break
+				return
 			}
-			ws.WriteMessage(websocket.TextMessage, buf[:n])
+			if err := ws.WriteMessage(websocket.TextMessage, buf[:n]); err != nil {
+				return
+			}
 		}
-		ws.Close()
 	}()
 
 	for {
 		_, data, err := ws.ReadMessage()
 		if err != nil {
-			break
+			return
 		}
-		result.Conn.Write(data)
+		if _, err := result.Conn.Write(data); err != nil {
+			return
+		}
 	}
 }
 

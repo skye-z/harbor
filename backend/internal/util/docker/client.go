@@ -13,20 +13,21 @@ type Client struct {
 	cli *client.Client
 }
 
+func parseDockerHost(socket string) string {
+	if strings.HasPrefix(socket, "unix://") || strings.HasPrefix(socket, "unix:///") {
+		return socket
+	} else if strings.HasPrefix(socket, "/") {
+		return "unix://" + socket
+	} else if strings.HasPrefix(socket, "tcp://") || strings.HasPrefix(socket, "http://") {
+		return socket
+	}
+	return socket
+}
+
 // 创建新的客户端
 func NewClient() (*Client, error) {
 	socket := config.GetString("docker.socket")
-
-	var host string
-	if strings.HasPrefix(socket, "unix://") || strings.HasPrefix(socket, "unix:///") {
-		host = socket
-	} else if strings.HasPrefix(socket, "/") {
-		host = "unix://" + socket
-	} else if strings.HasPrefix(socket, "tcp://") || strings.HasPrefix(socket, "http://") {
-		host = socket
-	} else {
-		host = socket
-	}
+	host := parseDockerHost(socket)
 
 	cli, err := client.New(client.WithHost(host))
 	if err != nil {

@@ -86,14 +86,9 @@ func (c *Client) GetInfo() (*SystemInfo, error) {
 		return nil, fmt.Errorf("failed to get docker version: %w", err)
 	}
 
+	data, _ := json.Marshal(versionResult)
 	var version VersionInfo
-	data, err := json.Marshal(versionResult)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal version: %w", err)
-	}
-	if err := json.Unmarshal(data, &version); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal version: %w", err)
-	}
+	json.Unmarshal(data, &version)
 
 	return &SystemInfo{
 		ID:                result.Info.ID,
