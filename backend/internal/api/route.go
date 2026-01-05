@@ -94,7 +94,7 @@ func (r Route) addPublicRoute() {
 			response.Unauthorized(c, err.Error())
 			return
 		}
-		c.JSON(200, resp)
+		response.Success(c, resp)
 	})
 }
 
@@ -170,14 +170,14 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		if token == "" {
-			c.JSON(401, gin.H{"error": "未授权访问"})
+			response.Unauthorized(c, "未授权访问")
 			c.Abort()
 			return
 		}
 
 		payload, err := service.ParseToken(token)
 		if err != nil {
-			c.JSON(401, gin.H{"error": "无效的认证令牌"})
+			response.Unauthorized(c, "无效的认证令牌")
 			c.Abort()
 			return
 		}

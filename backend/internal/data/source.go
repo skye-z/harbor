@@ -1,7 +1,9 @@
 package data
 
 import (
+	"crypto/md5"
 	"errors"
+	"fmt"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -15,7 +17,7 @@ var initialized bool
 
 // 初始化数据库连接
 func InitDB() (*xorm.Engine, error) {
-	engine, err := xorm.NewEngine("sqlite", "./harbor.db")
+	engine, err := xorm.NewEngine("sqlite", "/opt/harbor/harbor.db")
 	if err != nil {
 		return nil, errors.New("创建数据库引擎失败: " + err.Error())
 	}
@@ -46,13 +48,15 @@ func InitDBTable(engine *xorm.Engine) error {
 	}
 	if count == 0 {
 		defaultPassword := "HarborAdmin2026!"
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(defaultPassword), bcrypt.DefaultCost)
+		md5Password := fmt.Sprintf("%x", md5.Sum([]byte(defaultPassword)))
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(md5Password), bcrypt.DefaultCost)
 		if err != nil {
 			return errors.New("加密默认密码失败: " + err.Error())
 		}
 		admin := User{
 			Username:  "admin",
 			Password:  string(hashedPassword),
+			IsAdmin:   true,
 			CreatedAt: time.Now(),
 		}
 		_, err = engine.Insert(&admin)

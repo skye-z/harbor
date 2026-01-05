@@ -1,4 +1,7 @@
 backend/dist/
+frontend/test-results/
+frontend/.vite/
+old/
 
 .DS_Store
 

@@ -43,7 +43,7 @@ After=network.target docker.service
 Wants=docker.service
 
 [Service]
-Type=notify
+Type=simple
 User=harbor
 Group=harbor
 WorkingDirectory=/opt/harbor
@@ -235,8 +235,7 @@ download_harbor() {
     # 优先使用当前目录的 harbor 文件
     if [ -f "$current_binary" ]; then
         log_info "使用当前目录的 harbor 文件"
-        cp "$current_binary" "./harbor"
-        chmod +x "./harbor"
+        chmod +x "$current_binary"
         return 0
     fi
 
@@ -245,8 +244,8 @@ download_harbor() {
         log_info "正在下载 Harbor v$version ..."
         local github_url="$GITHUB_REPO/$version/harbor-linux-amd64"
 
-        if curl -L -o "harbor" "$github_url" 2>/dev/null; then
-            chmod +x "./harbor"
+        if curl -L -o "$current_binary" "$github_url" 2>/dev/null; then
+            chmod +x "$current_binary"
             log_info "下载成功"
             return 0
         fi
@@ -254,8 +253,8 @@ download_harbor() {
         # 失败则使用 gh-proxy
         log_warn "GitHub 下载失败，尝试代理..."
         local proxy_url="$GH_PROXY/$github_url"
-        if curl -L -o "harbor" "$proxy_url" 2>/dev/null; then
-            chmod +x "./harbor"
+        if curl -L -o "$current_binary" "$proxy_url" 2>/dev/null; then
+            chmod +x "$current_binary"
             log_info "代理下载成功"
             return 0
         fi
@@ -324,21 +323,18 @@ install_files() {
         systemctl stop "$APP_NAME" 2>/dev/null || true
     fi
 
+    # 获取源码目录
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local current_binary="$script_dir/harbor"
+
     # 复制二进制文件
-    cp "./harbor" "$HARBOR_FILE"
+    cp "$current_binary" "$HARBOR_FILE"
     chmod +x "$HARBOR_FILE"
 
     # 复制前端文件
-    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     if [ -d "$script_dir/dist" ]; then
         rm -rf "$INSTALL_DIR/dist" 2>/dev/null || true
         cp -r "$script_dir/dist" "$INSTALL_DIR/"
-    fi
-
-    # 确保配置文件存在
-    if [ ! -f "$INSTALL_DIR/config.yaml" ]; then
-        touch "$INSTALL_DIR/config.yaml"
-        chown "$APP_USER:$APP_USER" "$INSTALL_DIR/config.yaml"
     fi
 
     chown -R "$APP_USER:$APP_USER" "$INSTALL_DIR"

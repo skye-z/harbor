@@ -130,8 +130,7 @@ func (s *ContainerService) GetLogs(c *gin.Context) {
 	defer logs.Close()
 
 	content, _ := io.ReadAll(logs)
-	c.Header("Content-Type", "text/plain; charset=utf-8")
-	c.String(200, string(content))
+	response.Success(c, gin.H{"logs": string(content)})
 }
 
 // 获取容器统计信息

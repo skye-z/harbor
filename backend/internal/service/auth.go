@@ -17,6 +17,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/skye-z/harbor/internal/data"
 	"github.com/skye-z/harbor/internal/util/config"
+	"github.com/skye-z/harbor/internal/util/response"
 	"golang.org/x/crypto/bcrypt"
 	"xorm.io/xorm"
 )
@@ -297,7 +298,7 @@ func (h *AuthHandler) AuthMiddleware() gin.HandlerFunc {
 		}
 
 		if token == "" {
-			c.JSON(401, gin.H{"error": "未授权访问"})
+			response.Unauthorized(c, "未授权访问")
 			c.Abort()
 			return
 		}

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -45,21 +47,31 @@ func main() {
 	port := route.GetPort()
 	log.Println("[Core] 服务已启动，端口为", port)
 	logService.Log(service.LogTypeSystem, service.LogLevelInfo, "startup", "system", "", "Harbor服务已启动，端口: "+port, "", 0)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	go func() {
-		if err := route.Router.Run(":" + port); err != nil {
-			log.Fatalf("[Core] 启动服务器失败: %v", err)
-		}
+		srv := &http.Server{Addr: ":" + port}
+		go func() {
+			if err := route.Router.Run(":" + port); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("[Core] 启动服务器失败: %v", err)
+			}
+		}()
+		<-ctx.Done()
+		srv.Shutdown(context.Background())
 	}()
 
-	waitForInterrupt(engine, logService)
+	waitForInterrupt(engine, logService, cancel)
 }
 
-func waitForInterrupt(engine *xorm.Engine, logService *service.LogService) {
+func waitForInterrupt(engine *xorm.Engine, logService *service.LogService, cancel context.CancelFunc) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 
 	<-sigCh
 	log.Println("[Core] 正在关闭服务器...")
+	cancel()
 
 	if logService != nil {
 		logService.LogSystemShutdown()
