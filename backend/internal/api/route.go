@@ -109,6 +109,9 @@ func (r Route) addPrivateRoute(route gin.IRoutes) {
 	route.GET("/api/docker/prune/networks", ds.PruneNetworks)
 	route.GET("/api/docker/prune/all", ds.PruneAll)
 
+	ls := service.NewLogService(r.Engine)
+	route.GET("/api/logs/recent", ls.GetRecent)
+
 	is := service.NewImageService(r.DockerClient)
 	route.GET("/api/image/list", is.GetList)
 	route.GET("/api/image/pull", is.PullImage)

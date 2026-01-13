@@ -1,0 +1,93 @@
+<script setup lang="ts">
+import { ref, computed, watch, onMounted } from 'vue'
+import { darkTheme as naiveDarkTheme, type GlobalThemeOverrides } from 'naive-ui'
+import GlobalAPI from './components/GlobalAPI.vue'
+
+const getInitialTheme = () => {
+  const savedTheme = localStorage.getItem('theme')
+  if (savedTheme === 'dark' || savedTheme === 'light') {
+    return savedTheme === 'dark'
+  }
+
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+  return prefersDark
+}
+
+const isDark = ref(getInitialTheme())
+
+const theme = computed(() => isDark.value ? naiveDarkTheme : undefined)
+
+const lightThemeOverrides: GlobalThemeOverrides = {
+  common: {
+    bodyColor: '#f5f5f5',
+    borderRadius: '8px',
+    borderRadiusSmall: '6px'
+  }
+}
+
+const darkThemeOverrides: GlobalThemeOverrides = {
+  common: {
+    bodyColor: '#101014',
+    borderRadius: '8px',
+    borderRadiusSmall: '6px'
+  }
+}
+
+const toggleTheme = () => {
+  isDark.value = !isDark.value
+  localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
+  document.documentElement.setAttribute('data-theme', isDark.value ? 'dark' : 'light')
+}
+
+if (typeof window !== 'undefined') {
+  (window as any).toggleTheme = toggleTheme
+}
+
+onMounted(() => {
+  document.documentElement.setAttribute('data-theme', isDark.value ? 'dark' : 'light')
+})
+
+watch(isDark, (val) => {
+  localStorage.setItem('theme', val ? 'dark' : 'light')
+  document.documentElement.setAttribute('data-theme', val ? 'dark' : 'light')
+})
+</script>
+
+<template>
+  <n-config-provider :theme="theme" :theme-overrides="isDark ? darkThemeOverrides : lightThemeOverrides">
+    <n-loading-bar-provider>
+      <n-message-provider>
+        <n-dialog-provider>
+          <n-notification-provider>
+            <GlobalAPI />
+            <router-view />
+          </n-notification-provider>
+        </n-dialog-provider>
+      </n-message-provider>
+    </n-loading-bar-provider>
+  </n-config-provider>
+</template>
+
+<style>
+@import 'vfonts/FiraCode.css';
+
+html {
+  transition: background-color 0.3s, color 0.3s;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+[data-theme='light'] body {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+[data-theme='dark'] body {
+  background-color: #101014;
+  color: #fff;
+}
+</style>

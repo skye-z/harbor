@@ -272,6 +272,12 @@ create_user() {
         useradd -r -s /usr/sbin/nologin -d "$INSTALL_DIR" -M "$APP_USER" 2>/dev/null || true
         log_info "用户 $APP_USER 创建成功"
     fi
+    
+    # 将 harbor 用户加入 docker 组（解决 socket 权限问题）
+    if getent group docker >/dev/null 2>&1; then
+        usermod -aG docker "$APP_USER" 2>/dev/null || true
+        log_info "已添加 $APP_USER 到 docker 组"
+    fi
 }
 
 create_directories() {
@@ -314,6 +320,17 @@ install_logrotate() {
     chmod 644 /etc/logrotate.d/harbor
 }
 
+fix_docker_socket() {
+    if [ -S /var/run/docker.sock ]; then
+        # 确保 docker 组对 socket 有读写权限
+        if getent group docker >/dev/null 2>&1; then
+            chmod 660 /var/run/docker.sock 2>/dev/null || true
+            chown root:docker /var/run/docker.sock 2>/dev/null || true
+            log_info "已修复 Docker socket 权限"
+        fi
+    fi
+}
+
 install_files() {
     log_info "复制 Harbor 文件..."
 
@@ -343,6 +360,9 @@ install_files() {
 
 start_service() {
     log_info "启动 Harbor 服务..."
+    
+    # 修复 Docker socket 权限
+    fix_docker_socket
 
     systemctl enable "$APP_NAME" 2>/dev/null || true
     systemctl enable "$APP_NAME-backup.timer" 2>/dev/null || true
