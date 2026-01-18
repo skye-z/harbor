@@ -67,6 +67,7 @@ func newRoute(page embed.FS) (*gin.Engine, error) {
 // 初始化路由
 func (r Route) Init(engine *xorm.Engine) {
 	r.Engine = engine
+	r.Router.Use(CORSMiddleware())
 	r.addPublicRoute()
 	private := r.Router.Group("")
 	private.Use(AuthMiddleware())
@@ -143,6 +144,7 @@ func (r Route) addPrivateRoute(route gin.IRoutes) {
 	route.GET("/api/container/stat", cs.GetStat)
 	route.GET("/api/container/processes", cs.GetProcesses)
 	route.GET("/api/container/diff", cs.GetDiff)
+	route.GET("/api/container/files", cs.ListFiles)
 	route.GET("/api/container/copy/from", cs.CopyFromContainer)
 	route.GET("/api/container/copy/to", cs.CopyToContainer)
 	route.GET("/api/container/terminal", cs.ConnectTerminal)

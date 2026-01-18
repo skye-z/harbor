@@ -120,8 +120,8 @@
               <n-list-item v-for="c in usingContainers" :key="c.id">
                 <n-thing :title="getContainerName(c)" @click="viewContainer(c.id)">
                   <template #avatar>
-                    <n-tag :type="c.state === 'running' ? 'success' : 'default'" size="small" round>
-                      {{ c.state }}
+                    <n-tag :type="getStateType(c.state)" size="small" round>
+                      {{ formatState(c.state) }}
                     </n-tag>
                   </template>
                   <template #header-extra>
@@ -179,6 +179,26 @@ const loading = ref(true)
 const imageId = computed(() => route.params.id as string)
 
 const image = computed(() => imageDetail.value)
+
+const stateMap: Record<string, string> = {
+  running: '运行',
+  exited: '停止',
+  created: '创建',
+  paused: '暂停',
+  restarting: '重启',
+  removing: '移除',
+  dead: '异常'
+}
+
+const formatState = (state: string) => {
+  return stateMap[state] || state || '未知'
+}
+
+const getStateType = (state: string) => {
+  if (state === 'running') return 'success'
+  if (state === 'paused') return 'warning'
+  return 'default'
+}
 
 const usingContainers = computed(() => {
   if (!image.value) return []

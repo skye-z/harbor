@@ -74,18 +74,8 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHashHistory(),
   routes,
-  scrollBehavior(to, from, savedPosition) {
-    // 保持滚动位置
-    if (savedPosition) {
-      return savedPosition
-    } else if (to.hash) {
-      return {
-        selector: to.hash,
-        behavior: 'smooth'
-      }
-    } else {
-      return { top: 0 }
-    }
+  scrollBehavior() {
+    return { top: 0 }
   }
 })
 

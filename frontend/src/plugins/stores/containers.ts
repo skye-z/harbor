@@ -57,6 +57,10 @@ export const useContainerStore = defineStore('containers', () => {
     return await containerApi.rename(id, name)
   }
 
+  const listContainerFiles = async (id: string, path: string) => {
+    return await containerApi.listFiles(id, path)
+  }
+
   const copyFromContainer = async (id: string, srcPath: string, dstPath?: string) => {
     return await containerApi.copyFrom(id, srcPath, dstPath)
   }
@@ -79,6 +83,7 @@ export const useContainerStore = defineStore('containers', () => {
     getContainerProcesses,
     getContainerInfo,
     renameContainer,
+    listContainerFiles,
     copyFromContainer,
     copyToContainer
   }

@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/skye-z/harbor/internal/util/docker"
 	"github.com/skye-z/harbor/internal/util/response"
+	"github.com/skye-z/harbor/internal/util/validation"
 )
 
 type ImageService struct {
@@ -193,7 +194,22 @@ func (s *ImageService) BuildImage(c *gin.Context) {
 		return
 	}
 
+	if !validation.ValidateDockerTag(imageName) {
+		response.BadRequest(c, "无效的镜像名称")
+		return
+	}
+
 	dockerfile := c.DefaultQuery("dockerfile", "FROM alpine\nRUN apk add --no-cache curl")
+	if dockerfile == "" {
+		response.BadRequest(c, "Dockerfile不能为空")
+		return
+	}
+
+	if len(dockerfile) > 1024*1024 {
+		response.BadRequest(c, "Dockerfile内容过长")
+		return
+	}
+
 	if err := s.client.BuildImage(imageName, dockerfile); err != nil {
 		response.Error(c, err.Error())
 		return

@@ -48,11 +48,13 @@ func (c *Client) ListVolumes() ([]*Volume, error) {
 			status[k] = fmt.Sprintf("%v", v)
 		}
 
+		createdAt, _ := time.Parse(time.RFC3339, vol.CreatedAt)
+
 		volumes = append(volumes, &Volume{
 			Name:       vol.Name,
 			Driver:     vol.Driver,
 			Mountpoint: vol.Mountpoint,
-			CreatedAt:  time.Time{},
+			CreatedAt:  createdAt,
 			Status:     status,
 			Labels:     vol.Labels,
 			Scope:      vol.Scope,

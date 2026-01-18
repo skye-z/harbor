@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMessage, useDialog, NTag, NButton, NSpace, NIcon } from 'naive-ui'
 import { useContainerStore } from '../plugins/stores/containers'
+import { formatContainerState, getContainerStateType } from '../plugins/utils/container'
 import {
   Trash,
   SearchOutline,
@@ -85,18 +86,27 @@ const openPort = (port: number) => {
   window.open(`http://localhost:${port}`, '_blank')
 }
 
-const stateMap: Record<string, string> = {
-  running: '运行',
-  exited: '停止',
-  created: '创建',
-  paused: '暂停',
-  restarting: '重启',
-  removing: '移除',
-  dead: '异常'
-}
-
-const formatState = (state: string) => {
-  return stateMap[state] || state || '未知'
+const formatPorts = (ports: any[]) => {
+  if (!ports || ports.length === 0) return []
+  const portMap = new Map<string, { public_port: number; private_port: number; types: string[]; ips: string[] }>()
+  for (const port of ports) {
+    const key = `${port.public_port}:${port.private_port}`
+    if (!portMap.has(key)) {
+      portMap.set(key, {
+        public_port: port.public_port,
+        private_port: port.private_port,
+        types: [],
+        ips: []
+      })
+    }
+    if (port.type && !portMap.get(key)!.types.includes(port.type)) {
+      portMap.get(key)!.types.push(port.type)
+    }
+    if (port.ip && !port.ip.startsWith('invalid') && !portMap.get(key)!.ips.includes(port.ip)) {
+      portMap.get(key)!.ips.push(port.ip)
+    }
+  }
+  return Array.from(portMap.values())
 }
 
 const handleOperation = async (id: string, action: string, btnType: string) => {
@@ -209,19 +219,20 @@ onMounted(async () => {
                     <n-tag size="small" :bordered="false" @click.stop="copyId(container.id)" style="cursor: pointer">
                       {{ formatId(container.id) }}
                     </n-tag>
-                    <n-tag v-if="container.ports && container.ports.length > 0" size="small" :bordered="false"
-                      type="success" @click.stop="openPort(container.ports[0].public_port)" style="cursor: pointer">
-                      {{ container.ports[0].public_port }}:{{ container.ports[0].private_port }}
-                    </n-tag>
-                    <n-tag v-else size="small" :bordered="false">
-                      {{ container.ports?.[0]?.private_port || '-' }}
+                    <template v-for="(port, index) in formatPorts(container.ports)" :key="index">
+                      <n-tag v-if="port.public_port !== 0" size="small" :bordered="false" type="success" style="cursor: pointer" @click.stop="openPort(port.public_port)">
+                        {{ port.public_port }}
+                      </n-tag>
+                    </template>
+                    <n-tag v-if="!container.ports || container.ports.length === 0" size="small" :bordered="false">
+                      -
                     </n-tag>
                   </n-space>
                 </div>
                 <n-tag
-                  :type="container.state === 'running' ? 'success' : container.state === 'paused' ? 'warning' : 'default'"
+                  :type="getContainerStateType(container.state)"
                   size="small" round :bordered="false">
-                  {{ formatState(container.state) }}
+                  {{ formatContainerState(container.state) }}
                   <template #icon>
                     <div :style="{
                       width: '6px',

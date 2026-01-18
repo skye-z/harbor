@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/client"
 )
 
@@ -226,6 +227,7 @@ func (c *Client) GetContainerLogs(ctx context.Context, id string, tail string) (
 		ShowStdout: true,
 		ShowStderr: true,
 		Tail:       tail,
+		Details:    false,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get container logs: %w", err)
@@ -300,6 +302,62 @@ func (c *Client) ListContainerDir(ctx context.Context, id string, path string) (
 	}
 
 	return resp, nil
+}
+
+func (c *Client) ExecCommand(ctx context.Context, containerID string, cmd []string) (string, error) {
+	execID, err := c.CreateExec(ctx, containerID, &ContainerCreateConfig{
+		Cmd:          cmd,
+		AttachStdout: true,
+		AttachStderr: true,
+		Tty:          false,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create exec: %w", err)
+	}
+
+	result, err := c.AttachToExec(ctx, execID, false)
+	if err != nil {
+		return "", fmt.Errorf("failed to attach to exec: %w", err)
+	}
+	defer result.Conn.Close()
+
+	output, err := io.ReadAll(result.Reader)
+	if err != nil {
+		return "", fmt.Errorf("failed to read exec output: %w", err)
+	}
+
+	return decodeDockerStream(output), nil
+}
+
+func decodeDockerStream(data []byte) string {
+	if len(data) < 8 {
+		return string(data)
+	}
+
+	var result strings.Builder
+	i := 0
+	for i < len(data) {
+		if i+8 > len(data) {
+			break
+		}
+		streamType := data[i]
+		if streamType != 1 && streamType != 2 {
+			break
+		}
+		size := uint32(data[i+4])<<24 | uint32(data[i+5])<<16 | uint32(data[i+6])<<8 | uint32(data[i+7])
+		i += 8
+		if i+int(size) > len(data) {
+			result.Write(data[i:])
+			break
+		}
+		result.Write(data[i : i+int(size)])
+		i += int(size)
+	}
+
+	if result.Len() == 0 {
+		return string(data)
+	}
+	return result.String()
 }
 
 func (c *Client) CopyFromContainer(ctx context.Context, containerID, srcPath, dstPath string) error {
@@ -441,9 +499,13 @@ func (c *Client) CreateContainer(imageName, containerName string, cmd []string, 
 
 	// 处理ExposedPorts
 	if exposedPortsData != nil && len(exposedPortsData) > 0 {
-		config.ExposedPorts = make(map[string]struct{})
+		config.ExposedPorts = make(network.PortSet)
 		for port := range exposedPortsData {
-			config.ExposedPorts[port] = struct{}{}
+			p, err := network.ParsePort(port)
+			if err != nil {
+				continue
+			}
+			config.ExposedPorts[p] = struct{}{}
 		}
 	}
 
@@ -458,7 +520,7 @@ func (c *Client) CreateContainer(imageName, containerName string, cmd []string, 
 			// RestartPolicy
 			if rp, ok := hc["RestartPolicy"].(map[string]interface{}); ok {
 				if name, ok := rp["Name"].(string); ok {
-					hostConfig.RestartPolicy.Name = name
+					hostConfig.RestartPolicy.Name = container.RestartPolicyMode(name)
 				}
 			}
 
@@ -483,18 +545,19 @@ func (c *Client) CreateContainer(imageName, containerName string, cmd []string, 
 
 			// PortBindings
 			if pb, ok := hc["PortBindings"].(map[string]interface{}); ok {
-				hostConfig.PortBindings = make(map[string][]struct{ HostPort string })
+				hostConfig.PortBindings = make(network.PortMap)
 				for port, bindings := range pb {
 					if bindingList, ok := bindings.([]interface{}); ok {
-						var ports []struct{ HostPort string }
+						var ports []network.PortBinding
 						for _, b := range bindingList {
 							if binding, ok := b.(map[string]interface{}); ok {
 								if hp, ok := binding["HostPort"].(string); ok {
-									ports = append(ports, struct{ HostPort string }{HostPort: hp})
+									ports = append(ports, network.PortBinding{HostPort: hp})
 								}
 							}
 						}
-						hostConfig.PortBindings[port] = ports
+						p, _ := network.ParsePort(port)
+						hostConfig.PortBindings[p] = ports
 					}
 				}
 			}

@@ -76,6 +76,10 @@ func (s *AuthService) Login(req *LoginRequest) (*LoginResponse, error) {
 
 // 密码登录
 func (s *AuthService) loginWithPassword(req *LoginRequest, user *data.User) (*LoginResponse, error) {
+	if req.Password == "" {
+		return nil, errors.New("密码不能为空")
+	}
+
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		return nil, errors.New("密码错误")
 	}

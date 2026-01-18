@@ -4,11 +4,11 @@
       <div class="container-title-group">
         <div class="title-info">
           <h1>{{ container?.Name?.replace(/^\//, '') || containerId }}</h1>
-          <n-tag :type="container?.State?.Status === 'running' ? 'success' : 'default'" round size="small" :bordered="false">
+          <n-tag :type="getStateType(container?.State?.Status)" round size="small" :bordered="false">
             <template #icon>
               <div :style="{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor', marginRight: '4px' }"></div>
             </template>
-            {{ container?.State?.Status === 'running' ? 'RUNNING' : container?.State?.Status?.toUpperCase() }}
+            {{ formatState(container?.State?.Status) }}
           </n-tag>
         </div>
       </div>
@@ -130,8 +130,8 @@
           <n-card title="状态信息" size="small" :bordered="true">
             <n-descriptions :column="1" label-placement="left" bordered>
               <n-descriptions-item label="状态">
-                <n-tag :type="container?.State?.Status === 'running' ? 'success' : 'default'" size="small">
-                  {{ container?.State?.Status?.toUpperCase() || '-' }}
+                <n-tag :type="getStateType(container?.State?.Status)" size="small">
+                  {{ formatState(container?.State?.Status) }}
                 </n-tag>
               </n-descriptions-item>
               <n-descriptions-item label="运行中">
@@ -220,8 +220,12 @@
             </n-button>
           </n-space>
         </template>
-        <div class="logs-container" v-if="logs">
-          <pre class="logs-content">{{ logs }}</pre>
+        <div class="logs-container" v-if="logs.length > 0">
+          <pre class="logs-content"><code
+            v-for="(line, index) in logs"
+            :key="index"
+            :class="getLogLineClass(line)"
+          >{{ line }}</code></pre>
         </div>
         <n-empty v-else description="暂无日志" />
       </n-card>
@@ -229,7 +233,19 @@
       <n-card title="文件管理" :bordered="true">
         <template #header-extra>
           <n-space>
-            <n-input v-model:value="filePath" placeholder="输入容器内路径，如 /app" style="width: 300px" />
+            <n-button size="small" @click="handleNavigateUp" :disabled="filePath === '/'">
+              <template #icon>
+                <n-icon :component="FolderOpenOutline" />
+              </template>
+              返回上级
+            </n-button>
+            <n-input v-model:value="currentPath" placeholder="输入容器内路径，如 /app" style="width: 300px" />
+            <n-button size="small" type="primary" @click="loadFileList" :loading="fileLoading">
+              <template #icon>
+                <n-icon :component="SearchOutline" />
+              </template>
+              浏览
+            </n-button>
             <n-button size="small" type="primary" @click="handleDownload" :loading="fileLoading">
               <template #icon>
                 <n-icon :component="DownloadOutline" />
@@ -247,15 +263,16 @@
           </n-space>
         </template>
         <n-alert type="info" :show-icon="false" style="margin-bottom: 16px">
-          输入容器内文件/目录路径，点击下载可将文件下载到本地。点击上传可选择本地文件上传到容器当前路径。
+          输入容器内文件/目录路径，点击浏览查看目录内容，点击下载可将文件下载到本地。点击上传可选择本地文件上传到容器当前路径。
         </n-alert>
         <n-data-table
           v-if="fileList.length > 0"
           :columns="fileColumns"
           :data="fileList"
           :bordered="false"
+          :pagination="{ pageSize: 20 }"
         />
-        <n-empty v-else description="暂无文件信息，请在上方输入路径并点击下载或上传" />
+        <n-empty v-else description="暂无文件信息，请在上方输入路径并点击浏览" />
       </n-card>
 
       <n-card title="进程列表" :bordered="true">
@@ -286,6 +303,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useContainerStore } from '../plugins/stores/containers'
 import { useMessage, useDialog, NButton, NIcon, NCard, NDataTable, NTag, NText, NGrid, NGi, NEmpty, NInput, NSpace, NAlert, NUpload, NStatistic, NDescriptions, NDescriptionsItem } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
+import { formatContainerState, getContainerStateType } from '../plugins/utils/container'
 import {
   PlayOutline,
   StopOutline,
@@ -295,10 +313,12 @@ import {
   DownloadOutline,
   CloudUploadOutline,
   FolderOutline,
+  FolderOpenOutline,
   DocumentOutline,
   HardwareChipOutline,
   DiscOutline,
-  ServerOutline
+  ServerOutline,
+  SearchOutline
 } from '@vicons/ionicons5'
 
 const route = useRoute()
@@ -313,12 +333,21 @@ const container = ref<any>(null)
 const containerLoading = ref(true)
 
 const stats = ref<any>(null)
-const logs = ref<string>('')
+const logs = ref<string[]>([])
+
+const getLogLineClass = (line: string) => {
+  const lower = line.toLowerCase()
+  if (lower.includes('error') || lower.includes('err') || lower.includes('fatal') || lower.includes('exception')) return 'log-error'
+  if (lower.includes('warn')) return 'log-warn'
+  if (lower.includes('info')) return 'log-info'
+  if (lower.includes('debug')) return 'log-debug'
+  return ''
+}
 const processes = ref<any[]>([])
 const loading = ref(false)
 const logsLoading = ref(false)
 const processesLoading = ref(false)
-const filePath = ref('/')
+const currentPath = ref('/')
 const fileList = ref<any[]>([])
 const fileLoading = ref(false)
 const uploadLoading = ref(false)
@@ -335,6 +364,23 @@ const formatDate = (timestamp: number | string | undefined) => {
   if (!timestamp) return '-'
   const date = new Date(timestamp)
   return date.toLocaleString()
+}
+
+const getStateType = (state: string) => {
+  if (state === 'running') return 'success'
+  if (state === 'paused') return 'warning'
+  return 'default'
+}
+
+const formatState = (state: string) => {
+  if (state === 'running') return '运行中'
+  if (state === 'exited') return '已停止'
+  if (state === 'paused') return '已暂停'
+  if (state === 'created') return '已创建'
+  if (state === 'restarting') return '重启中'
+  if (state === 'removing') return '删除中'
+  if (state === 'dead') return '已终止'
+  return state || '未知'
 }
 
 const portBindings = computed(() => {
@@ -433,7 +479,8 @@ const fileColumns: DataTableColumns<{
     key: 'name',
     render(row: any) {
       return h('div', {
-        style: { display: 'flex', alignItems: 'center', gap: '8px' }
+        style: { display: 'flex', alignItems: 'center', gap: '8px', cursor: row.is_dir ? 'pointer' : 'default', color: row.is_dir ? '#2080f0' : 'inherit' },
+        onClick: () => handleNavigate(row)
       }, [
         h(NIcon, {
           component: row.is_dir ? FolderOutline : DocumentOutline,
@@ -479,7 +526,8 @@ const loadLogs = async () => {
   try {
     logsLoading.value = true
     const result = await containerStore.getContainerLogs(containerId.value)
-    logs.value = result?.logs || result || ''
+    const logText = result?.logs || result || ''
+    logs.value = logText.split('\n').filter((line: string) => line.length > 0)
   } catch (error: any) {
     message.error('加载日志失败: ' + error.message)
   } finally {
@@ -592,23 +640,46 @@ const openTerminal = () => {
   router.push({ name: 'ContainerTerminal', params: { id: containerId.value } })
 }
 
+const loadFileList = async () => {
+  if (!currentPath.value) {
+    message.warning('请输入路径')
+    return
+  }
+  try {
+    fileLoading.value = true
+    const result = await containerStore.listContainerFiles(containerId.value, currentPath.value)
+    fileList.value = result || []
+  } catch (error: any) {
+    message.error('获取文件列表失败: ' + error.message)
+    fileList.value = []
+  } finally {
+    fileLoading.value = false
+  }
+}
+
+const handleNavigateUp = () => {
+  if (currentPath.value === '/') return
+  const parent = currentPath.value.split('/').slice(0, -1).join('/')
+  currentPath.value = parent || '/'
+  loadFileList()
+}
+
+const handleNavigate = (row: any) => {
+  if (row.is_dir) {
+    currentPath.value = row.path
+    loadFileList()
+  }
+}
+
 const handleDownload = async () => {
-  if (!filePath.value) {
+  if (!currentPath.value) {
     message.warning('请输入文件路径')
     return
   }
   try {
     fileLoading.value = true
-    await containerStore.copyFromContainer(containerId.value, filePath.value)
+    await containerStore.copyFromContainer(containerId.value, currentPath.value)
     message.success('文件下载成功')
-    fileList.value.unshift({
-      name: filePath.value.split('/').pop() || filePath.value,
-      path: filePath.value,
-      type: 'file',
-      size: '-',
-      mtime: new Date().toLocaleString(),
-      is_dir: false
-    })
   } catch (error: any) {
     message.error('下载失败: ' + error.message)
   } finally {
@@ -617,7 +688,7 @@ const handleDownload = async () => {
 }
 
 const handleUpload = async (options: any) => {
-  if (!filePath.value) {
+  if (!currentPath.value) {
     message.warning('请输入目标路径')
     return false
   }
@@ -626,16 +697,9 @@ const handleUpload = async (options: any) => {
 
   try {
     uploadLoading.value = true
-    await containerStore.copyToContainer(containerId.value, file.name, filePath.value + '/' + file.name)
+    await containerStore.copyToContainer(containerId.value, file.name, currentPath.value + '/' + file.name)
     message.success('文件上传成功')
-    fileList.value.unshift({
-      name: file.name,
-      path: filePath.value + '/' + file.name,
-      type: 'file',
-      size: formatFileSize(file.size),
-      mtime: new Date().toLocaleString(),
-      is_dir: false
-    })
+    loadFileList()
   } catch (error: any) {
     message.error('上传失败: ' + error.message)
   } finally {
@@ -651,11 +715,16 @@ onMounted(async () => {
     router.push({ name: 'Containers' })
     return
   }
-  const promises = [loadStats(), loadLogs()]
+  await loadStats()
+  await loadLogs()
+  setTimeout(() => {
+    loadFileList()
+  }, 1000)
   if (container.value?.State?.Status === 'running') {
-    promises.push(loadProcesses())
+    setTimeout(() => {
+      loadProcesses()
+    }, 3000)
   }
-  await Promise.all(promises)
 })
 </script>
 
@@ -717,5 +786,25 @@ onMounted(async () => {
   font-size: 12px;
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+.logs-content code {
+  display: block;
+}
+
+.log-error {
+  color: #ff7b72;
+}
+
+.log-warn {
+  color: #d29922;
+}
+
+.log-info {
+  color: #58a6ff;
+}
+
+.log-debug {
+  color: #8b949e;
 }
 </style>

@@ -3,6 +3,7 @@ package service
 import (
 	"io"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -122,6 +123,7 @@ func (s *ContainerService) GetLogs(c *gin.Context) {
 	}
 
 	tail := c.DefaultQuery("tail", "100")
+
 	logs, err := s.client.GetContainerLogs(c.Request.Context(), id, tail)
 	if err != nil {
 		response.Error(c, err.Error())
@@ -130,7 +132,27 @@ func (s *ContainerService) GetLogs(c *gin.Context) {
 	defer logs.Close()
 
 	content, _ := io.ReadAll(logs)
-	response.Success(c, gin.H{"logs": string(content)})
+	logContent := StripANSICodes(string(content))
+
+	response.Success(c, gin.H{"logs": logContent})
+}
+
+func StripANSICodes(s string) string {
+	result := make([]rune, 0, len(s))
+	i := 0
+	for i < len(s) {
+		r := rune(s[i])
+		if r == '\x1b' && i+1 < len(s) && s[i+1] == '[' {
+			i += 2
+			for i < len(s) && (s[i] >= '0' && s[i] <= '9' || s[i] == ';' || s[i] == 'm') {
+				i++
+			}
+			continue
+		}
+		result = append(result, r)
+		i++
+	}
+	return string(result)
 }
 
 // 获取容器统计信息
@@ -180,6 +202,51 @@ func (s *ContainerService) GetDiff(c *gin.Context) {
 		return
 	}
 	response.Success(c, result)
+}
+
+// 获取容器文件列表
+func (s *ContainerService) ListFiles(c *gin.Context) {
+	id := c.Query("id")
+	if id == "" {
+		response.BadRequest(c, "缺少容器ID")
+		return
+	}
+
+	path := c.DefaultQuery("path", "/")
+
+	cmd := []string{"ls", "-1ap", path}
+	output, err := s.client.ExecCommand(c.Request.Context(), id, cmd)
+	if err != nil {
+		response.Error(c, err.Error())
+		return
+	}
+
+	var files []map[string]interface{}
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || line == "." || line == ".." {
+			continue
+		}
+
+		isDir := strings.HasSuffix(line, "/")
+		name := strings.TrimSuffix(line, "/")
+
+		files = append(files, map[string]interface{}{
+			"name":   name,
+			"path":   filepath.Join(path, name),
+			"type":   map[bool]string{true: "directory", false: "file"}[isDir],
+			"size":   "0",
+			"mtime":  "",
+			"is_dir": isDir,
+			"mode":   "-rw-r--r--",
+			"perm":   "rw-r--r--",
+			"owner":  "root",
+			"group":  "root",
+		})
+	}
+
+	response.Success(c, files)
 }
 
 // 从容器复制文件

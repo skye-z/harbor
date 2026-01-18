@@ -1,13 +1,12 @@
 package docker
 
 import (
+	"archive/tar"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
-	"os/exec"
-	"path/filepath"
 
 	"github.com/moby/moby/client"
 )
@@ -96,27 +95,51 @@ func (c *Client) PullImage(tag string, onProgress func(PullProgress)) error {
 func (c *Client) BuildImage(imageName, dockerfileContent string) error {
 	ctx := context.Background()
 
-	tmpDir, err := os.MkdirTemp("", "docker-build")
+	dockerfileReader, err := buildDockerfileTar(dockerfileContent)
 	if err != nil {
-		return fmt.Errorf("failed to create temp directory: %w", err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	dockerfilePath := filepath.Join(tmpDir, "Dockerfile")
-	if err := os.WriteFile(dockerfilePath, []byte(dockerfileContent), 0644); err != nil {
-		return fmt.Errorf("failed to write Dockerfile: %w", err)
+		return fmt.Errorf("failed to create tar: %w", err)
 	}
 
-	cmd := exec.CommandContext(ctx, "docker", "build", "-t", imageName, "-f", dockerfilePath, tmpDir)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-
-	if err := cmd.Run(); err != nil {
+	resp, err := c.cli.ImageBuild(ctx, dockerfileReader, client.ImageBuildOptions{
+		Tags:        []string{imageName},
+		Remove:      true,
+		ForceRemove: true,
+		PullParent:  true,
+		BuildArgs:   map[string]*string{},
+	})
+	if err != nil {
 		return fmt.Errorf("failed to build image: %w", err)
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(io.Discard, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read build response: %w", err)
 	}
 
 	return nil
+}
+
+func buildDockerfileTar(dockerfileContent string) (io.Reader, error) {
+	buf := new(bytes.Buffer)
+	tw := tar.NewWriter(buf)
+
+	dockerfileHeader := &tar.Header{
+		Name: "Dockerfile",
+		Mode: 0644,
+		Size: int64(len(dockerfileContent)),
+	}
+	if err := tw.WriteHeader(dockerfileHeader); err != nil {
+		return nil, err
+	}
+	if _, err := tw.Write([]byte(dockerfileContent)); err != nil {
+		return nil, err
+	}
+	if err := tw.Close(); err != nil {
+		return nil, err
+	}
+
+	return buf, nil
 }
 
 // 删除镜像

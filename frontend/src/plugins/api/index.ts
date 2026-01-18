@@ -37,6 +37,9 @@ export const containerApi = {
   rename: async (id: string, name: string) => {
     return apiClient.post('/container/rename', { id, name })
   },
+  listFiles: async (id: string, path: string) => {
+    return apiClient.get('/container/files', { params: { id, path } })
+  },
   copyFrom: async (id: string, srcPath: string, dstPath?: string) => {
     return apiClient.get('/container/copy/from', { params: { id, src_path: srcPath, dst_path: dstPath } })
   },
