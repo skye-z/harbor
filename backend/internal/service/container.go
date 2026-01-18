@@ -422,26 +422,34 @@ func (s *ContainerService) CreateContainer(c *gin.Context) {
 
 // 重命名容器
 func (s *ContainerService) RenameContainer(c *gin.Context) {
-	id := c.Query("id")
-	if id == "" {
+	var req struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "无效的请求数据: "+err.Error())
+		return
+	}
+
+	if req.ID == "" {
 		response.BadRequest(c, "缺少容器ID")
 		return
 	}
 
-	newName := c.Query("name")
-	if newName == "" {
+	if req.Name == "" {
 		response.BadRequest(c, "缺少新名称")
 		return
 	}
 
-	err := s.client.RenameContainer(id, newName)
+	err := s.client.RenameContainer(req.ID, req.Name)
 	if err != nil {
 		response.Error(c, err.Error())
 		return
 	}
 
 	response.SuccessWithMessage(c, "容器重命名成功", gin.H{
-		"id":      id,
-		"newName": newName,
+		"id":      req.ID,
+		"newName": req.Name,
 	})
 }

@@ -35,7 +35,7 @@ export const containerApi = {
     return apiClient.get('/container/processes', { params: { id } })
   },
   rename: async (id: string, name: string) => {
-    return apiClient.get('/container/rename', { params: { id, name } })
+    return apiClient.post('/container/rename', { id, name })
   },
   copyFrom: async (id: string, srcPath: string, dstPath?: string) => {
     return apiClient.get('/container/copy/from', { params: { id, src_path: srcPath, dst_path: dstPath } })

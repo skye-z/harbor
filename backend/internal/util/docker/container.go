@@ -282,10 +282,10 @@ func (c *Client) GetContainerStats(id string) (*ContainerStats, error) {
 
 func (c *Client) GetContainerProcesses(ctx context.Context, id string) (client.ContainerTopResult, error) {
 	resp, err := c.cli.ContainerTop(ctx, id, client.ContainerTopOptions{
-		Arguments: []string{"pid", "ppid", "user", "cmd"},
+		Arguments: []string{},
 	})
 	if err != nil {
-		return client.ContainerTopResult{}, fmt.Errorf("failed to get container logs: %w", err)
+		return client.ContainerTopResult{}, fmt.Errorf("failed to get container processes: %w", err)
 	}
 
 	return resp, nil
@@ -439,16 +439,66 @@ func (c *Client) CreateContainer(imageName, containerName string, cmd []string, 
 		AutoRemove: autoRemove,
 	}
 
-	// 将前端数据序列化为JSON，然后反序列化到正确的结构
+	// 处理ExposedPorts
 	if exposedPortsData != nil && len(exposedPortsData) > 0 {
-		exposedPortsJSON, _ := json.Marshal(exposedPortsData)
-		json.Unmarshal(exposedPortsJSON, &config.ExposedPorts)
+		config.ExposedPorts = make(map[string]struct{})
+		for port := range exposedPortsData {
+			config.ExposedPorts[port] = struct{}{}
+		}
 	}
 
-	// 处理hostConfig数据
+	// 手动处理hostConfig数据
 	if hostConfigData != nil {
-		hostConfigJSON, _ := json.Marshal(hostConfigData)
-		json.Unmarshal(hostConfigJSON, hostConfig)
+		if hc, ok := hostConfigData.(map[string]interface{}); ok {
+			// NetworkMode
+			if nm, ok := hc["NetworkMode"].(string); ok && nm != "" {
+				hostConfig.NetworkMode = container.NetworkMode(nm)
+			}
+
+			// RestartPolicy
+			if rp, ok := hc["RestartPolicy"].(map[string]interface{}); ok {
+				if name, ok := rp["Name"].(string); ok {
+					hostConfig.RestartPolicy.Name = name
+				}
+			}
+
+			// Memory
+			if mem, ok := hc["Memory"].(float64); ok && mem > 0 {
+				hostConfig.Memory = int64(mem)
+			}
+
+			// CPUShares
+			if cpu, ok := hc["CPUShares"].(float64); ok && cpu > 0 {
+				hostConfig.CPUShares = int64(cpu)
+			}
+
+			// Binds
+			if binds, ok := hc["Binds"].([]interface{}); ok {
+				for _, b := range binds {
+					if bind, ok := b.(string); ok {
+						hostConfig.Binds = append(hostConfig.Binds, bind)
+					}
+				}
+			}
+
+			// PortBindings
+			if pb, ok := hc["PortBindings"].(map[string]interface{}); ok {
+				hostConfig.PortBindings = make(map[string][]struct{ HostPort string })
+				for port, bindings := range pb {
+					if bindingList, ok := bindings.([]interface{}); ok {
+						var ports []struct{ HostPort string }
+						for _, b := range bindingList {
+							if binding, ok := b.(map[string]interface{}); ok {
+								if hp, ok := binding["HostPort"].(string); ok {
+									ports = append(ports, struct{ HostPort string }{HostPort: hp})
+								}
+							}
+						}
+						hostConfig.PortBindings[port] = ports
+					}
+				}
+			}
+		}
 	}
 
 	resp, err := c.cli.ContainerCreate(ctx, client.ContainerCreateOptions{

@@ -424,7 +424,7 @@ const doCreateContainer = async () => {
     })
 
     const hostConfig: any = {
-      network_mode: formData.networkMode,
+      NetworkMode: formData.networkMode,
       RestartPolicy: {
         Name: formData.restartPolicy
       }
@@ -435,7 +435,7 @@ const doCreateContainer = async () => {
     }
 
     if (formData.cpuShares && formData.cpuShares > 0) {
-      hostConfig.CpuShares = formData.cpuShares
+      hostConfig.CPUShares = formData.cpuShares
     }
 
     if (Object.keys(portBindings).length > 0) {
@@ -460,20 +460,51 @@ const doCreateContainer = async () => {
       hostConfig.Binds = binds
     }
 
-    const data = {
+    // 构建符合 Docker API 格式的配置
+    const dockerConfig: any = {
       Image: formData.image,
       name: formData.name,
       Env: envs,
-      Cmd: formData.command ? [formData.command] : undefined,
+      Cmd: formData.command ? formData.command.split(' ') : undefined,
       WorkingDir: formData.workingDir || undefined,
-      HostConfig: hostConfig,
-      ExposedPorts: exposedPorts,
       Tty: true,
       OpenStdin: true,
       AutoRemove: !formData.autoStart
     }
 
-    await containerApi.create(data)
+    // 添加 ExposedPorts
+    if (Object.keys(exposedPorts).length > 0) {
+      dockerConfig.ExposedPorts = exposedPorts
+    }
+
+    // 构建 HostConfig，使用 Docker API 标准字段名
+    const dockerHostConfig: any = {
+      NetworkMode: formData.networkMode,
+      RestartPolicy: {
+        Name: formData.restartPolicy
+      },
+      AutoRemove: !formData.autoStart
+    }
+
+    if (formData.memory && formData.memory > 0) {
+      dockerHostConfig.Memory = formData.memory * 1024 * 1024
+    }
+
+    if (formData.cpuShares && formData.cpuShares > 0) {
+      dockerHostConfig.CpuShares = formData.cpuShares
+    }
+
+    if (Object.keys(portBindings).length > 0) {
+      dockerHostConfig.PortBindings = portBindings
+    }
+
+    if (binds.length > 0) {
+      dockerHostConfig.Binds = binds
+    }
+
+    dockerConfig.HostConfig = dockerHostConfig
+
+    await containerApi.create(dockerConfig)
     message.success('容器创建成功')
     router.push({ name: 'Containers' })
   } catch (error: any) {
