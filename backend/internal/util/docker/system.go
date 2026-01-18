@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"syscall"
 
 	"github.com/moby/moby/client"
 )
@@ -37,6 +38,9 @@ type SystemInfo struct {
 	SecurityOptions   []string      `json:"security_options"`
 	Labels            []string      `json:"labels"`
 	Version           VersionInfo   `json:"version"`
+	DiskTotal         int64         `json:"disk_total"`
+	DiskUsed          int64         `json:"disk_used"`
+	DiskAvailable     int64         `json:"disk_available"`
 }
 
 type VersionInfo struct {
@@ -90,6 +94,8 @@ func (c *Client) GetInfo() (*SystemInfo, error) {
 	var version VersionInfo
 	json.Unmarshal(data, &version)
 
+	diskInfo, _ := GetDiskUsage()
+
 	return &SystemInfo{
 		ID:                result.Info.ID,
 		Name:              result.Info.Name,
@@ -119,6 +125,33 @@ func (c *Client) GetInfo() (*SystemInfo, error) {
 		SecurityOptions:   result.Info.SecurityOptions,
 		Labels:            result.Info.Labels,
 		Version:           version,
+		DiskTotal:         diskInfo.Total,
+		DiskUsed:          diskInfo.Used,
+		DiskAvailable:     diskInfo.Available,
+	}, nil
+}
+
+type DiskUsageInfo struct {
+	Total     int64 `json:"total"`
+	Used      int64 `json:"used"`
+	Available int64 `json:"available"`
+}
+
+func GetDiskUsage() (*DiskUsageInfo, error) {
+	fs := syscall.Statfs_t{}
+	err := syscall.Statfs("/", &fs)
+	if err != nil {
+		return nil, err
+	}
+
+	total := fs.Blocks * uint64(fs.Bsize)
+	available := fs.Bavail * uint64(fs.Bsize)
+	used := (fs.Blocks - fs.Bfree) * uint64(fs.Bsize)
+
+	return &DiskUsageInfo{
+		Total:     int64(total),
+		Used:      int64(used),
+		Available: int64(available),
 	}, nil
 }
 

@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/skye-z/harbor/internal/util/docker"
 	"github.com/skye-z/harbor/internal/util/response"
@@ -26,9 +28,36 @@ func (s *ImageService) GetList(c *gin.Context) {
 	response.Success(c, images)
 }
 
+// 搜索镜像
+func (s *ImageService) SearchImages(c *gin.Context) {
+	query := c.Query("q")
+	if query == "" {
+		query = c.Query("term")
+	}
+	if query == "" {
+		response.BadRequest(c, "缺少搜索关键词")
+		return
+	}
+
+	limit := 10
+	if l := c.Query("limit"); l != "" {
+		fmt.Sscanf(l, "%d", &limit)
+	}
+
+	results, err := s.client.SearchImages(query, limit)
+	if err != nil {
+		response.Error(c, err.Error())
+		return
+	}
+	response.Success(c, results)
+}
+
 // 拉取镜像
 func (s *ImageService) PullImage(c *gin.Context) {
-	tag := c.Query("tag")
+	tag := c.Query("image")
+	if tag == "" {
+		tag = c.Query("tag")
+	}
 	if tag == "" {
 		response.BadRequest(c, "缺少镜像标签")
 		return

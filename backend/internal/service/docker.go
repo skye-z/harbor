@@ -1,6 +1,9 @@
 package service
 
 import (
+	"encoding/json"
+	"syscall"
+
 	"github.com/gin-gonic/gin"
 	"github.com/skye-z/harbor/internal/util/docker"
 	"github.com/skye-z/harbor/internal/util/response"
@@ -82,5 +85,44 @@ func (s *DockerService) GetInfo(c *gin.Context) {
 		response.Error(c, err.Error())
 		return
 	}
-	response.Success(c, info)
+
+	diskInfo, _ := GetDiskUsage()
+
+	data, _ := json.Marshal(info)
+	var infoMap map[string]interface{}
+	json.Unmarshal(data, &infoMap)
+
+	if diskInfo != nil {
+		infoMap["disk_total"] = diskInfo.Total
+		infoMap["disk_used"] = diskInfo.Used
+		infoMap["disk_available"] = diskInfo.Available
+	}
+
+	response.Success(c, infoMap)
+}
+
+// 磁盘使用情况
+type DiskUsageInfo struct {
+	Total     int64 `json:"total"`
+	Used      int64 `json:"used"`
+	Available int64 `json:"available"`
+}
+
+// 获取磁盘使用情况
+func GetDiskUsage() (*DiskUsageInfo, error) {
+	fs := syscall.Statfs_t{}
+	err := syscall.Statfs("/", &fs)
+	if err != nil {
+		return nil, err
+	}
+
+	total := fs.Blocks * uint64(fs.Bsize)
+	available := fs.Bavail * uint64(fs.Bsize)
+	used := (fs.Blocks - fs.Bfree) * uint64(fs.Bsize)
+
+	return &DiskUsageInfo{
+		Total:     int64(total),
+		Used:      int64(used),
+		Available: int64(available),
+	}, nil
 }

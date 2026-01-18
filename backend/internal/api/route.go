@@ -114,6 +114,7 @@ func (r Route) addPrivateRoute(route gin.IRoutes) {
 
 	is := service.NewImageService(r.DockerClient)
 	route.GET("/api/image/list", is.GetList)
+	route.GET("/api/image/search", is.SearchImages)
 	route.GET("/api/image/pull", is.PullImage)
 	route.GET("/api/image/remove", is.RemoveImage)
 	route.GET("/api/image/inspect", is.GetInspect)
@@ -168,6 +169,9 @@ func (r Route) GetPort() string {
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader("Authorization")
+		if token != "" && len(token) > 7 && token[:7] == "Bearer " {
+			token = token[7:]
+		}
 		if token == "" {
 			token = c.Query("token")
 		}

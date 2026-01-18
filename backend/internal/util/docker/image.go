@@ -149,3 +149,35 @@ func (c *Client) PushImage(tag string) error {
 
 	return nil
 }
+
+// 搜索镜像
+type SearchResult struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	StarCount   int    `json:"star_count"`
+	IsOfficial  bool   `json:"is_official"`
+	IsAutomated bool   `json:"is_automated"`
+}
+
+func (c *Client) SearchImages(query string, limit int) ([]SearchResult, error) {
+	ctx := context.Background()
+	result, err := c.cli.ImageSearch(ctx, query, client.ImageSearchOptions{
+		Limit: limit,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to search images: %w", err)
+	}
+
+	results := make([]SearchResult, 0, len(result.Items))
+	for _, r := range result.Items {
+		results = append(results, SearchResult{
+			Name:        r.Name,
+			Description: r.Description,
+			StarCount:   r.StarCount,
+			IsOfficial:  r.IsOfficial,
+			IsAutomated: r.IsAutomated,
+		})
+	}
+
+	return results, nil
+}
