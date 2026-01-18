@@ -43,9 +43,19 @@ const routes: RouteRecordRaw[] = [
         component: () => import(/* webpackChunkName: "images" */ '@/views/Images.vue')
       },
       {
+        path: 'images/pull',
+        name: 'ImagePull',
+        component: () => import(/* webpackChunkName: "image-pull" */ '@/views/ImagePull.vue')
+      },
+      {
         path: 'images/:id',
         name: 'ImageDetail',
         component: () => import(/* webpackChunkName: "image-detail" */ '@/views/ImageDetail.vue')
+      },
+      {
+        path: 'containers/create',
+        name: 'ContainerCreate',
+        component: () => import(/* webpackChunkName: "container-create" */ '@/views/ContainerCreate.vue')
       },
       {
         path: 'storage',

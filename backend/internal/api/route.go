@@ -116,6 +116,7 @@ func (r Route) addPrivateRoute(route gin.IRoutes) {
 	route.GET("/api/image/list", is.GetList)
 	route.GET("/api/image/search", is.SearchImages)
 	route.GET("/api/image/pull", is.PullImage)
+	route.GET("/api/image/pull/progress", is.GetPullProgress)
 	route.GET("/api/image/remove", is.RemoveImage)
 	route.GET("/api/image/inspect", is.GetInspect)
 	route.GET("/api/image/build", is.BuildImage)
@@ -149,8 +150,8 @@ func (r Route) addPrivateRoute(route gin.IRoutes) {
 	route.GET("/api/container/terminal/resize", cs.ResizeTerminal)
 	route.GET("/api/container/terminal/close", cs.CloseTerminal)
 	route.GET("/api/container/commit", cs.CommitContainer)
-	route.GET("/api/container/create", cs.CreateContainer)
-	route.GET("/api/container/rename", cs.RenameContainer)
+	route.POST("/api/container/create", cs.CreateContainer)
+	route.POST("/api/container/rename", cs.RenameContainer)
 }
 
 // 获取服务端口

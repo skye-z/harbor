@@ -231,23 +231,15 @@ const formatDate = (timestamp: number | string | undefined) => {
   return date.toLocaleString()
 }
 
-const processColumns: DataTableColumns<{
-  user: string
-  pid: string
-  cpu: string
-  mem: string
-  vsz: string
-  rss: string
-  tty: string
-  stat: string
-  start: string
-  time: string
-  command: string
-}> = [
-  { title: 'USER', key: 'user', width: 100 },
-  { title: 'PID', key: 'pid', width: 80 },
-  { title: 'CPU%', key: 'cpu', width: 80 },
-  { title: 'MEM%', key: 'mem', width: 80 },
+const processColumns: DataTableColumns<any> = [
+  { title: 'USER', key: '0', width: 100 },
+  { title: 'PID', key: '1', width: 80 },
+  { title: 'PPID', key: '2', width: 80 },
+  { title: 'C', key: '3', width: 60 },
+  { title: 'STIME', key: '4', width: 80 },
+  { title: 'TTY', key: '5', width: 60 },
+  { title: 'TIME', key: '6', width: 100 },
+  { title: 'CMD', key: '7', ellipsis: { tooltip: true } },
   { title: 'VSZ', key: 'vsz', width: 100 },
   { title: 'RSS', key: 'rss', width: 100 },
   { title: 'TTY', key: 'tty', width: 80 },
@@ -318,6 +310,27 @@ const viewFullLogs = () => {
   router.push({ name: 'ContainerLogs', params: { id: containerId.value } })
 }
 
+const loadProcesses = async () => {
+  try {
+    processesLoading.value = true
+    const result = await containerStore.getContainerProcesses(containerId.value)
+    const processesData = result?.Processes || []
+    const titles = result?.Titles || []
+    
+    processes.value = processesData.map((row: string[]) => {
+      const obj: any = {}
+      row.forEach((cell, index) => {
+        obj[index] = cell
+      })
+      return obj
+    })
+  } catch (error: any) {
+    message.error('加载进程列表失败: ' + error.message)
+  } finally {
+    processesLoading.value = false
+  }
+}
+
 const openTerminal = () => {
   router.push({ name: 'ContainerTerminal', params: { id: containerId.value } })
 }
@@ -329,7 +342,7 @@ const handleDownload = async () => {
   }
   try {
     fileLoading.value = true
-    await containerApi.copyFrom(containerId.value, filePath.value)
+    await containerStore.copyFromContainer(containerId.value, filePath.value)
     message.success('文件下载成功')
     // 添加下载记录到列表
     fileList.value.unshift({
@@ -361,7 +374,7 @@ const handleUpload = async (options: any) => {
     const formData = new FormData()
     formData.append('file', file)
     // 使用上传API
-    await containerApi.copyTo(containerId.value, file.name, filePath.value + '/' + file.name)
+    await containerStore.copyToContainer(containerId.value, file.name, filePath.value + '/' + file.name)
     message.success('文件上传成功')
     // 添加上传记录到列表
     fileList.value.unshift({

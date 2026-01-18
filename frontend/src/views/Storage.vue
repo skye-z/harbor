@@ -1,46 +1,45 @@
 <template>
   <div class="storage">
-    <n-grid x-gap="10" y-gap="10" :cols="24">
+    <div class="page-header">
+      <div class="view-header">
+        <div class="title-group">
+          <h1>存储管理</h1>
+        </div>
+      </div>
+    </div>
+
+    <n-grid x-gap="20" :cols="24">
       <n-gi :span="24">
-        <n-el tag="div" class="card overview-card">
-          <n-row :gutter="16" style="padding: 16px 20px 0">
+        <n-card class="config-card">
+          <n-row :gutter="16">
             <n-col :span="6">
-              <n-statistic label="总容量">
-                {{ formatSize(storage.total) }}
-              </n-statistic>
+              <n-statistic label="总容量" :value="formatSize(storage.total)" />
             </n-col>
             <n-col :span="6">
-              <n-statistic label="已使用">
-                {{ formatSize(storage.used) }}
-              </n-statistic>
+              <n-statistic label="已使用" :value="formatSize(storage.used)" />
             </n-col>
             <n-col :span="6">
-              <n-statistic label="可用空间">
-                {{ formatSize(storage.available) }}
-              </n-statistic>
+              <n-statistic label="可用空间" :value="formatSize(storage.available)" />
             </n-col>
             <n-col :span="6">
               <n-statistic label="使用率" :value="storage.usagePercent" suffix="%" />
             </n-col>
           </n-row>
-          <div style="padding: 0 20px 16px">
+          <div style="margin-top: 16px">
             <n-progress
               type="line"
               :percentage="storage.usagePercent"
-              :status="storage.usagePercent > 80 ? 'error' : 'success'"
+              :status="storage.usagePercent > 80 ? 'error' : storage.usagePercent > 60 ? 'warning' : 'success'"
               :height="12"
               :show-indicator="true"
             />
           </div>
-        </n-el>
+        </n-card>
       </n-gi>
 
       <n-gi :span="12">
-        <n-el tag="div" class="card resource-card">
-          <div class="card-header">
-            <n-space align="center">
-              <n-text strong>数据卷</n-text>
-            </n-space>
+        <n-card title="数据卷" class="config-card">
+          <template #header-extra>
             <n-space>
               <n-button type="primary" size="small" @click="showVolumeModal = true">
                 <template #icon>
@@ -54,66 +53,53 @@
                 </template>
               </n-button>
             </n-space>
-          </div>
-          <div class="card-content">
-            <n-scrollbar style="max-height: 500px">
-              <n-space vertical :size="12">
-                <n-el tag="div" v-for="volume in volumes" :key="volume.id" class="volume-card" hoverable>
-                  <div class="volume-header">
-                    <div class="volume-title">
-                      <n-icon :component="ServerOutline" :size="18" color="#2080f0" />
-                      <span>{{ volume.name }}</span>
-                    </div>
-                    <n-space>
-                      <n-button text size="small" type="primary" @click="handleInspectVolume(volume.id)">
-                        <template #icon>
-                          <n-icon :component="SettingsOutline" :size="16" />
-                        </template>
-                      </n-button>
-                      <n-button text size="small" type="error" @click="handleDeleteVolume(volume.id)">
-                        <template #icon>
-                          <n-icon :component="TrashOutline" :size="16" />
-                        </template>
-                      </n-button>
-                    </n-space>
+          </template>
+          <n-scrollbar style="max-height: 500px">
+            <n-space vertical :size="12">
+              <n-card v-for="volume in volumes" :key="volume.id" size="small" hoverable>
+                <div class="volume-header">
+                  <div class="volume-title">
+                    <n-icon :component="ServerOutline" :size="18" color="#2080f0" />
+                    <span>{{ volume.name }}</span>
                   </div>
-                  <n-divider style="margin: 8px 0" />
-                  <div class="volume-info">
-                    <div class="info-item">
-                      <n-text depth="3" style="font-size: 12px">驱动</n-text>
-                      <n-tag size="small" :bordered="false" type="info">{{ volume.driver }}</n-tag>
-                    </div>
-                    <div class="info-item">
-                      <n-text depth="3" style="font-size: 12px">挂载点</n-text>
-                      <n-text code style="font-size: 12px">{{ volume.mountpoint }}</n-text>
-                    </div>
-                    <div class="info-item">
-                      <n-text depth="3" style="font-size: 12px">容量</n-text>
-                      <n-text>{{ volume.size ? formatSize(volume.size) : '-' }}</n-text>
-                    </div>
-                    <div class="info-item">
-                      <n-text depth="3" style="font-size: 12px">已使用</n-text>
-                      <n-text>{{ volume.used ? formatSize(volume.used) : '-' }}</n-text>
-                    </div>
-                    <div class="info-item">
-                      <n-text depth="3" style="font-size: 12px">创建时间</n-text>
-                      <n-text>{{ volume.created_at }}</n-text>
-                    </div>
+                  <n-space>
+                    <n-button text size="small" type="primary" @click="handleInspectVolume(volume.id)">
+                      <template #icon>
+                        <n-icon :component="SettingsOutline" :size="16" />
+                      </template>
+                    </n-button>
+                    <n-button text size="small" type="error" @click="handleDeleteVolume(volume.id)">
+                      <template #icon>
+                        <n-icon :component="TrashOutline" :size="16" />
+                      </template>
+                    </n-button>
+                  </n-space>
+                </div>
+                <n-divider style="margin: 8px 0" />
+                <div class="volume-info">
+                  <div class="info-item">
+                    <n-text depth="3" style="font-size: 12px">驱动</n-text>
+                    <n-tag size="small" :bordered="false" type="info">{{ volume.driver }}</n-tag>
                   </div>
-                </n-el>
-                <n-empty v-if="volumes.length === 0" description="暂无数据卷" size="medium" />
-              </n-space>
-            </n-scrollbar>
-          </div>
-        </n-el>
+                  <div class="info-item">
+                    <n-text depth="3" style="font-size: 12px">挂载点</n-text>
+                    <n-text code style="font-size: 12px">{{ volume.mountpoint }}</n-text>
+                  </div>
+                  <div class="info-item">
+                    <n-text depth="3" style="font-size: 12px">创建时间</n-text>
+                    <n-text>{{ volume.created_at }}</n-text>
+                  </div>
+                </div>
+              </n-card>
+              <n-empty v-if="volumes.length === 0" description="暂无数据卷" size="medium" />
+            </n-space>
+          </n-scrollbar>
+        </n-card>
       </n-gi>
 
       <n-gi :span="12">
-        <n-el tag="div" class="card resource-card">
-          <div class="card-header">
-            <n-space align="center">
-              <n-text strong>网络</n-text>
-            </n-space>
+        <n-card title="网络" class="config-card">
+          <template #header-extra>
             <n-space>
               <n-button type="primary" size="small" @click="showNetworkModal = true">
                 <template #icon>
@@ -127,60 +113,54 @@
                 </template>
               </n-button>
             </n-space>
-          </div>
-          <div class="card-content">
-            <n-scrollbar style="max-height: 500px">
-              <n-space vertical :size="12">
-                <n-el tag="div" v-for="network in networks" :key="network.id" class="network-card" hoverable>
-                  <div class="network-header">
-                    <div class="network-title">
-                      <n-icon :component="GlobeOutline" :size="18" color="#18a058" />
-                      <span>{{ network.name }}</span>
-                    </div>
-                    <n-space>
-                      <n-button text size="small" type="primary" @click="handleInspectNetwork(network.id)">
-                        <template #icon>
-                          <n-icon :component="SettingsOutline" :size="16" />
-                        </template>
-                      </n-button>
-                      <n-button text size="small" type="error" @click="handleDeleteNetwork(network.id)">
-                        <template #icon>
-                          <n-icon :component="TrashOutline" :size="16" />
-                        </template>
-                      </n-button>
-                    </n-space>
+          </template>
+          <n-scrollbar style="max-height: 500px">
+            <n-space vertical :size="12">
+              <n-card v-for="network in networks" :key="network.id" size="small" hoverable>
+                <div class="network-header">
+                  <div class="network-title">
+                    <n-icon :component="GlobeOutline" :size="18" color="#18a058" />
+                    <span>{{ network.name }}</span>
                   </div>
-                  <n-divider style="margin: 8px 0" />
-                  <div class="network-info">
-                    <div class="info-item">
-                      <n-text depth="3" style="font-size: 12px">驱动</n-text>
-                      <n-tag
-                        size="small"
-                        :bordered="false"
-                        :type="network.driver === 'bridge' ? 'info' : 'default'"
-                      >
-                        {{ network.driver }}
-                      </n-tag>
-                    </div>
-                    <div class="info-item">
-                      <n-text depth="3" style="font-size: 12px">子网</n-text>
-                      <n-text code style="font-size: 12px">{{ network.subnet || '-' }}</n-text>
-                    </div>
-                    <div class="info-item">
-                      <n-text depth="3" style="font-size: 12px">网关</n-text>
-                      <n-text code style="font-size: 12px">{{ network.gateway || '-' }}</n-text>
-                    </div>
-                    <div class="info-item">
-                      <n-text depth="3" style="font-size: 12px">创建时间</n-text>
-                      <n-text>{{ network.created_at }}</n-text>
-                    </div>
+                  <n-space>
+                    <n-button text size="small" type="primary" @click="handleInspectNetwork(network.id)">
+                      <template #icon>
+                        <n-icon :component="SettingsOutline" :size="16" />
+                      </template>
+                    </n-button>
+                    <n-button text size="small" type="error" @click="handleDeleteNetwork(network.id)">
+                      <template #icon>
+                        <n-icon :component="TrashOutline" :size="16" />
+                      </template>
+                    </n-button>
+                  </n-space>
+                </div>
+                <n-divider style="margin: 8px 0" />
+                <div class="network-info">
+                  <div class="info-item">
+                    <n-text depth="3" style="font-size: 12px">驱动</n-text>
+                    <n-tag size="small" :bordered="false" :type="network.driver === 'bridge' ? 'info' : 'default'">
+                      {{ network.driver }}
+                    </n-tag>
                   </div>
-                </n-el>
-                <n-empty v-if="networks.length === 0" description="暂无网络" size="medium" />
-              </n-space>
-            </n-scrollbar>
-          </div>
-        </n-el>
+                  <div class="info-item">
+                    <n-text depth="3" style="font-size: 12px">子网</n-text>
+                    <n-text code style="font-size: 12px">{{ network.subnet || '-' }}</n-text>
+                  </div>
+                  <div class="info-item">
+                    <n-text depth="3" style="font-size: 12px">网关</n-text>
+                    <n-text code style="font-size: 12px">{{ network.gateway || '-' }}</n-text>
+                  </div>
+                  <div class="info-item">
+                    <n-text depth="3" style="font-size: 12px">创建时间</n-text>
+                    <n-text>{{ network.created_at }}</n-text>
+                  </div>
+                </div>
+              </n-card>
+              <n-empty v-if="networks.length === 0" description="暂无网络" size="medium" />
+            </n-space>
+          </n-scrollbar>
+        </n-card>
       </n-gi>
     </n-grid>
 
@@ -227,14 +207,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useMessage } from 'naive-ui'
-import { volumeApi, networkApi } from '../plugins/api'
+import { ref, onMounted, computed } from 'vue'
+import { useMessage, useDialog } from 'naive-ui'
+import { volumeApi, networkApi, systemApi } from '../plugins/api'
 import {
   ServerOutline,
-  CloudOutline,
-  CheckmarkCircleOutline,
-  PieChartOutline,
   AddOutline,
   TrashOutline,
   SettingsOutline,
@@ -244,17 +221,31 @@ import {
 import type { Volume, Network } from '../types'
 
 const message = useMessage()
+const dialog = useDialog()
 
 const showVolumeModal = ref(false)
 const showNetworkModal = ref(false)
 const loadingVolumes = ref(false)
 const loadingNetworks = ref(false)
+const loadingStorage = ref(false)
 
-const storage = ref({
-  total: 500 * 1024 * 1024 * 1024,
-  used: 375 * 1024 * 1024 * 1024,
-  available: 125 * 1024 * 1024 * 1024,
-  usagePercent: 75
+const storageData = ref({
+  disk_total: 0,
+  disk_used: 0,
+  disk_available: 0
+})
+
+const storage = computed(() => {
+  const total = storageData.value.disk_total || 0
+  const used = storageData.value.disk_used || 0
+  const available = storageData.value.disk_available || 0
+  const usagePercent = total > 0 ? Math.round((used / total) * 100) : 0
+  return {
+    total,
+    used,
+    available,
+    usagePercent
+  }
 })
 
 const volumeForm = ref({
@@ -283,6 +274,22 @@ const networkDriverOptions = [
 
 const volumes = ref<Volume[]>([])
 const networks = ref<Network[]>([])
+
+const refreshStorage = async () => {
+  loadingStorage.value = true
+  try {
+    const info = await systemApi.getSystemInfo()
+    storageData.value = {
+      disk_total: info.disk_total || 0,
+      disk_used: info.disk_used || 0,
+      disk_available: info.disk_available || 0
+    }
+  } catch (error: any) {
+    console.error('获取磁盘信息失败:', error)
+  } finally {
+    loadingStorage.value = false
+  }
+}
 
 const refreshVolumes = async () => {
   loadingVolumes.value = true
@@ -327,20 +334,35 @@ const handleCreateVolume = async () => {
 }
 
 const handleDeleteVolume = async (id: string) => {
-  loadingVolumes.value = true
-  try {
-    await volumeApi.delete(id)
-    message.success('数据卷删除成功')
-    await refreshVolumes()
-  } catch (error: any) {
-    message.error('删除失败: ' + error.message)
-  } finally {
-    loadingVolumes.value = false
-  }
+  dialog.warning({
+    title: '确认删除',
+    content: '确定要删除该数据卷吗？此操作不可恢复。',
+    positiveText: '删除',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      loadingVolumes.value = true
+      try {
+        await volumeApi.delete(id)
+        message.success('数据卷删除成功')
+        await refreshVolumes()
+      } catch (error: any) {
+        message.error('删除失败: ' + error.message)
+      } finally {
+        loadingVolumes.value = false
+      }
+    }
+  })
 }
 
-const handleInspectVolume = (_id: string) => {
-  message.info('查看详情功能开发中')
+const handleInspectVolume = (id: string) => {
+  const volume = volumes.value.find(v => v.id === id)
+  if (volume) {
+    dialog.info({
+      title: '数据卷详情',
+      content: JSON.stringify(volume, null, 2),
+      positiveText: '确定'
+    })
+  }
 }
 
 const handleCreateNetwork = async () => {
@@ -364,20 +386,35 @@ const handleCreateNetwork = async () => {
 }
 
 const handleDeleteNetwork = async (id: string) => {
-  loadingNetworks.value = true
-  try {
-    await networkApi.delete(id)
-    message.success('网络删除成功')
-    await refreshNetworks()
-  } catch (error: any) {
-    message.error('删除失败: ' + error.message)
-  } finally {
-    loadingNetworks.value = false
-  }
+  dialog.warning({
+    title: '确认删除',
+    content: '确定要删除该网络吗？此操作不可恢复。',
+    positiveText: '删除',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      loadingNetworks.value = true
+      try {
+        await networkApi.delete(id)
+        message.success('网络删除成功')
+        await refreshNetworks()
+      } catch (error: any) {
+        message.error('删除失败: ' + error.message)
+      } finally {
+        loadingNetworks.value = false
+      }
+    }
+  })
 }
 
-const handleInspectNetwork = (_id: string) => {
-  message.info('查看详情功能开发中')
+const handleInspectNetwork = (id: string) => {
+  const network = networks.value.find(n => n.id === id)
+  if (network) {
+    dialog.info({
+      title: '网络详情',
+      content: JSON.stringify(network, null, 2),
+      positiveText: '确定'
+    })
+  }
 }
 
 const formatSize = (bytes: number) => {
@@ -389,6 +426,7 @@ const formatSize = (bytes: number) => {
 }
 
 onMounted(() => {
+  refreshStorage()
   refreshVolumes()
   refreshNetworks()
 })
@@ -396,46 +434,29 @@ onMounted(() => {
 
 <style scoped>
 .storage {
-  padding: 5px 10px 10px 10px;
+  padding: 0 10px 10px 10px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-.card {
-  border: 1px solid var(--n-border-color);
-  background-color: var(--n-card-color);
-  border-radius: 12px;
-  overflow: hidden;
+.page-header {
+  margin-bottom: 10px;
 }
 
-.overview-card,
-.resource-card {
-  border-radius: 12px;
-}
-
-.volume-card,
-.network-card {
-  transition: all 0.3s ease;
-  border-radius: 8px;
-  border: 1px solid var(--n-border-color);
-  background-color: var(--n-card-color);
-  padding: 12px 16px;
-}
-
-.volume-card:hover,
-.network-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.card-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--n-border-color);
+.view-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
 }
 
-.card-content {
-  padding: 16px 20px;
+.title-group h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.config-card {
+  margin-bottom: 20px;
 }
 
 .volume-header,
@@ -453,7 +474,6 @@ onMounted(() => {
   gap: 8px;
   font-weight: 600;
   font-size: 14px;
-  color: var(--n-text-color-1);
 }
 
 .volume-info,

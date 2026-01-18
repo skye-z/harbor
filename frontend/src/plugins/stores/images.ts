@@ -29,7 +29,12 @@ export const useImageStore = defineStore('images', () => {
   }
 
   const getImageById = (id: string) => {
-    return images.value.find(i => i.id === id)
+    if (!id) return undefined
+    return images.value.find(i => {
+      if (i.id === id) return true
+      const shortId = i.id.startsWith('sha256:') ? i.id.substring(7) : i.id
+      return shortId === id || shortId.startsWith(id)
+    })
   }
 
   const pullImage = async (image: string, tag?: string) => {

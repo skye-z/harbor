@@ -2,23 +2,28 @@ package service
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/skye-z/harbor/internal/util/docker"
 	"github.com/skye-z/harbor/internal/util/response"
 )
 
-// 镜像管理服务
 type ImageService struct {
 	client *docker.Client
 }
 
-// 创建镜像服务实例
 func NewImageService(client *docker.Client) *ImageService {
 	return &ImageService{client: client}
 }
 
-// 获取镜像列表
+var (
+	currentPullTag      string
+	currentPullProgress docker.PullProgress
+	pullLayerProgress   = make(map[string]docker.PullProgress)
+	pullMutex           sync.RWMutex
+)
+
 func (s *ImageService) GetList(c *gin.Context) {
 	images, err := s.client.ListImages()
 	if err != nil {
@@ -28,7 +33,6 @@ func (s *ImageService) GetList(c *gin.Context) {
 	response.Success(c, images)
 }
 
-// 搜索镜像
 func (s *ImageService) SearchImages(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
@@ -52,7 +56,20 @@ func (s *ImageService) SearchImages(c *gin.Context) {
 	response.Success(c, results)
 }
 
-// 拉取镜像
+type LayerProgress struct {
+	ID       string `json:"id"`
+	Status   string `json:"status"`
+	Progress string `json:"progress"`
+	Current  int64  `json:"current"`
+	Total    int64  `json:"total"`
+}
+
+type PullProgressResponse struct {
+	Tag     string          `json:"tag"`
+	Layers  []LayerProgress `json:"layers"`
+	Percent int             `json:"percent"`
+}
+
 func (s *ImageService) PullImage(c *gin.Context) {
 	tag := c.Query("image")
 	if tag == "" {
@@ -63,14 +80,83 @@ func (s *ImageService) PullImage(c *gin.Context) {
 		return
 	}
 
-	if err := s.client.PullImage(tag); err != nil {
-		response.Error(c, err.Error())
-		return
-	}
-	response.SuccessWithMessage(c, "镜像拉取成功", gin.H{"tag": tag})
+	pullMutex.Lock()
+	currentPullTag = tag
+	currentPullProgress = docker.PullProgress{Status: "pending"}
+	pullLayerProgress = make(map[string]docker.PullProgress)
+	pullMutex.Unlock()
+
+	go func() {
+		onProgress := func(progress docker.PullProgress) {
+			pullMutex.Lock()
+			if progress.ID != "" {
+				pullLayerProgress[progress.ID] = progress
+			}
+			currentPullProgress = progress
+			pullMutex.Unlock()
+		}
+
+		err := s.client.PullImage(tag, onProgress)
+
+		pullMutex.Lock()
+		if err != nil {
+			currentPullProgress = docker.PullProgress{Status: "error"}
+		} else {
+			currentPullTag = ""
+			currentPullProgress = docker.PullProgress{}
+			pullLayerProgress = make(map[string]docker.PullProgress)
+		}
+		pullMutex.Unlock()
+	}()
+
+	response.SuccessWithMessage(c, "镜像拉取任务已启动", gin.H{"tag": tag})
 }
 
-// 删除镜像
+func (s *ImageService) GetPullProgress(c *gin.Context) {
+	pullMutex.RLock()
+	tag := currentPullTag
+	layers := make([]LayerProgress, 0, len(pullLayerProgress))
+
+	totalCurrent := int64(0)
+	totalSize := int64(0)
+	layerCount := 0
+	completedCount := 0
+
+	for id, p := range pullLayerProgress {
+		layers = append(layers, LayerProgress{
+			ID:       id,
+			Status:   p.Status,
+			Progress: p.Progress,
+			Current:  p.ProgressDetail.Current,
+			Total:    p.ProgressDetail.Total,
+		})
+
+		if p.ProgressDetail.Total > 0 {
+			totalCurrent += p.ProgressDetail.Current
+			totalSize += p.ProgressDetail.Total
+			layerCount++
+			if p.Status == "Pull complete" || p.Status == "Already exists" {
+				completedCount++
+			}
+		}
+	}
+
+	percent := 0
+	if totalSize > 0 {
+		percent = int(float64(totalCurrent) / float64(totalSize) * 100)
+	} else if layerCount > 0 {
+		percent = int(float64(completedCount) / float64(layerCount) * 100)
+	}
+
+	pullMutex.RUnlock()
+
+	response.Success(c, PullProgressResponse{
+		Tag:     tag,
+		Layers:  layers,
+		Percent: percent,
+	})
+}
+
 func (s *ImageService) RemoveImage(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
@@ -85,7 +171,6 @@ func (s *ImageService) RemoveImage(c *gin.Context) {
 	response.SuccessWithMessage(c, "镜像删除成功", gin.H{"id": id})
 }
 
-// 获取镜像详情
 func (s *ImageService) GetInspect(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
@@ -101,7 +186,6 @@ func (s *ImageService) GetInspect(c *gin.Context) {
 	response.Success(c, result)
 }
 
-// 构建镜像
 func (s *ImageService) BuildImage(c *gin.Context) {
 	imageName := c.Query("name")
 	if imageName == "" {
@@ -117,7 +201,6 @@ func (s *ImageService) BuildImage(c *gin.Context) {
 	response.SuccessWithMessage(c, "镜像构建成功", gin.H{"name": imageName})
 }
 
-// 为镜像添加标签
 func (s *ImageService) TagImage(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
@@ -141,7 +224,6 @@ func (s *ImageService) TagImage(c *gin.Context) {
 	})
 }
 
-// 推送镜像
 func (s *ImageService) PushImage(c *gin.Context) {
 	tag := c.Query("tag")
 	if tag == "" {

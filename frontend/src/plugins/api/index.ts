@@ -22,17 +22,8 @@ export const containerApi = {
   create: async (data: any) => {
     return apiClient.post('/container/create', data)
   },
-  start: async (id: string) => {
-    return apiClient.get('/container/operation', { params: { id, action: 'start' } })
-  },
-  stop: async (id: string) => {
-    return apiClient.get('/container/operation', { params: { id, action: 'stop' } })
-  },
-  restart: async (id: string) => {
-    return apiClient.get('/container/operation', { params: { id, action: 'restart' } })
-  },
-  delete: async (id: string) => {
-    return apiClient.get('/container/operation', { params: { id, action: 'remove' } })
+  operation: async (id: string,action: string) => {
+    return apiClient.get('/container/operation', { params: { id, action } })
   },
   logs: async (id: string) => {
     return apiClient.get('/container/logs', { params: { id, stdout: true, stderr: true, timestamps: true, tail: '100' } })
@@ -45,6 +36,12 @@ export const containerApi = {
   },
   rename: async (id: string, name: string) => {
     return apiClient.get('/container/rename', { params: { id, name } })
+  },
+  copyFrom: async (id: string, srcPath: string, dstPath?: string) => {
+    return apiClient.get('/container/copy/from', { params: { id, src_path: srcPath, dst_path: dstPath } })
+  },
+  copyTo: async (id: string, srcPath: string, dstPath: string) => {
+    return apiClient.post('/container/copy/to', { id, src_path: srcPath, dst_path: dstPath })
   }
 }
 
@@ -55,8 +52,14 @@ export const imageApi = {
   get: async (id: string) => {
     return apiClient.get('/image/inspect', { params: { id } })
   },
+  search: async (query: string, limit?: number) => {
+    return apiClient.get('/image/search', { params: { q: query, limit } })
+  },
   pull: async (image: string, tag?: string) => {
     return apiClient.get('/image/pull', { params: { image, tag } })
+  },
+  getPullProgress: async () => {
+    return apiClient.get('/image/pull/progress')
   },
   delete: async (id: string) => {
     return apiClient.get('/image/remove', { params: { id } })
@@ -120,5 +123,11 @@ export const systemApi = {
   },
   pruneAll: async () => {
     return apiClient.get('/docker/prune/all')
+  }
+}
+
+export const logApi = {
+  getRecent: async (limit: number = 10) => {
+    return apiClient.get('/logs/recent', { params: { limit } })
   }
 }

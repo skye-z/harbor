@@ -32,24 +32,9 @@ export const useContainerStore = defineStore('containers', () => {
     return containers.value.find(c => c.id === id)
   }
 
-  const startContainer = async (id: string) => {
-    await containerApi.start(id)
+  const operationContainer = async (id: string,action: string) => {
+    await containerApi.operation(id,action)
     await fetchContainers()
-  }
-
-  const stopContainer = async (id: string) => {
-    await containerApi.stop(id)
-    await fetchContainers()
-  }
-
-  const restartContainer = async (id: string) => {
-    await containerApi.restart(id)
-    await fetchContainers()
-  }
-
-  const deleteContainer = async (id: string) => {
-    await containerApi.delete(id)
-    containers.value = containers.value.filter(c => c.id !== id)
   }
 
   const getContainerLogs = async (id: string) => {
@@ -88,10 +73,7 @@ export const useContainerStore = defineStore('containers', () => {
     totalContainers,
     fetchContainers,
     getContainerById,
-    startContainer,
-    stopContainer,
-    restartContainer,
-    deleteContainer,
+    operationContainer,
     getContainerLogs,
     getContainerStats,
     getContainerProcesses,

@@ -39,14 +39,15 @@ export interface NetworkInfo {
 
 export interface Image {
   id: string
+  parent_id: string
   repo_tags: string[]
   repo_digests: string[]
   created: number
   size: number
-  shared_size: number
   virtual_size: number
-  architecture: string
-  os: string
+  shared_size: number
+  labels?: Record<string, string>
+  containers: number
 }
 
 export interface Network {

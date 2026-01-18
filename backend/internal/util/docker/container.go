@@ -423,16 +423,33 @@ func (c *Client) CloseExec(ctx context.Context, execID string) error {
 	return nil
 }
 
-func (c *Client) CreateContainer(imageName, containerName string, cmd []string, env []string) (*Container, error) {
+func (c *Client) CreateContainer(imageName, containerName string, cmd []string, env []string, workingDir string, hostConfigData interface{}, exposedPortsData map[string]interface{}, tty, openStdin, autoRemove bool) (*Container, error) {
 	ctx := context.Background()
 
 	config := &container.Config{
-		Image: imageName,
-		Cmd:   cmd,
-		Env:   env,
+		Image:      imageName,
+		Cmd:        cmd,
+		Env:        env,
+		WorkingDir: workingDir,
+		Tty:        tty,
+		OpenStdin:  openStdin,
 	}
 
-	hostConfig := &container.HostConfig{}
+	hostConfig := &container.HostConfig{
+		AutoRemove: autoRemove,
+	}
+
+	// 将前端数据序列化为JSON，然后反序列化到正确的结构
+	if exposedPortsData != nil && len(exposedPortsData) > 0 {
+		exposedPortsJSON, _ := json.Marshal(exposedPortsData)
+		json.Unmarshal(exposedPortsJSON, &config.ExposedPorts)
+	}
+
+	// 处理hostConfig数据
+	if hostConfigData != nil {
+		hostConfigJSON, _ := json.Marshal(hostConfigData)
+		json.Unmarshal(hostConfigJSON, hostConfig)
+	}
 
 	resp, err := c.cli.ContainerCreate(ctx, client.ContainerCreateOptions{
 		Config:     config,

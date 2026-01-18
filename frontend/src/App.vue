@@ -90,4 +90,12 @@ body {
   background-color: #101014;
   color: #fff;
 }
+
+.n-card-header{
+  padding: 10px !important;
+}
+
+.n-card__action{
+  padding: 5px !important;
+}
 </style>

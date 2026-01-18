@@ -13,6 +13,7 @@
     "axios": "^1.13.2",
     "crypto-js": "^4.2.0",
     "echarts": "^6.0.0",
+    "highlight.js": "^11.11.1",
     "naive-ui": "^2.43.2",
     "pinia": "^3.0.4",
     "vfonts": "^0.0.3",

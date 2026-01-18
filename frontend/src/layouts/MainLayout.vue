@@ -59,19 +59,11 @@ const route = useRoute()
 const userStore = useUserStore()
 const loadingBar = useLoadingBar()
 
-const routeToMenuMap: Record<string, string> = {
-  'Dashboard': 'dashboard',
-  'Containers': 'containers',
-  'ContainerDetail': 'containers',
-  'Images': 'images',
-  'ImageDetail': 'images',
-  'Storage': 'storage',
-  'System': 'system'
-}
-
-// 根据当前路由动态计算 activeKey
+// 根据当前路由路径的第一段动态计算 activeKey
 const activeKey = computed(() => {
-  return routeToMenuMap[route.name as string] || 'dashboard'
+  const path = route.path
+  const firstSegment = path.split('/')[1] || 'dashboard'
+  return firstSegment
 })
 
 const menuOptions = [

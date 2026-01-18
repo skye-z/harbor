@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -55,8 +56,18 @@ func (c *Client) ListImages() ([]*Image, error) {
 	return images, nil
 }
 
-// 拉取镜像
-func (c *Client) PullImage(tag string) error {
+type PullProgress struct {
+	Status         string `json:"status"`
+	ID             string `json:"id"`
+	Progress       string `json:"progress"`
+	ProgressDetail struct {
+		Current int64 `json:"current"`
+		Total   int64 `json:"total"`
+	} `json:"progressDetail"`
+}
+
+// 拉取镜像，支持进度回调
+func (c *Client) PullImage(tag string, onProgress func(PullProgress)) error {
 	ctx := context.Background()
 	resp, err := c.cli.ImagePull(ctx, tag, client.ImagePullOptions{})
 	if err != nil {
@@ -64,9 +75,18 @@ func (c *Client) PullImage(tag string) error {
 	}
 	defer resp.Close()
 
-	_, err = io.Copy(io.Discard, resp)
-	if err != nil {
-		return fmt.Errorf("failed to read pull output: %w", err)
+	decoder := json.NewDecoder(resp)
+	for {
+		var progress PullProgress
+		if err := decoder.Decode(&progress); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return fmt.Errorf("failed to decode progress: %w", err)
+		}
+		if onProgress != nil {
+			onProgress(progress)
+		}
 	}
 
 	return nil

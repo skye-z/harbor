@@ -382,26 +382,36 @@ func (s *ContainerService) CommitContainer(c *gin.Context) {
 
 // 创建容器
 func (s *ContainerService) CreateContainer(c *gin.Context) {
-	imageName := c.Query("image")
-	if imageName == "" {
+	var req struct {
+		Image        string                 `json:"Image"`
+		Name         string                 `json:"name"`
+		Cmd          []string               `json:"Cmd"`
+		Env          map[string]string      `json:"Env"`
+		WorkingDir   string                 `json:"WorkingDir"`
+		Tty          bool                   `json:"Tty"`
+		OpenStdin    bool                   `json:"OpenStdin"`
+		HostConfig   interface{}            `json:"HostConfig"`
+		ExposedPorts map[string]interface{} `json:"ExposedPorts"`
+		AutoRemove   bool                   `json:"AutoRemove"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "无效的请求数据: "+err.Error())
+		return
+	}
+
+	if req.Image == "" {
 		response.BadRequest(c, "缺少镜像名称")
 		return
 	}
 
-	containerName := c.DefaultQuery("name", "")
-	cmdStr := c.DefaultQuery("cmd", "")
-	var cmd []string
-	if cmdStr != "" {
-		cmd = strings.Split(cmdStr, " ")
-	}
-
-	envStr := c.DefaultQuery("env", "")
+	// 转换环境变量
 	var env []string
-	if envStr != "" {
-		env = strings.Split(envStr, ",")
+	for k, v := range req.Env {
+		env = append(env, k+"="+v)
 	}
 
-	container, err := s.client.CreateContainer(imageName, containerName, cmd, env)
+	container, err := s.client.CreateContainer(req.Image, req.Name, req.Cmd, env, req.WorkingDir, req.HostConfig, req.ExposedPorts, req.Tty, req.OpenStdin, req.AutoRemove)
 	if err != nil {
 		response.Error(c, err.Error())
 		return

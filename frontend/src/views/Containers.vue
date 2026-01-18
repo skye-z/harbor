@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useMessage, useDialog, NTag, NButton, NSpace, NText, NIcon, NGrid, NGi, NCard, NDataTable, NRadioGroup, NRadioButton, NInput, NSelect } from 'naive-ui'
-import type { DataTableColumns } from 'naive-ui'
+import { useMessage, useDialog, NTag, NButton, NSpace, NIcon } from 'naive-ui'
 import { useContainerStore } from '../plugins/stores/containers'
 import {
-  TrashOutline,
+  Trash,
   SearchOutline,
-  SettingsOutline,
-  StopCircleOutline,
-  PlayCircleOutline,
+  Stop,
+  Play,
+  Pause,
   RefreshOutline,
-  ListOutline,
-  GridOutline
+  Balloon,
+  Add
 } from '@vicons/ionicons5'
 
 const router = useRouter()
@@ -25,7 +24,7 @@ const containers = computed(() => containerStore.containers)
 const searchText = ref('')
 const statusFilter = ref('all')
 const loading = ref(false)
-const viewMode = ref<'card'>('card')
+const loadingStates = ref<Record<string, boolean>>({})
 
 const statusOptions = [
   { label: '全部', value: 'all' },
@@ -54,47 +53,88 @@ const viewDetails = (id: string) => {
 }
 
 const getContainerName = (container: any) => {
-  return container.names?.[0]?.replace(/^\//, '') || container.id
+  return formatContainerName(container.names?.[0]?.replace(/^\//, '') || container.id)
+}
+
+function formatContainerName(name: string) {
+  if (typeof name !== 'string' || name.trim().length === 0) {
+    return name || '';
+  }
+
+  const replacedStr = name.replace(/[_-]/g, ' ');
+  const formattedStr = replacedStr.split(/\s+/)
+    .filter(word => word.length > 0)
+    .map(word => {
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+
+  return formattedStr;
 }
 
 const formatId = (id: string) => {
   return id?.substring(0, 12) || ''
 }
 
-const handleStart = async (id: string) => {
-  try {
-    await containerStore.startContainer(id)
-    message.success('容器启动成功')
-  } catch (error: any) {
-    message.error('启动失败：' + error.message)
-  }
+const copyId = (id: string) => {
+  navigator.clipboard.writeText(id)
+  message.success('已复制容器ID')
 }
 
-const handleStop = async (id: string) => {
+const openPort = (port: number) => {
+  window.open(`http://localhost:${port}`, '_blank')
+}
+
+const stateMap: Record<string, string> = {
+  running: '运行',
+  exited: '停止',
+  created: '创建',
+  paused: '暂停',
+  restarting: '重启',
+  removing: '移除',
+  dead: '异常'
+}
+
+const formatState = (state: string) => {
+  return stateMap[state] || state || '未知'
+}
+
+const handleOperation = async (id: string, action: string, btnType: string) => {
+  const key = `${id}-${btnType}`
+  loadingStates.value[key] = true
   try {
-    await containerStore.stopContainer(id)
-    message.success('容器已停止')
+    await containerStore.operationContainer(id, action)
   } catch (error: any) {
-    message.error('停止失败：' + error.message)
+    message.error('操作失败：' + error.message)
+  } finally {
+    loadingStates.value[key] = false
   }
 }
 
 const handleDelete = async (id: string) => {
   const name = getContainerName({ names: containers.value.find(c => c.id === id)?.names })
-  dialog.warning({
+  const d = dialog.warning({
     title: '确认删除',
     content: `确定要删除容器 "${name || id}" 吗？`,
-    positiveText: '确定',
+    positiveText: '删除',
     negativeText: '取消',
     onPositiveClick: async () => {
+      d.destroy()
+      loadingStates.value[`${id}-delete`] = true
       try {
-        await containerStore.deleteContainer(id)
+        await containerStore.operationContainer(id, 'remove')
         message.success('容器已删除')
       } catch (error: any) {
         message.error('删除失败：' + error.message)
+      } finally {
+        loadingStates.value[`${id}-delete`] = false
       }
     }
   })
+}
+
+const handleCreateContainer = () => {
+  router.push({ name: 'ContainerCreate' })
 }
 
 onMounted(async () => {
@@ -119,127 +159,6 @@ const handleRefresh = async () => {
     loading.value = false
   }
 }
-
-const rowProps = (row: any) => {
-  return {
-    style: 'cursor: pointer;',
-    onClick: () => viewDetails(row.id)
-  }
-}
-
-const createColumns = (): DataTableColumns<any> => {
-  return [
-    {
-      title: '名称/ID',
-      key: 'names',
-      render(row) {
-        return h('div', { class: 'container-identity' }, [
-          h('div', { class: 'container-name' }, row.names?.[0]?.replace(/^\//, '') || row.id),
-          h(NText, { depth: 3, style: 'font-size: 12px; font-family: monospace' }, { default: () => formatId(row.id) })
-        ])
-      }
-    },
-    {
-      title: '镜像',
-      key: 'image',
-      render(row) {
-        return h(NText, { depth: 3, style: 'font-size: 12px' }, { default: () => row.image || '-' })
-      }
-    },
-    {
-      title: '状态',
-      key: 'state',
-      render(row) {
-        return h(
-          'div',
-          { style: 'display: flex; flex-direction: column; gap: 4px;' },
-          [
-            h(
-              NTag,
-              {
-                type: row.state === 'running' ? 'success' : 'default',
-                size: 'small',
-                bordered: false,
-                round: true
-              },
-              {
-                default: () => row.state === 'running' ? 'Running' : row.state,
-                icon: () => h('div', {
-                  style: {
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    backgroundColor: 'currentColor',
-                    marginRight: '4px'
-                  }
-                })
-              }
-            ),
-            row.status ? h(NText, { depth: 3, style: 'font-size: 12px;' }, { default: () => row.status }) : null
-          ]
-        )
-      }
-    },
-    {
-      title: '端口映射',
-      key: 'ports',
-      render(row) {
-        if (!row.ports || row.ports.length === 0) return '-'
-        return h(NSpace, { size: 4, wrap: true }, {
-          default: () => row.ports.map((p: any) =>
-            h(NTag, { size: 'small', bordered: true, style: 'font-size: 12px' }, {
-              default: () => `${p.public_port}:${p.private_port}/${p.type}`
-            })
-          )
-        })
-      }
-    },
-    {
-      title: '操作',
-      key: 'actions',
-      fixed: 'right',
-      width: 120,
-      render(row) {
-        return h(NSpace, { size: 'small', onClick: (e: MouseEvent) => e.stopPropagation() }, {
-          default: () => [
-            h(NButton, {
-              size: 'small',
-              quaternary: true,
-              circle: true,
-              type: 'info',
-              onClick: (e: MouseEvent) => {
-                e.stopPropagation()
-                viewDetails(row.id)
-              }
-            }, { icon: () => h(NIcon, { component: SettingsOutline }) }),
-            h(NButton, {
-              size: 'small',
-              quaternary: true,
-              circle: true,
-              type: row.state === 'running' ? 'warning' : 'success',
-              onClick: (e: MouseEvent) => {
-                e.stopPropagation()
-                row.state === 'running' ? handleStop(row.id) : handleStart(row.id)
-              }
-            }, { icon: () => h(NIcon, { component: row.state === 'running' ? StopCircleOutline : PlayCircleOutline }) }),
-            h(NButton, {
-              size: 'small',
-              quaternary: true,
-              circle: true,
-              type: 'error',
-              onClick: (e: MouseEvent) => {
-                e.stopPropagation()
-                handleDelete(row.id)
-              }
-            }, { icon: () => h(NIcon, { component: TrashOutline }) })
-          ]
-        })
-      }
-    }
-  ]
-}
-
-
 
 onMounted(async () => {
   loading.value = true
@@ -266,14 +185,6 @@ onMounted(async () => {
           <n-select v-model:value="statusFilter" :options="statusOptions" placeholder="状态筛选" style="width: 150px" />
         </n-space>
         <n-space>
-          <n-radio-group v-model:value="viewMode">
-            <n-radio-button value="table">
-              <n-icon :component="ListOutline" />
-            </n-radio-button>
-            <n-radio-button value="card">
-              <n-icon :component="GridOutline" />
-            </n-radio-button>
-          </n-radio-group>
           <n-button @click="handleRefresh" :loading="loading">
             <template #icon>
               <n-icon :component="RefreshOutline" />
@@ -285,21 +196,32 @@ onMounted(async () => {
     </div>
 
     <div class="content-area">
-      <n-grid x-gap="16" y-gap="16" cols="1 s:2 m:3 l:4" responsive="screen">
+      <n-grid x-gap="16" y-gap="16" cols="1 s:2 m:3 l:4" responsive="screen" v-if="filteredContainers.length > 0">
         <n-gi v-for="container in filteredContainers" :key="container.id">
           <n-card hoverable class="container-card" style="cursor: pointer" @click="viewDetails(container.id)">
             <template #header>
               <div class="card-header">
-                <div class="card-title" :title="getContainerName(container)">
-                  {{ getContainerName(container) }}
+                <div>
+                  <div class="card-title" :title="getContainerName(container)">
+                    {{ getContainerName(container) }}
+                  </div>
+                  <n-space size="small">
+                    <n-tag size="small" :bordered="false" @click.stop="copyId(container.id)" style="cursor: pointer">
+                      {{ formatId(container.id) }}
+                    </n-tag>
+                    <n-tag v-if="container.ports && container.ports.length > 0" size="small" :bordered="false"
+                      type="success" @click.stop="openPort(container.ports[0].public_port)" style="cursor: pointer">
+                      {{ container.ports[0].public_port }}:{{ container.ports[0].private_port }}
+                    </n-tag>
+                    <n-tag v-else size="small" :bordered="false">
+                      {{ container.ports?.[0]?.private_port || '-' }}
+                    </n-tag>
+                  </n-space>
                 </div>
                 <n-tag
-                  :type="container.state === 'running' ? 'success' : 'default'"
-                  size="small"
-                  round
-                  :bordered="false"
-                >
-                  {{ container.state }}
+                  :type="container.state === 'running' ? 'success' : container.state === 'paused' ? 'warning' : 'default'"
+                  size="small" round :bordered="false">
+                  {{ formatState(container.state) }}
                   <template #icon>
                     <div :style="{
                       width: '6px',
@@ -312,70 +234,69 @@ onMounted(async () => {
                 </n-tag>
               </div>
             </template>
-
-            <n-space vertical size="small">
-              <div class="info-item">
-                <span class="label">ID:</span>
-                <span class="value monospace">{{ formatId(container.id) }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">镜像:</span>
-                <span class="value" :title="container.image">{{ container.image }}</span>
-              </div>
-              <div class="info-item" v-if="container.status">
-                <span class="label">时长:</span>
-                <span class="value">{{ container.status }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">端口:</span>
-                <div class="value">
-                  <n-space size="small" v-if="container.ports && container.ports.length > 0">
-                    <n-tag v-for="(p, i) in container.ports.slice(0, 2)" :key="i" size="tiny" :bordered="true">
-                      {{ p.public_port }}:{{ p.private_port }}
-                    </n-tag>
-                    <n-tag v-if="container.ports.length > 2" size="tiny" :bordered="true">+{{ container.ports.length - 2 }}</n-tag>
-                  </n-space>
-                  <span v-else>-</span>
-                </div>
-              </div>
-            </n-space>
-
             <template #action>
-              <div class="card-actions">
-                <n-button size="small" quaternary circle type="info" @click.stop="viewDetails(container.id)">
-                  <template #icon><n-icon :component="SettingsOutline" /></template>
-                </n-button>
-                <n-button
-                  size="small"
-                  quaternary
-                  circle
-                  :type="container.state === 'running' ? 'warning' : 'success'"
-                  @click.stop="container.state === 'running' ? handleStop(container.id) : handleStart(container.id)"
-                >
+              <n-button class="del-btn" size="small" quaternary circle type="error"
+                :disabled="container.state === 'running' || loadingStates[`${container.id}-delete`]"
+                :loading="loadingStates[`${container.id}-delete`]" @click.stop="handleDelete(container.id)">
+                <template #icon>
+                  <n-icon>
+                    <Trash />
+                  </n-icon>
+                </template>
+              </n-button>
+              <n-button-group>
+                <n-button size="small" tertiary :type="container.state === 'running' ? 'error' : 'success'"
+                  :disabled="container.state === 'paused' || Object.values(loadingStates).some(v => v)"
+                  :loading="loadingStates[`${container.id}-startstop`]"
+                  @click.stop="container.state === 'running' ? handleOperation(container.id, 'stop', 'startstop') : handleOperation(container.id, 'start', 'startstop')">
                   <template #icon>
-                    <n-icon :component="container.state === 'running' ? StopCircleOutline : PlayCircleOutline" />
+                    <n-icon :component="container.state === 'running' ? Stop : Play" />
                   </template>
                 </n-button>
-                <n-button size="small" quaternary circle type="error" @click.stop="handleDelete(container.id)">
-                  <template #icon><n-icon :component="TrashOutline" /></template>
+                <n-button size="small" tertiary type="warning"
+                  :disabled="container.state !== 'running' && container.state !== 'paused' || Object.values(loadingStates).some(v => v)"
+                  :loading="loadingStates[`${container.id}-pause`]"
+                  @click.stop="container.state === 'running' ? handleOperation(container.id, 'pause', 'pause') : handleOperation(container.id, 'unpause', 'pause')">
+                  <template #icon>
+                    <n-icon>
+                      <component :is="container.state === 'running' ? Pause : Play" />
+                    </n-icon>
+                  </template>
                 </n-button>
-              </div>
+              </n-button-group>
             </template>
           </n-card>
         </n-gi>
       </n-grid>
+      <n-result v-else status="404" title="这里什么都没有" description="在找啥呢? 要不要先创建一个容器试试" style="margin-top: 20vh;">
+        <template #icon>
+          <n-icon size="100">
+            <Balloon />
+          </n-icon>
+        </template>
+        <template #footer>
+          <n-button type="primary" strong secondary @click="handleCreateContainer">
+            <template #icon>
+              <n-icon>
+                <Add />
+              </n-icon>
+            </template>
+            创建容器
+          </n-button>
+        </template>
+      </n-result>
     </div>
   </div>
 </template>
 
 <style scoped>
 .containers-page {
-  padding: 24px;
+  padding: 0 10px 10px 10px;
   max-width: 1600px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 10px;
 }
 
 .view-header {
@@ -410,18 +331,17 @@ onMounted(async () => {
 }
 
 .card-header {
-  display: flex;
   justify-content: space-between;
-  align-items: center;
+  display: flex;
   width: 100%;
 }
 
 .card-title {
-  font-weight: 600;
-  font-size: 16px;
-  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  overflow: hidden;
+  font-weight: 600;
+  font-size: 16px;
   max-width: 70%;
 }
 
@@ -448,9 +368,7 @@ onMounted(async () => {
   font-family: monospace;
 }
 
-.card-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+.del-btn {
+  float: right;
 }
 </style>

@@ -77,7 +77,7 @@ import { useImageStore } from '../plugins/stores/images'
 import { useVolumeStore } from '../plugins/stores/volumes'
 import { useNetworkStore } from '../plugins/stores/networks'
 import { useUserStore } from '../plugins/stores/user'
-import { systemApi } from '../plugins/api'
+import { systemApi, logApi } from '../plugins/api'
 import ResourceTopology from '../components/ResourceTopology.vue'
 
 const containerStore = useContainerStore()
@@ -93,48 +93,19 @@ const storageAvailable = ref(0)
 
 const recentLogs = ref<any[]>([])
 
-const generateLogsFromContainers = () => {
-  const logs: any[] = []
-  const currentTime = new Date()
-
-  containerStore.containers.forEach((container, index) => {
-    const logTime = new Date(currentTime.getTime() - (index * 5 * 60 * 1000))
-    const timeStr = logTime.toLocaleString('zh-CN', { hour12: false })
-
-    if (container.state === 'running') {
-      logs.push({
-        id: logs.length + 1,
-        action: `容器 ${container.names[0]?.replace(/^\//, '') || container.id} 正在运行`,
-        time: timeStr,
-        type: 'success'
-      })
-    } else if (container.state === 'exited') {
-      logs.push({
-        id: logs.length + 1,
-        action: `容器 ${container.names[0]?.replace(/^\//, '') || container.id} 已停止`,
-        time: timeStr,
-        type: 'default'
-      })
-    } else if (container.state === 'created') {
-      logs.push({
-        id: logs.length + 1,
-        action: `容器 ${container.names[0]?.replace(/^\//, '') || container.id} 已创建`,
-        time: timeStr,
-        type: 'info'
-      })
-    }
-  })
-
-  if (userStore.user) {
-    logs.unshift({
-      id: 0,
-      action: `用户 ${userStore.user.username} 登录系统`,
-      time: currentTime.toLocaleString('zh-CN', { hour12: false }),
-      type: 'default'
-    })
+const loadRecentLogs = async () => {
+  try {
+    const logs = await logApi.getRecent(10)
+    recentLogs.value = logs.map((log: any) => ({
+      id: log.id,
+      action: log.message || log.action,
+      time: new Date(log.created_at).toLocaleString('zh-CN', { hour12: false }),
+      type: log.level === 'error' ? 'error' : log.level === 'warning' ? 'warning' : 'info'
+    }))
+  } catch (error: any) {
+    console.error('Failed to load logs:', error)
+    recentLogs.value = []
   }
-
-  return logs.slice(0, 10)
 }
 
 const containerStats = computed(() => {
@@ -176,10 +147,9 @@ onMounted(async () => {
       imageStore.fetchImages(),
       volumeStore.fetchVolumes(),
       networkStore.fetchNetworks(),
-      loadSystemInfo()
+      loadSystemInfo(),
+      loadRecentLogs()
     ])
-
-    recentLogs.value = generateLogsFromContainers()
   } catch (err: any) {
     console.error('Failed to fetch data:', err)
   } finally {
@@ -192,13 +162,13 @@ const loadSystemInfo = async () => {
     const info = await systemApi.getSystemInfo()
     dockerVersion.value = info.server_version || info.version || 'Unknown'
 
-    storageTotal.value = 500 * 1024 * 1024 * 1024
-    storageAvailable.value = 125 * 1024 * 1024 * 1024
+    storageTotal.value = info.disk_total || 0
+    storageAvailable.value = info.disk_available || 0
   } catch (err) {
     console.error('Failed to load system info:', err)
     dockerVersion.value = 'Unknown'
-    storageTotal.value = 500 * 1024 * 1024 * 1024
-    storageAvailable.value = 125 * 1024 * 1024 * 1024
+    storageTotal.value = 0
+    storageAvailable.value = 0
   }
 }
 
@@ -210,7 +180,6 @@ const loadSystemInfo = async () => {
 }
 
 .card {
-  border: 1px solid var(--border-color);
   background-color: var(--base-color);
   border-radius: 12px;
   padding: 15px;
