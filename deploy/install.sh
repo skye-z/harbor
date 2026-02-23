@@ -55,7 +55,7 @@ PrivateTmp=true
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/opt/harbor/data /var/run/docker.sock
+ReadWritePaths=/var/run/docker.sock
 Restart=on-failure
 RestartSec=5
 
@@ -113,7 +113,6 @@ set -e
 
 APP_DIR="/opt/harbor"
 BACKUP_DIR="$APP_DIR/backups"
-DATA_DIR="$APP_DIR/data"
 CONFIG_FILE="$APP_DIR/config.yaml"
 LOG_DIR="/var/log/harbor"
 
@@ -140,11 +139,11 @@ log_error() {
 backup_database() {
     log_info "开始数据库备份..."
 
-    if [ -f "$DATA_DIR/harbor.db" ]; then
-        sqlite3 "$DATA_DIR/harbor.db" ".backup" "$BACKUP_FILE.db"
+    if [ -f "$APP_DIR/harbor.db" ]; then
+        sqlite3 "$APP_DIR/harbor.db" ".backup" "$BACKUP_FILE.db"
         log_info "数据库备份完成: $BACKUP_FILE.db"
     else
-        log_error "数据库文件未找到: $DATA_DIR/harbor.db"
+        log_error "数据库文件未找到: $APP_DIR/harbor.db"
         return 1
     fi
 }
@@ -283,8 +282,6 @@ create_user() {
 create_directories() {
     mkdir -p "$INSTALL_DIR"
     mkdir -p "$LOG_DIR"
-    mkdir -p "$INSTALL_DIR/backups"
-    mkdir -p "$INSTALL_DIR/data"
     mkdir -p "$INSTALL_DIR/scripts"
     chown -R "$APP_USER:$APP_USER" "$INSTALL_DIR"
     chmod 755 "$INSTALL_DIR"

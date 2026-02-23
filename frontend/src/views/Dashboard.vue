@@ -58,6 +58,11 @@
                   :time="log.time"
                 />
               </n-timeline>
+              <div class="logs-more">
+                <n-button strong secondary block type="primary" @click="goToLogs">
+                  查看更多
+                </n-button>
+              </div>
           </n-el>
         </n-gi>
         <n-gi :span="18">
@@ -72,6 +77,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useContainerStore } from '../plugins/stores/containers'
 import { useImageStore } from '../plugins/stores/images'
 import { useVolumeStore } from '../plugins/stores/volumes'
@@ -80,6 +86,7 @@ import { useUserStore } from '../plugins/stores/user'
 import { systemApi, logApi } from '../plugins/api'
 import ResourceTopology from '../components/ResourceTopology.vue'
 
+const router = useRouter()
 const containerStore = useContainerStore()
 const imageStore = useImageStore()
 const volumeStore = useVolumeStore()
@@ -95,7 +102,7 @@ const recentLogs = ref<any[]>([])
 
 const loadRecentLogs = async () => {
   try {
-    const logs = await logApi.getRecent(10)
+    const logs = await logApi.getRecent(10, '')
     recentLogs.value = logs.map((log: any) => ({
       id: log.id,
       action: log.message || log.action,
@@ -106,6 +113,10 @@ const loadRecentLogs = async () => {
     console.error('Failed to load logs:', error)
     recentLogs.value = []
   }
+}
+
+const goToLogs = () => {
+  router.push({ name: 'PlatformLogs' })
 }
 
 const containerStats = computed(() => {
@@ -209,6 +220,25 @@ const loadSystemInfo = async () => {
 
 .logs-card {
   height: calc(100vh - 200px);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.logs-card :deep(.n-timeline) {
+  padding: 12px;
+  padding-bottom: 60px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.logs-more {
+  position: absolute;
+  padding: 10px;
+  z-index: 1;
+  bottom: 0;
+  right: 0;
+  left: 0;
 }
 
 .logs-card,

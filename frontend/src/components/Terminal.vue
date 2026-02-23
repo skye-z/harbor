@@ -1,13 +1,12 @@
 <template>
-  <div class="terminal-container">
-    <div ref="terminalRef" class="terminal"></div>
-  </div>
+  <div ref="terminalRef" class="terminal-container"></div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { Terminal } from 'xterm'
 import { FitAddon } from 'xterm-addon-fit'
+import { WebLinksAddon } from 'xterm-addon-web-links'
 import 'xterm/css/xterm.css'
 import { containerApi } from '../plugins/api'
 
@@ -23,15 +22,16 @@ const props = withDefaults(defineProps<Props>(), {
 const terminalRef = ref<HTMLElement>()
 let terminal: Terminal | null = null
 let ws: WebSocket | null = null
+let fitAddon: FitAddon | null = null
 
 const connectTerminal = async () => {
   try {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     
-    const termResponse = await containerApi.get(props.containerId)
+    const termResponse = await containerApi.terminal(props.containerId)
     
-    const wsHost = window.location.host.replace('3000', '12800')
-    const wsUrl = `ws://${wsHost}/api/container/terminal/ws?exec_id=${termResponse.exec_id}${token ? `&token=${encodeURIComponent(token)}` : ''}`
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const wsUrl = `${protocol}//${window.location.host}/api/container/terminal/ws?exec_id=${termResponse.exec_id}${token ? `&token=${encodeURIComponent(token)}` : ''}`
     
     ws = new WebSocket(wsUrl)
 
@@ -40,21 +40,8 @@ const connectTerminal = async () => {
     }
 
     ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data)
-
-        switch (message.type) {
-          case 'terminal_output':
-            if (terminal && message.data) {
-              terminal.write(atob(message.data))
-            }
-            break
-          case 'terminal_error':
-            console.error('Terminal error:', message.data)
-            break
-        }
-      } catch (error) {
-        console.error('Error parsing message:', error)
+      if (terminal) {
+        terminal.write(event.data)
       }
     }
 
@@ -70,61 +57,80 @@ const connectTerminal = async () => {
   }
 }
 
+const fitTerminal = () => {
+  if (fitAddon && terminal) {
+    fitAddon.fit()
+  }
+}
+
+const handleResize = () => {
+  fitTerminal()
+}
+
 const initTerminal = () => {
   if (!terminalRef.value) return
 
   terminal = new Terminal({
     cursorBlink: true,
     fontSize: 14,
-    fontFamily: 'Fira Code, Consolas, monospace',
+    fontFamily: 'Fira Code, Consolas, "Courier New", monospace',
     theme: {
-      background: '#0d1117',
-      foreground: '#c9d1d9',
-      cursor: '#58a6ff',
-      black: '#0d1117',
-      red: '#ff7b72',
-      green: '#3fb950',
-      yellow: '#d29922',
-      blue: '#58a6ff',
-      magenta: '#bc8cff',
-      cyan: '#39c5cf',
-      white: '#c9d1d9',
-      brightBlack: '#484f58',
-      brightRed: '#ff7b72',
-      brightGreen: '#3fb950',
-      brightYellow: '#d29922',
-      brightBlue: '#58a6ff',
-      brightMagenta: '#bc8cff',
-      brightCyan: '#39c5cf',
-      brightWhite: '#f0f6fc'
-    }
+      background: '#1e1e1e',
+      foreground: '#d4d4d4',
+      cursor: '#ffffff',
+      cursorAccent: '#1e1e1e',
+      selectionBackground: '#264f78',
+      black: '#000000',
+      red: '#cd3131',
+      green: '#0dbc79',
+      yellow: '#e5e510',
+      blue: '#2472c8',
+      magenta: '#bc3fbc',
+      cyan: '#11a8cd',
+      white: '#e5e5e5',
+      brightBlack: '#666666',
+      brightRed: '#f14c4c',
+      brightGreen: '#23d18b',
+      brightYellow: '#f5f543',
+      brightBlue: '#3b8eea',
+      brightMagenta: '#d670d6',
+      brightCyan: '#29b8db',
+      brightWhite: '#ffffff'
+    },
+    allowProposedApi: true
   })
 
-  const fitAddon = new FitAddon()
+  fitAddon = new FitAddon()
   terminal.loadAddon(fitAddon)
+  terminal.loadAddon(new WebLinksAddon())
   terminal.open(terminalRef.value)
-  fitAddon.fit()
-  terminal.focus()
+  
+  setTimeout(() => {
+    fitTerminal()
+    terminal?.focus()
+  }, 0)
 
   terminal.onData((data: string) => {
     if (ws && ws.readyState === WebSocket.OPEN) {
-      const encoded = btoa(data)
-      ws.send(JSON.stringify({
-        type: 'input',
-        data: encoded
-      }))
+      ws.send(data)
     }
   })
 
-  terminal.onResize((size) => {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: 'resize',
-        rows: size.rows,
-        cols: size.cols
-      }))
+  terminalRef.value.addEventListener('contextmenu', (e) => {
+    e.preventDefault()
+    if (terminal && terminal.hasSelection()) {
+      navigator.clipboard.writeText(terminal.getSelection())
+      terminal.clearSelection()
+    } else {
+      navigator.clipboard.readText().then(text => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(text)
+        }
+      })
     }
   })
+
+  window.addEventListener('resize', handleResize)
 
   connectTerminal()
 }
@@ -134,12 +140,17 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
   if (ws) {
     ws.close()
   }
   if (terminal) {
     terminal.dispose()
   }
+})
+
+defineExpose({
+  fit: fitTerminal
 })
 </script>
 
@@ -148,20 +159,15 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   background: #1e1e1e;
-  border-radius: 8px;
   overflow: hidden;
 }
 
-.terminal {
-  height: 100%;
-  padding: 10px;
-}
-
 :deep(.xterm) {
-  padding: 10px;
+  height: 100%;
+  padding: 8px;
 }
 
 :deep(.xterm-viewport) {
-  overflow-y: auto;
+  overflow-y: auto !important;
 }
 </style>

@@ -171,6 +171,10 @@ func (r Route) GetPort() string {
 // 认证中间件
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if c.GetHeader("Upgrade") == "websocket" {
+			c.Next()
+			return
+		}
 		token := c.GetHeader("Authorization")
 		if token != "" && len(token) > 7 && token[:7] == "Bearer " {
 			token = token[7:]

@@ -51,7 +51,8 @@ import {
   ServerOutline,
   MoonOutline,
   LogOutOutline,
-  SettingsOutline
+  SettingsOutline,
+  GitNetworkOutline
 } from '@vicons/ionicons5'
 
 const router = useRouter()
@@ -85,7 +86,7 @@ const menuOptions = [
   {
     label: '连接',
     key: 'storage',
-    icon: ServerOutline
+    icon: GitNetworkOutline
   },
   {
     label: '系统',

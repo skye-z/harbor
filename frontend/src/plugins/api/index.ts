@@ -45,6 +45,9 @@ export const containerApi = {
   },
   copyTo: async (id: string, srcPath: string, dstPath: string) => {
     return apiClient.post('/container/copy/to', { id, src_path: srcPath, dst_path: dstPath })
+  },
+  terminal: async (id: string) => {
+    return apiClient.get('/container/terminal', { params: { id } })
   }
 }
 
@@ -130,7 +133,7 @@ export const systemApi = {
 }
 
 export const logApi = {
-  getRecent: async (limit: number = 10) => {
-    return apiClient.get('/logs/recent', { params: { limit } })
+  getRecent: async (limit: number = 10, type: string = '') => {
+    return apiClient.get('/logs/recent', { params: { limit, type } })
   }
 }

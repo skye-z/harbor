@@ -1,91 +1,9 @@
-<template>
-  <div class="logs-page">
-    <div class="page-header">
-      <div class="title-group">
-        <div class="view-header">
-          <h1>{{ container?.names?.[0]?.replace(/^\//, '') || containerId }} - 日志</h1>
-          <div class="header-actions">
-            <n-button size="medium" @click="router.back()">
-              <template #icon>
-                <n-icon :component="ArrowBackOutline" />
-              </template>
-              返回
-            </n-button>
-          </div>
-        </div>
-        <div class="subtitle-text">
-          容器ID: {{ containerId }}
-        </div>
-      </div>
-      <div class="header-actions">
-        <n-space>
-          <n-select
-            v-model:value="tailLines"
-            :options="tailOptions"
-            style="width: 140px"
-            size="small"
-          />
-          <n-input
-            v-model:value="searchText"
-            placeholder="过滤日志..."
-            clearable
-            style="width: 200px"
-            size="small"
-          >
-            <template #prefix>
-              <n-icon :component="SearchOutline" />
-            </template>
-          </n-input>
-          <n-button @click="toggleAutoRefresh" :type="autoRefresh ? 'warning' : 'default'" size="small">
-            <template #icon>
-              <n-icon :component="RefreshOutline" />
-            </template>
-            {{ autoRefresh ? '停止刷新' : '自动刷新' }}
-          </n-button>
-          <n-button @click="loadLogs" :loading="loading" size="small">
-            <template #icon>
-              <n-icon :component="RefreshOutline" />
-            </template>
-            刷新
-          </n-button>
-        </n-space>
-      </div>
-    </div>
-
-    <n-card class="logs-card" content-style="padding: 0; display: flex; flex-direction: column; height: 100%;">
-      <div class="logs-toolbar">
-        <n-space align="center">
-          <n-tag :type="statusType" size="small">{{ statusText }}</n-tag>
-          <n-text depth="3">共 {{ filteredLogs.length }} 行</n-text>
-          <n-divider vertical />
-          <n-checkbox v-model:checked="showTimestamp" size="small">显示时间戳</n-checkbox>
-          <n-checkbox v-model:checked="follow" size="small" :disabled="autoRefresh">跟随</n-checkbox>
-        </n-space>
-      </div>
-      
-      <div class="logs-container" ref="logsContainerRef">
-        <div v-if="loading && !logs.length" class="logs-loading">
-          <n-spin size="small" />
-          <span>加载中...</span>
-        </div>
-        <div v-else-if="!logs.length" class="logs-empty">
-          <n-empty description="暂无日志" />
-        </div>
-        <pre v-else class="logs-content"><code
-          v-for="(line, index) in filteredLogs"
-          :key="index"
-          :class="getLineClass(line)"
-        >{{ line }}</code></pre>
-      </div>
-    </n-card>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useContainerStore } from '../plugins/stores/containers'
-import { ArrowBackOutline, SearchOutline, RefreshOutline } from '@vicons/ionicons5'
+import { NButton, NIcon, NSelect, NInput, NCheckbox } from 'naive-ui'
+import { ArrowBack, SearchOutline, RefreshOutline, StopOutline, PlayOutline } from '@vicons/ionicons5'
 
 const route = useRoute()
 const router = useRouter()
@@ -106,10 +24,10 @@ const logsContainerRef = ref<HTMLElement>()
 let autoRefreshTimer: number | null = null
 
 const tailOptions = [
-  { label: '最后50行', value: '50' },
-  { label: '最后100行', value: '100' },
-  { label: '最后200行', value: '200' },
-  { label: '最后500行', value: '500' },
+  { label: '50行', value: '50' },
+  { label: '100行', value: '100' },
+  { label: '200行', value: '200' },
+  { label: '500行', value: '500' },
   { label: '全部', value: 'all' }
 ]
 
@@ -174,6 +92,10 @@ const scrollToBottom = () => {
   }
 }
 
+const handleBack = () => {
+  router.push({ name: 'ContainerDetail', params: { id: containerId.value } })
+}
+
 onMounted(async () => {
   if (!containerStore.containers.length) {
     await containerStore.fetchContainers()
@@ -196,102 +118,175 @@ watch(tailLines, () => {
 })
 </script>
 
+<template>
+  <div class="logs-page">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <n-button quaternary size="small" @click="handleBack">
+          <template #icon>
+            <n-icon :component="ArrowBack" />
+          </template>
+        </n-button>
+        <span class="container-name">{{ container?.names?.[0]?.replace(/^\//, '') || containerId }}</span>
+        <span class="status-indicator">
+          <span class="status-dot" :class="statusType"></span>
+          <span class="status-text">{{ statusText }}</span>
+        </span>
+      </div>
+      <div class="toolbar-center">
+        <n-select
+          v-model:value="tailLines"
+          :options="tailOptions"
+          size="small"
+          style="width: 90px"
+        />
+        <n-input
+          v-model:value="searchText"
+          placeholder="过滤..."
+          clearable
+          size="small"
+          style="width: 140px"
+        >
+          <template #prefix>
+            <n-icon :component="SearchOutline" size="14" />
+          </template>
+        </n-input>
+        <n-checkbox v-model:checked="showTimestamp" size="small">时间</n-checkbox>
+        <n-checkbox v-model:checked="follow" size="small" :disabled="autoRefresh">跟随</n-checkbox>
+      </div>
+      <div class="toolbar-right">
+        <n-button
+          quaternary
+          size="small"
+          @click="toggleAutoRefresh"
+          :type="autoRefresh ? 'warning' : 'default'"
+        >
+          <template #icon>
+            <n-icon :component="autoRefresh ? StopOutline : PlayOutline" />
+          </template>
+        </n-button>
+        <n-button quaternary size="small" @click="loadLogs" :loading="loading">
+          <template #icon>
+            <n-icon :component="RefreshOutline" />
+          </template>
+        </n-button>
+      </div>
+    </div>
+
+    <div class="logs-area" ref="logsContainerRef">
+      <div v-if="loading && !logs.length" class="placeholder">
+        <span>加载中...</span>
+      </div>
+      <div v-else-if="!logs.length" class="placeholder">
+        <span>暂无日志</span>
+      </div>
+      <pre v-else class="logs-content"><code
+        v-for="(line, index) in filteredLogs"
+        :key="index"
+        :class="getLineClass(line)"
+      >{{ line }}</code></pre>
+    </div>
+  </div>
+</template>
+
 <style scoped>
 .logs-page {
-  height: calc(100vh - 100px);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
+  background: #1e1e1e;
+  z-index: 100;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #252526;
+  border-bottom: 1px solid #3c3c3c;
+  flex-shrink: 0;
   gap: 16px;
-  padding: 0 10px 10px 10px;
-  max-width: 1400px;
-  margin: 0 auto;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.view-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.title-group h1 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
+.toolbar-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
-.title-group .subtitle-text {
-  color: var(--n-text-color-3);
+.container-name {
+  color: #cccccc;
+  font-weight: 500;
   font-size: 14px;
-  margin-top: 4px;
 }
 
-.header-info {
+.status-indicator {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
+  margin-left: 8px;
 }
 
-.header-info h1 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
 }
 
-.header-actions {
+.status-dot.success {
+  background: #0dbc79;
+  box-shadow: 0 0 8px rgba(13, 188, 121, 0.6);
+}
+
+.status-dot.warning {
+  background: #e5e510;
+}
+
+.status-text {
+  color: #808080;
+  font-size: 12px;
+}
+
+.toolbar-center {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
-.logs-card {
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.logs-area {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.logs-toolbar {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--n-border-color);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.logs-container {
-  flex: 1;
+  min-height: 0;
   overflow: auto;
-  background: #0d1117;
-  padding: 12px 16px;
+  padding: 8px 12px;
 }
 
-.logs-loading,
-.logs-empty {
+.placeholder {
   height: 100%;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  color: #8b949e;
+  color: #808080;
 }
 
 .logs-content {
   margin: 0;
-  font-family: 'Fira Code', Consolas, monospace;
+  font-family: 'Fira Code', Consolas, 'Courier New', monospace;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-all;
+  color: #d4d4d4;
 }
 
 .logs-content code {
@@ -299,14 +294,14 @@ watch(tailLines, () => {
 }
 
 .log-error {
-  color: #ff7b72;
+  color: #f14c4c;
 }
 
 .log-warn {
-  color: #d29922;
+  color: #e5e510;
 }
 
 .log-info {
-  color: #58a6ff;
+  color: #3794ff;
 }
 </style>

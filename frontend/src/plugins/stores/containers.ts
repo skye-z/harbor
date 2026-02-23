@@ -3,6 +3,45 @@ import { ref, computed } from 'vue'
 import { containerApi } from '../api'
 import type { Container } from '../../types'
 
+const CACHE_PREFIX = 'container_detail_'
+const CACHE_EXPIRE = 5 * 60 * 1000
+
+interface CacheItem {
+  data: any
+  timestamp: number
+}
+
+const getCache = (id: string): any | null => {
+  try {
+    const key = CACHE_PREFIX + id
+    const cached = localStorage.getItem(key)
+    if (cached) {
+      const item: CacheItem = JSON.parse(cached)
+      const now = Date.now()
+      if (now - item.timestamp < CACHE_EXPIRE) {
+        return item.data
+      }
+      localStorage.removeItem(key)
+    }
+  } catch (e) {
+    console.error('Failed to read cache:', e)
+  }
+  return null
+}
+
+const setCache = (id: string, data: any) => {
+  try {
+    const key = CACHE_PREFIX + id
+    const item: CacheItem = {
+      data,
+      timestamp: Date.now()
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  } catch (e) {
+    console.error('Failed to write cache:', e)
+  }
+}
+
 export const useContainerStore = defineStore('containers', () => {
   const containers = ref<Container[]>([])
   const loading = ref(false)
@@ -49,8 +88,26 @@ export const useContainerStore = defineStore('containers', () => {
     return await containerApi.processes(id)
   }
 
-  const getContainerInfo = async (id: string) => {
-    return await containerApi.get(id)
+  const getContainerInfo = async (id: string, useCache = true) => {
+    if (useCache) {
+      const cached = getCache(id)
+      if (cached) {
+        return cached
+      }
+    }
+    const data = await containerApi.get(id)
+    setCache(id, data)
+    return data
+  }
+
+  const getContainerInfoCached = (id: string): any | null => {
+    return getCache(id)
+  }
+
+  const refreshContainerInfo = async (id: string) => {
+    const data = await containerApi.get(id)
+    setCache(id, data)
+    return data
   }
 
   const renameContainer = async (id: string, name: string) => {
@@ -82,6 +139,8 @@ export const useContainerStore = defineStore('containers', () => {
     getContainerStats,
     getContainerProcesses,
     getContainerInfo,
+    getContainerInfoCached,
+    refreshContainerInfo,
     renameContainer,
     listContainerFiles,
     copyFromContainer,

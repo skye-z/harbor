@@ -1,80 +1,17 @@
-<template>
-  <div class="container-file">
-    <div class="page-header">
-      <div class="title-group">
-        <div class="view-header">
-          <h1>{{ containerName }} - 文件管理</h1>
-          <div class="header-actions">
-            <n-button size="medium" @click="router.back()">
-              <template #icon>
-                <n-icon :component="ArrowBackOutline" />
-              </template>
-              返回
-            </n-button>
-          </div>
-        </div>
-        <div class="subtitle-text">
-          容器ID: {{ containerId }}
-        </div>
-      </div>
-    </div>
-
-    <n-card>
-      <template #header-extra>
-        <n-space>
-          <n-button size="small" @click="handleNavigateUp" :disabled="currentPath === '/'">
-            <template #icon>
-              <n-icon :component="FolderOpenOutline" />
-            </template>
-            返回上级
-          </n-button>
-          <n-input v-model:value="currentPath" placeholder="输入容器内路径，如 /app" style="width: 300px" @keyup.enter="loadFileList" />
-          <n-button size="small" type="primary" @click="loadFileList" :loading="fileLoading">
-            <template #icon>
-              <n-icon :component="SearchOutline" />
-            </template>
-            浏览
-          </n-button>
-          <n-button size="small" type="primary" @click="handleDownload" :loading="fileLoading">
-            <template #icon>
-              <n-icon :component="DownloadOutline" />
-            </template>
-            下载
-          </n-button>
-          <n-upload :show-file-list="false" @before-upload="handleUpload" accept="*/*">
-            <n-button size="small" type="info" :loading="uploadLoading">
-              <template #icon>
-                <n-icon :component="CloudUploadOutline" />
-              </template>
-              上传
-            </n-button>
-          </n-upload>
-        </n-space>
-      </template>
-      <n-alert type="info" :show-icon="false" style="margin-bottom: 16px">
-        输入容器内文件/目录路径，点击浏览查看目录内容，点击下载可将文件下载到本地。点击上传可选择本地文件上传到容器当前路径。
-      </n-alert>
-      <n-data-table v-if="fileList.length > 0" :columns="fileColumns" :data="fileList" :bordered="false"
-        :pagination="{ pageSize: 20 }" />
-      <n-empty v-else description="暂无文件信息，请在上方输入路径并点击浏览" />
-    </n-card>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, computed, h, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useContainerStore } from '../plugins/stores/containers'
-import { useMessage, NIcon } from 'naive-ui'
+import { useMessage, NButton, NIcon, NInput, NDataTable, NUpload } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
 import {
-  ArrowBackOutline,
+  ArrowBack,
   FolderOutline,
-  FolderOpenOutline,
   DocumentOutline,
-  SearchOutline,
+  RefreshOutline,
   DownloadOutline,
-  CloudUploadOutline
+  CloudUploadOutline,
+  ChevronUpOutline
 } from '@vicons/ionicons5'
 
 const route = useRoute()
@@ -97,28 +34,28 @@ const fileColumns: DataTableColumns<{
   size: string
   mtime: string
 }> = [
-    {
-      title: '名称',
-      key: 'name',
-      render(row: any) {
-        return h('div', {
-          style: { display: 'flex', alignItems: 'center', gap: '8px', cursor: row.is_dir ? 'pointer' : 'default', color: row.is_dir ? '#2080f0' : 'inherit' },
-          onClick: () => handleNavigate(row)
-        }, [
-          h(NIcon, {
-            component: row.is_dir ? FolderOutline : DocumentOutline,
-            size: 18,
-            color: row.is_dir ? '#f0a020' : '#2080f0'
-          }),
-          h('span', row.name)
-        ])
-      }
-    },
-    { title: '路径', key: 'path', ellipsis: { tooltip: true } },
-    { title: '类型', key: 'type', width: 100 },
-    { title: '大小', key: 'size', width: 100 },
-    { title: '修改时间', key: 'mtime', width: 150 }
-  ]
+  {
+    title: '名称',
+    key: 'name',
+    render(row: any) {
+      return h('div', {
+        style: { display: 'flex', alignItems: 'center', gap: '8px', cursor: row.is_dir ? 'pointer' : 'default' },
+        onClick: () => handleNavigate(row)
+      }, [
+        h(NIcon, {
+          component: row.is_dir ? FolderOutline : DocumentOutline,
+          size: 16,
+          color: row.is_dir ? '#dcb67a' : '#75beff'
+        }),
+        h('span', {
+          style: { color: row.is_dir ? '#dcb67a' : '#d4d4d4' }
+        }, row.name)
+      ])
+    }
+  },
+  { title: '大小', key: 'size', width: 100, ellipsis: { tooltip: true } },
+  { title: '修改时间', key: 'mtime', width: 160, ellipsis: { tooltip: true } }
+]
 
 const loadContainerDetail = async () => {
   try {
@@ -199,6 +136,10 @@ const handleUpload = async (options: any) => {
   return false
 }
 
+const handleBack = () => {
+  router.push({ name: 'ContainerDetail', params: { id: containerId.value } })
+}
+
 onMounted(async () => {
   await loadContainerDetail()
   if (!containerName.value) {
@@ -210,35 +151,162 @@ onMounted(async () => {
 })
 </script>
 
+<template>
+  <div class="file-page">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <n-button quaternary size="small" @click="handleBack">
+          <template #icon>
+            <n-icon :component="ArrowBack" />
+          </template>
+        </n-button>
+        <span class="container-name">{{ containerName }}</span>
+      </div>
+      <div class="toolbar-center">
+        <n-button quaternary size="small" @click="handleNavigateUp" :disabled="currentPath === '/'">
+          <template #icon>
+            <n-icon :component="ChevronUpOutline" />
+          </template>
+        </n-button>
+        <n-input
+          v-model:value="currentPath"
+          placeholder="路径"
+          size="small"
+          style="width: 300px"
+          @keyup.enter="loadFileList"
+        />
+        <n-button quaternary size="small" @click="loadFileList" :loading="fileLoading">
+          <template #icon>
+            <n-icon :component="RefreshOutline" />
+          </template>
+        </n-button>
+      </div>
+      <div class="toolbar-right">
+        <n-button quaternary size="small" @click="handleDownload" :loading="fileLoading">
+          <template #icon>
+            <n-icon :component="DownloadOutline" />
+          </template>
+        </n-button>
+        <n-upload :show-file-list="false" @before-upload="handleUpload" accept="*/*">
+          <n-button quaternary size="small" :loading="uploadLoading">
+            <template #icon>
+              <n-icon :component="CloudUploadOutline" />
+            </template>
+          </n-button>
+        </n-upload>
+      </div>
+    </div>
+
+    <div class="file-area">
+      <div v-if="fileList.length === 0 && !fileLoading" class="placeholder">
+        <n-icon size="48" :component="FolderOutline" class="placeholder-icon" />
+        <span>空目录</span>
+      </div>
+      <n-data-table
+        v-else
+        :columns="fileColumns"
+        :data="fileList"
+        :bordered="false"
+        :loading="fileLoading"
+        :pagination="false"
+        size="small"
+        class="file-table"
+      />
+    </div>
+  </div>
+</template>
+
 <style scoped>
-.container-file {
-  padding: 0 10px 10px 10px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.page-header {
-  margin-bottom: 10px;
-}
-
-.view-header {
+.file-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+  z-index: 100;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
+  padding: 8px 16px;
+  background: #252526;
+  border-bottom: 1px solid #3c3c3c;
+  flex-shrink: 0;
+  gap: 16px;
 }
 
-.title-group h1 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
+.toolbar-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
-.title-group .subtitle-text {
-  color: var(--n-text-color-3);
+.container-name {
+  color: #cccccc;
+  font-weight: 500;
   font-size: 14px;
-  margin-top: 4px;
+}
+
+.toolbar-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.file-area {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px 0;
+}
+
+.placeholder {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #808080;
+}
+
+.placeholder-icon {
+  opacity: 0.5;
+}
+
+.file-table {
+  background: transparent !important;
+}
+
+.file-table :deep(.n-data-table-th) {
+  background: #252526 !important;
+  color: #808080 !important;
+  border-bottom: 1px solid #3c3c3c !important;
+  font-weight: 500;
+}
+
+.file-table :deep(.n-data-table-td) {
+  background: transparent !important;
+  color: #d4d4d4 !important;
+  border-bottom: 1px solid #2d2d2d !important;
+}
+
+.file-table :deep(.n-data-table-tr:hover .n-data-table-td) {
+  background: #2a2d2e !important;
+}
+
+.file-table :deep(.n-data-table-empty) {
+  padding: 48px 0;
 }
 </style>

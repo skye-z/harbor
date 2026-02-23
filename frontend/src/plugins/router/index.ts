@@ -71,6 +71,11 @@ const routes: RouteRecordRaw[] = [
         path: 'system',
         name: 'System',
         component: () => import(/* webpackChunkName: "system" */ '@/views/System.vue')
+      },
+      {
+        path: 'logs',
+        name: 'PlatformLogs',
+        component: () => import(/* webpackChunkName: "platform-logs" */ '@/views/PlatformLogs.vue')
       }
     ]
   }

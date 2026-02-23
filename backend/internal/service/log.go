@@ -195,7 +195,7 @@ func (s *LogService) GetList(logType string, page int, pageSize int) ([]*data.Sy
 	if logType != "" {
 		query = s.engine.Where("type = ?", logType)
 	} else {
-		query = s.engine.Table(&data.SystemLog{})
+		query = s.engine.Where("")
 	}
 
 	// 统计总数
@@ -215,28 +215,21 @@ func (s *LogService) GetList(logType string, page int, pageSize int) ([]*data.Sy
 	return logs, total, nil
 }
 
-// 获取最近的系统日志
-func (s *LogService) GetRecentSystemLogs(limit int) ([]*data.SystemLog, error) {
-	var logs []*data.SystemLog
-	err := s.engine.
-		OrderBy("created_at DESC").
-		Limit(limit).
-		Find(&logs)
-	return logs, err
-}
-
 // GetRecent HTTP handler for recent logs
 func (s *LogService) GetRecent(c *gin.Context) {
 	limitStr := c.DefaultQuery("limit", "10")
+	logType := c.Query("type")
+
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil || limit <= 0 {
 		limit = 10
 	}
 
-	logs, err := s.GetRecentSystemLogs(limit)
+	logs, _, err := s.GetList(logType, 1, limit)
 	if err != nil {
 		response.Error(c, err.Error())
 		return
 	}
+
 	response.Success(c, logs)
 }

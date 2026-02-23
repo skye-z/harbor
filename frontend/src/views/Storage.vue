@@ -1,219 +1,11 @@
-<template>
-  <div class="storage">
-    <div class="page-header">
-      <div class="view-header">
-        <div class="title-group">
-          <h1>存储管理</h1>
-        </div>
-      </div>
-    </div>
-
-    <n-grid x-gap="20" :cols="24">
-      <n-gi :span="24">
-        <n-card class="config-card">
-          <n-row :gutter="16">
-            <n-col :span="6">
-              <n-statistic label="总容量" :value="formatSize(storage.total)" />
-            </n-col>
-            <n-col :span="6">
-              <n-statistic label="已使用" :value="formatSize(storage.used)" />
-            </n-col>
-            <n-col :span="6">
-              <n-statistic label="可用空间" :value="formatSize(storage.available)" />
-            </n-col>
-            <n-col :span="6">
-              <n-statistic label="使用率" :value="storage.usagePercent" suffix="%" />
-            </n-col>
-          </n-row>
-          <div style="margin-top: 16px">
-            <n-progress
-              type="line"
-              :percentage="storage.usagePercent"
-              :status="storage.usagePercent > 80 ? 'error' : storage.usagePercent > 60 ? 'warning' : 'success'"
-              :height="12"
-              :show-indicator="true"
-            />
-          </div>
-        </n-card>
-      </n-gi>
-
-      <n-gi :span="12">
-        <n-card title="数据卷" class="config-card">
-          <template #header-extra>
-            <n-space>
-              <n-button type="primary" size="small" @click="showVolumeModal = true">
-                <template #icon>
-                  <n-icon :component="AddOutline" />
-                </template>
-                新建
-              </n-button>
-              <n-button quaternary size="small" @click="refreshVolumes" :loading="loadingVolumes">
-                <template #icon>
-                  <n-icon :component="RefreshOutline" />
-                </template>
-              </n-button>
-            </n-space>
-          </template>
-          <n-scrollbar style="max-height: 500px">
-            <n-space vertical :size="12">
-              <n-card v-for="volume in volumes" :key="volume.id" size="small" hoverable>
-                <div class="volume-header">
-                  <div class="volume-title">
-                    <n-icon :component="ServerOutline" :size="18" color="#2080f0" />
-                    <span>{{ volume.name }}</span>
-                  </div>
-                  <n-space>
-                    <n-button text size="small" type="primary" @click="handleInspectVolume(volume.id)">
-                      <template #icon>
-                        <n-icon :component="SettingsOutline" :size="16" />
-                      </template>
-                    </n-button>
-                    <n-button text size="small" type="error" @click="handleDeleteVolume(volume.id)">
-                      <template #icon>
-                        <n-icon :component="TrashOutline" :size="16" />
-                      </template>
-                    </n-button>
-                  </n-space>
-                </div>
-                <n-divider style="margin: 8px 0" />
-                <div class="volume-info">
-                  <div class="info-item">
-                    <n-text depth="3" style="font-size: 12px">驱动</n-text>
-                    <n-tag size="small" :bordered="false" type="info">{{ volume.driver }}</n-tag>
-                  </div>
-                  <div class="info-item">
-                    <n-text depth="3" style="font-size: 12px">挂载点</n-text>
-                    <n-text code style="font-size: 12px">{{ volume.mountpoint }}</n-text>
-                  </div>
-                  <div class="info-item">
-                    <n-text depth="3" style="font-size: 12px">创建时间</n-text>
-                    <n-text>{{ volume.created_at }}</n-text>
-                  </div>
-                </div>
-              </n-card>
-              <n-empty v-if="volumes.length === 0" description="暂无数据卷" size="medium" />
-            </n-space>
-          </n-scrollbar>
-        </n-card>
-      </n-gi>
-
-      <n-gi :span="12">
-        <n-card title="网络" class="config-card">
-          <template #header-extra>
-            <n-space>
-              <n-button type="primary" size="small" @click="showNetworkModal = true">
-                <template #icon>
-                  <n-icon :component="AddOutline" />
-                </template>
-                新建
-              </n-button>
-              <n-button quaternary size="small" @click="refreshNetworks" :loading="loadingNetworks">
-                <template #icon>
-                  <n-icon :component="RefreshOutline" />
-                </template>
-              </n-button>
-            </n-space>
-          </template>
-          <n-scrollbar style="max-height: 500px">
-            <n-space vertical :size="12">
-              <n-card v-for="network in networks" :key="network.id" size="small" hoverable>
-                <div class="network-header">
-                  <div class="network-title">
-                    <n-icon :component="GlobeOutline" :size="18" color="#18a058" />
-                    <span>{{ network.name }}</span>
-                  </div>
-                  <n-space>
-                    <n-button text size="small" type="primary" @click="handleInspectNetwork(network.id)">
-                      <template #icon>
-                        <n-icon :component="SettingsOutline" :size="16" />
-                      </template>
-                    </n-button>
-                    <n-button text size="small" type="error" @click="handleDeleteNetwork(network.id)">
-                      <template #icon>
-                        <n-icon :component="TrashOutline" :size="16" />
-                      </template>
-                    </n-button>
-                  </n-space>
-                </div>
-                <n-divider style="margin: 8px 0" />
-                <div class="network-info">
-                  <div class="info-item">
-                    <n-text depth="3" style="font-size: 12px">驱动</n-text>
-                    <n-tag size="small" :bordered="false" :type="network.driver === 'bridge' ? 'info' : 'default'">
-                      {{ network.driver }}
-                    </n-tag>
-                  </div>
-                  <div class="info-item">
-                    <n-text depth="3" style="font-size: 12px">子网</n-text>
-                    <n-text code style="font-size: 12px">{{ network.subnet || '-' }}</n-text>
-                  </div>
-                  <div class="info-item">
-                    <n-text depth="3" style="font-size: 12px">网关</n-text>
-                    <n-text code style="font-size: 12px">{{ network.gateway || '-' }}</n-text>
-                  </div>
-                  <div class="info-item">
-                    <n-text depth="3" style="font-size: 12px">创建时间</n-text>
-                    <n-text>{{ network.created_at }}</n-text>
-                  </div>
-                </div>
-              </n-card>
-              <n-empty v-if="networks.length === 0" description="暂无网络" size="medium" />
-            </n-space>
-          </n-scrollbar>
-        </n-card>
-      </n-gi>
-    </n-grid>
-
-    <n-modal v-model:show="showVolumeModal" preset="card" title="新建数据卷" style="width: 500px">
-      <n-form :model="volumeForm" label-placement="left" label-width="100px">
-        <n-form-item label="卷名称">
-          <n-input v-model:value="volumeForm.name" placeholder="my-volume" />
-        </n-form-item>
-        <n-form-item label="驱动">
-          <n-select v-model:value="volumeForm.driver" :options="driverOptions" />
-        </n-form-item>
-      </n-form>
-      <template #footer>
-        <n-space justify="end">
-          <n-button @click="showVolumeModal = false">取消</n-button>
-          <n-button type="primary" @click="handleCreateVolume" :loading="loadingVolumes">创建</n-button>
-        </n-space>
-      </template>
-    </n-modal>
-
-    <n-modal v-model:show="showNetworkModal" preset="card" title="新建网络" style="width: 500px">
-      <n-form :model="networkForm" label-placement="left" label-width="100px">
-        <n-form-item label="网络名称">
-          <n-input v-model:value="networkForm.name" placeholder="my-network" />
-        </n-form-item>
-        <n-form-item label="驱动">
-          <n-select v-model:value="networkForm.driver" :options="networkDriverOptions" />
-        </n-form-item>
-        <n-form-item label="子网">
-          <n-input v-model:value="networkForm.subnet" placeholder="172.20.0.0/16" />
-        </n-form-item>
-        <n-form-item label="网关">
-          <n-input v-model:value="networkForm.gateway" placeholder="172.20.0.1" />
-        </n-form-item>
-      </n-form>
-      <template #footer>
-        <n-space justify="end">
-          <n-button @click="showNetworkModal = false">取消</n-button>
-          <n-button type="primary" @click="handleCreateNetwork" :loading="loadingNetworks">创建</n-button>
-        </n-space>
-      </template>
-    </n-modal>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useMessage, useDialog } from 'naive-ui'
+import { useMessage, useDialog, NButton, NSpace, NIcon } from 'naive-ui'
 import { volumeApi, networkApi, systemApi } from '../plugins/api'
 import {
   ServerOutline,
-  AddOutline,
-  TrashOutline,
+  Add,
+  Trash,
   SettingsOutline,
   RefreshOutline,
   GlobeOutline
@@ -432,60 +224,277 @@ onMounted(() => {
 })
 </script>
 
+<template>
+  <div class="storage-page">
+    <n-grid x-gap="16" y-gap="16" cols="1 s:2 m:3 l:4" responsive="screen" style="margin-top: 10px;">
+      <n-gi v-for="(stat, key) in [
+        { label: '总容量', value: formatSize(storage.total), color: '#2080f0' },
+        { label: '已使用', value: formatSize(storage.used), color: '#f0a020' },
+        { label: '可用空间', value: formatSize(storage.available), color: '#18a058' },
+        { label: '使用率', value: storage.usagePercent + '%', color: storage.usagePercent > 80 ? '#d03050' : '#18a058' }
+      ]" :key="key">
+        <n-card class="stat-card" :bordered="false">
+          <div class="stat-label">{{ stat.label }}</div>
+          <div class="stat-value" :style="{ color: stat.color }">{{ stat.value }}</div>
+        </n-card>
+      </n-gi>
+    </n-grid>
+
+    <div style="margin-top: 20px;">
+      <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600;">数据卷</h2>
+        <n-space>
+          <n-button size="small" @click="showVolumeModal = true">
+            <template #icon>
+              <n-icon :component="Add" />
+            </template>
+            新建
+          </n-button>
+          <n-button size="small" quaternary @click="refreshVolumes" :loading="loadingVolumes">
+            <template #icon>
+              <n-icon :component="RefreshOutline" />
+            </template>
+          </n-button>
+        </n-space>
+      </div>
+
+      <n-grid x-gap="16" y-gap="16" cols="1 s:2 m:3 l:4" responsive="screen">
+        <n-gi v-for="volume in volumes" :key="volume.id">
+          <n-card hoverable class="volume-card" :bordered="false">
+            <template #header>
+              <div class="card-header">
+                <div>
+                  <div class="card-title">
+                    <n-icon :component="ServerOutline" size="16" color="#2080f0" style="margin-right: 6px;" />
+                    {{ volume.name }}
+                  </div>
+                </div>
+                <n-tag size="small" :bordered="false" type="info">{{ volume.driver }}</n-tag>
+              </div>
+            </template>
+            <div class="volume-info">
+              <div class="info-item">
+                <span class="label">挂载点</span>
+                <span class="value">{{ volume.mountpoint }}</span>
+              </div>
+            </div>
+            <template #action>
+              <n-button class="del-btn" size="small" quaternary circle type="error" @click="handleDeleteVolume(volume.id)">
+                <template #icon>
+                  <n-icon><Trash /></n-icon>
+                </template>
+              </n-button>
+              <n-button size="small" tertiary @click="handleInspectVolume(volume.id)">
+                <template #icon>
+                  <n-icon :component="SettingsOutline" />
+                </template>
+                详情
+              </n-button>
+            </template>
+          </n-card>
+        </n-gi>
+        <n-empty v-if="volumes.length === 0" description="暂无数据卷" size="medium" :span="24" />
+      </n-grid>
+    </div>
+
+    <div style="margin-top: 30px;">
+      <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600;">网络</h2>
+        <n-space>
+          <n-button size="small" @click="showNetworkModal = true">
+            <template #icon>
+              <n-icon :component="Add" />
+            </template>
+            新建
+          </n-button>
+          <n-button size="small" quaternary @click="refreshNetworks" :loading="loadingNetworks">
+            <template #icon>
+              <n-icon :component="RefreshOutline" />
+            </template>
+          </n-button>
+        </n-space>
+      </div>
+
+      <n-grid x-gap="16" y-gap="16" cols="1 s:2 m:3 l:4" responsive="screen">
+        <n-gi v-for="network in networks" :key="network.id">
+          <n-card hoverable class="network-card" :bordered="false">
+            <template #header>
+              <div class="card-header">
+                <div>
+                  <div class="card-title">
+                    <n-icon :component="GlobeOutline" size="16" color="#18a058" style="margin-right: 6px;" />
+                    {{ network.name }}
+                  </div>
+                </div>
+                <n-tag size="small" :bordered="false" :type="network.driver === 'bridge' ? 'info' : 'default'">
+                  {{ network.driver }}
+                </n-tag>
+              </div>
+            </template>
+            <div class="network-info">
+              <div class="info-item">
+                <span class="label">子网</span>
+                <span class="value">{{ network.subnet || '-' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">网关</span>
+                <span class="value">{{ network.gateway || '-' }}</span>
+              </div>
+            </div>
+            <template #action>
+              <n-button class="del-btn" size="small" quaternary circle type="error" @click="handleDeleteNetwork(network.id)">
+                <template #icon>
+                  <n-icon><Trash /></n-icon>
+                </template>
+              </n-button>
+              <n-button size="small" tertiary @click="handleInspectNetwork(network.id)">
+                <template #icon>
+                  <n-icon :component="SettingsOutline" />
+                </template>
+                详情
+              </n-button>
+            </template>
+          </n-card>
+        </n-gi>
+        <n-empty v-if="networks.length === 0" description="暂无网络" size="medium" :span="24" />
+      </n-grid>
+    </div>
+
+    <n-modal v-model:show="showVolumeModal" preset="card" title="新建数据卷" style="width: 500px">
+      <n-form :model="volumeForm" label-placement="left" label-width="100px">
+        <n-form-item label="卷名称">
+          <n-input v-model:value="volumeForm.name" placeholder="my-volume" />
+        </n-form-item>
+        <n-form-item label="驱动">
+          <n-select v-model:value="volumeForm.driver" :options="driverOptions" />
+        </n-form-item>
+      </n-form>
+      <template #footer>
+        <n-space justify="end">
+          <n-button @click="showVolumeModal = false">取消</n-button>
+          <n-button type="primary" @click="handleCreateVolume" :loading="loadingVolumes">创建</n-button>
+        </n-space>
+      </template>
+    </n-modal>
+
+    <n-modal v-model:show="showNetworkModal" preset="card" title="新建网络" style="width: 500px">
+      <n-form :model="networkForm" label-placement="left" label-width="100px">
+        <n-form-item label="网络名称">
+          <n-input v-model:value="networkForm.name" placeholder="my-network" />
+        </n-form-item>
+        <n-form-item label="驱动">
+          <n-select v-model:value="networkForm.driver" :options="networkDriverOptions" />
+        </n-form-item>
+        <n-form-item label="子网">
+          <n-input v-model:value="networkForm.subnet" placeholder="172.20.0.0/16" />
+        </n-form-item>
+        <n-form-item label="网关">
+          <n-input v-model:value="networkForm.gateway" placeholder="172.20.0.1" />
+        </n-form-item>
+      </n-form>
+      <template #footer>
+        <n-space justify="end">
+          <n-button @click="showNetworkModal = false">取消</n-button>
+          <n-button type="primary" @click="handleCreateNetwork" :loading="loadingNetworks">创建</n-button>
+        </n-space>
+      </template>
+    </n-modal>
+  </div>
+</template>
+
 <style scoped>
-.storage {
+.storage-page {
   padding: 0 10px 10px 10px;
   max-width: 1400px;
   margin: 0 auto;
 }
 
-.page-header {
-  margin-bottom: 10px;
+.view-header {
+  margin-bottom: 0;
 }
 
-.view-header {
+.filter-bar-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  width: 100%;
 }
 
-.title-group h1 {
+.page-title {
   margin: 0;
   font-size: 24px;
   font-weight: 700;
 }
 
-.config-card {
-  margin-bottom: 20px;
+.stat-card {
+  transition: all 0.3s ease;
+  cursor: default;
 }
 
-.volume-header,
-.network-header {
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--n-text-color-3);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
 }
 
-.volume-title,
-.network-title {
+.card-title {
+  font-weight: 600;
+  font-size: 15px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  font-size: 14px;
+}
+
+.volume-card,
+.network-card {
+  transition: all 0.3s ease;
+}
+
+.volume-card:hover,
+.network-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .volume-info,
 .network-info {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .info-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 13px;
+}
+
+.info-item .label {
+  color: var(--n-text-color-3);
+}
+
+.info-item .value {
+  font-family: monospace;
+}
+
+.del-btn {
+  float: right;
 }
 </style>

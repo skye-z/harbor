@@ -58,9 +58,9 @@
               {{ container?.Id?.substring(0, 12) || '-' }}
             </n-descriptions-item>
             <n-descriptions-item label="镜像">
-              <a href="javascript:void(0)" @click="goToImage(container?.Config?.Image || container?.Image)" style="color: #2080f0;">
+              <div style="cursor: pointer;" @click="goToImage(container?.Image)">
                 {{ container?.Config?.Image || container?.Image || '-' }}
-              </a>
+              </div>
             </n-descriptions-item>
             <n-descriptions-item label="平台">
               {{
@@ -312,14 +312,11 @@ const networkInfos = computed(() => {
 })
 
 const loadContainerDetail = async () => {
-  containerLoading.value = true
   try {
-    const data = await containerStore.getContainerInfo(containerId.value)
+    const data = await containerStore.refreshContainerInfo(containerId.value)
     container.value = data
   } catch (error: any) {
     message.error('获取容器详情失败: ' + error.message)
-  } finally {
-    containerLoading.value = false
   }
 }
 
@@ -428,21 +425,42 @@ const openFile = () => {
 
 const goToImage = (imageName: string) => {
   if (!imageName) return
-  const imageId = imageName.split(':')[1] || imageName
-  router.push({ name: 'ImageDetail', params: { id: imageId } })
+  router.push({ name: 'ImageDetail', params: { id: imageName.substring(0,12) } })
 }
 
 const showRawData = ref(false)
 const rawData = computed(() => JSON.stringify(container.value, null, 2))
 
 onMounted(async () => {
-  await loadContainerDetail()
+  containerLoading.value = true
+  
+  const cached = containerStore.getContainerInfoCached(containerId.value)
+  if (cached) {
+    container.value = cached
+    containerLoading.value = false
+    loadStats()
+  }
+  
+  try {
+    const data = await containerStore.refreshContainerInfo(containerId.value)
+    container.value = data
+    if (!cached) {
+      loadStats()
+    }
+  } catch (error: any) {
+    if (!cached) {
+      message.error('获取容器详情失败: ' + error.message)
+      router.push({ name: 'Containers' })
+      return
+    }
+  } finally {
+    containerLoading.value = false
+  }
+  
   if (!container.value?.Id) {
     message.error('容器不存在')
     router.push({ name: 'Containers' })
-    return
   }
-  await loadStats()
 })
 </script>
 

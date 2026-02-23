@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useContainerStore } from '../plugins/stores/containers'
-import { useMessage, NCard, NSpace, NSelect, NButton, NIcon, NPageHeader, NSpin } from 'naive-ui'
+import { useMessage, NSelect, NButton, NIcon } from 'naive-ui'
 import { ArrowBack, TerminalOutline, PowerOutline } from '@vicons/ionicons5'
 import Terminal from '../components/Terminal.vue'
 
@@ -17,6 +17,7 @@ const container = computed(() => containerStore.getContainerById(containerId.val
 const selectedShell = ref('/bin/sh')
 const isConnected = ref(false)
 const terminalKey = ref(0)
+const terminalRef = ref<InstanceType<typeof Terminal>>()
 
 const shellOptions = [
   { label: '/bin/sh', value: '/bin/sh' },
@@ -38,6 +39,7 @@ const handleConnect = () => {
 
 const handleDisconnect = () => {
   isConnected.value = false
+  terminalKey.value++
 }
 
 onMounted(async () => {
@@ -53,139 +55,161 @@ onMounted(async () => {
 
 <template>
   <div class="terminal-page">
-    <div class="page-header">
-      <div class="title-group">
-        <div class="view-header">
-          <h1>{{ container?.names?.[0]?.replace(/^\//, '') || containerId }} - 终端</h1>
-          <div class="header-actions">
-            <n-button size="medium" @click="handleBack">
-              <template #icon>
-                <n-icon :component="ArrowBack" />
-              </template>
-              返回
-            </n-button>
-          </div>
-        </div>
-        <div class="subtitle-text">
-          容器ID: {{ containerId }}
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <n-button quaternary size="small" @click="handleBack">
+          <template #icon>
+            <n-icon :component="ArrowBack" />
+          </template>
+        </n-button>
+        <span class="container-name">{{ container?.names?.[0]?.replace(/^\//, '') || containerId }}</span>
+      </div>
+      <div class="toolbar-center">
+        <n-select
+          v-model:value="selectedShell"
+          :options="shellOptions"
+          size="small"
+          style="width: 120px"
+          :disabled="isConnected"
+        />
+        <n-button
+          v-if="!isConnected"
+          type="primary"
+          size="small"
+          @click="handleConnect"
+        >
+          <template #icon>
+            <n-icon :component="TerminalOutline" />
+          </template>
+          连接
+        </n-button>
+        <n-button
+          v-else
+          type="error"
+          size="small"
+          @click="handleDisconnect"
+        >
+          <template #icon>
+            <n-icon :component="PowerOutline" />
+          </template>
+          断开
+        </n-button>
+      </div>
+      <div class="toolbar-right">
+        <div class="status-indicator">
+          <span
+            class="status-dot"
+            :class="isConnected ? 'connected' : 'disconnected'"
+          ></span>
+          <span class="status-text">{{ isConnected ? '已连接' : '未连接' }}</span>
         </div>
       </div>
     </div>
 
-    <n-card class="mt-4 terminal-card" content-style="padding: 0; height: 100%; display: flex; flex-direction: column;">
-      <div class="terminal-controls p-4 border-b border-gray-700 bg-gray-900 flex items-center justify-between">
-        <n-space align="center">
-          <span class="text-gray-300">Shell:</span>
-          <n-select
-            v-model:value="selectedShell"
-            :options="shellOptions"
-            size="small"
-            style="width: 150px"
-            :disabled="isConnected"
-          />
-          <n-button
-            v-if="!isConnected"
-            type="primary"
-            size="small"
-            @click="handleConnect"
-          >
-            <template #icon>
-              <n-icon :component="TerminalOutline" />
-            </template>
-            连接
-          </n-button>
-          <n-button
-            v-else
-            type="error"
-            size="small"
-            @click="handleDisconnect"
-          >
-            <template #icon>
-              <n-icon :component="PowerOutline" />
-            </template>
-            断开
-          </n-button>
-        </n-space>
-
-        <div class="status-indicator flex items-center gap-2">
-          <div
-            class="w-2 h-2 rounded-full transition-colors duration-300"
-            :class="isConnected ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'"
-          ></div>
-          <span class="text-xs text-gray-400">
-            {{ isConnected ? '已连接' : '未连接' }}
-          </span>
-        </div>
+    <div class="terminal-area">
+      <div v-if="!isConnected" class="placeholder">
+        <n-icon size="48" :component="TerminalOutline" class="placeholder-icon" />
+        <span>选择 Shell 后点击连接</span>
       </div>
-
-      <div class="terminal-wrapper flex-1 bg-[#1e1e1e] relative">
-        <div v-if="!isConnected" class="absolute inset-0 flex items-center justify-center text-gray-500">
-          <n-space vertical align="center">
-            <n-icon size="48" :component="TerminalOutline" />
-            <span>请选择 Shell 并点击连接</span>
-          </n-space>
-        </div>
-
-        <Terminal
-          v-if="isConnected"
-          :key="terminalKey"
-          :container-id="containerId"
-          :shell="selectedShell"
-        />
-      </div>
-    </n-card>
+      <Terminal
+        v-else
+        :key="terminalKey"
+        :container-id="containerId"
+        :shell="selectedShell"
+        ref="terminalRef"
+      />
+    </div>
   </div>
 </template>
 
 <style scoped>
 .terminal-page {
-  height: calc(100vh - 100px);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
-  padding: 0 10px 10px 10px;
-  max-width: 1400px;
-  margin: 0 auto;
+  background: #1e1e1e;
+  z-index: 100;
 }
 
-.page-header {
-  margin-bottom: 10px;
-}
-
-.view-header {
+.toolbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #252526;
+  border-bottom: 1px solid #3c3c3c;
+  flex-shrink: 0;
 }
 
-.title-group h1 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.container-name {
+  color: #cccccc;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.toolbar-center {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.title-group .subtitle-text {
-  color: var(--n-text-color-3);
-  font-size: 14px;
-  margin-top: 4px;
+.toolbar-right {
+  width: 100px;
 }
 
-.terminal-card {
-  flex: 1;
+.status-indicator {
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  align-items: center;
+  gap: 6px;
 }
 
-.terminal-wrapper {
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot.connected {
+  background: #0dbc79;
+  box-shadow: 0 0 8px rgba(13, 188, 121, 0.6);
+}
+
+.status-dot.disconnected {
+  background: #f14c4c;
+}
+
+.status-text {
+  color: #808080;
+  font-size: 12px;
+}
+
+.terminal-area {
+  flex: 1;
   min-height: 0;
   overflow: hidden;
 }
 
-.mt-4 {
-  margin-top: 16px;
+.placeholder {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #808080;
+}
+
+.placeholder-icon {
+  opacity: 0.5;
 }
 </style>

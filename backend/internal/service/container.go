@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/skye-z/harbor/internal/util/config"
 	"github.com/skye-z/harbor/internal/util/docker"
 	"github.com/skye-z/harbor/internal/util/response"
 )
@@ -28,12 +29,17 @@ func NewContainerService(client *docker.Client) *ContainerService {
 			WriteBufferSize: 1024,
 			CheckOrigin: func(r *http.Request) bool {
 				origin := r.Header.Get("Origin")
-				allowedOrigins := []string{"http://localhost:12800", "http://127.0.0.1:12800"}
+				originsStr := config.GetString("cors.origins")
+				if originsStr == "" {
+					return true
+				}
+				allowedOrigins := strings.Split(originsStr, ",")
 				for _, allowed := range allowedOrigins {
-					if origin == allowed {
+					if origin == strings.TrimSpace(allowed) {
 						return true
 					}
 				}
+				println("WebSocket origin denied:", origin, "allowed:", originsStr)
 				return false
 			},
 		},
@@ -334,9 +340,21 @@ func (s *ContainerService) ConnectTerminal(c *gin.Context) {
 
 // 终端WebSocket连接
 func (s *ContainerService) TerminalWebSocket(c *gin.Context) {
+	println("TerminalWebSocket called")
 	execID := c.Query("exec_id")
 	if execID == "" {
 		response.BadRequest(c, "缺少执行实例ID")
+		return
+	}
+
+	token := c.Query("token")
+	if token == "" {
+		response.Unauthorized(c, "未授权访问")
+		return
+	}
+	_, err := ParseToken(token)
+	if err != nil {
+		response.Unauthorized(c, "无效的认证令牌")
 		return
 	}
 
@@ -351,6 +369,7 @@ func (s *ContainerService) TerminalWebSocket(c *gin.Context) {
 
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
+		println("WebSocket upgrade failed:", err.Error())
 		return
 	}
 	defer ws.Close()
