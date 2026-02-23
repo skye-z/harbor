@@ -1,17 +1,20 @@
 <template>
   <div class="logs-page">
     <div class="page-header">
-      <div class="header-left">
-        <n-button quaternary circle @click="router.back()">
-          <template #icon>
-            <n-icon :component="ArrowBackOutline" />
-          </template>
-        </n-button>
-        <div class="header-info">
-          <h1>容器日志</h1>
-          <n-tag :type="container?.state === 'running' ? 'success' : 'default'" size="small" round :bordered="false">
-            {{ container?.names?.[0]?.replace(/^\//, '') || containerId }}
-          </n-tag>
+      <div class="title-group">
+        <div class="view-header">
+          <h1>{{ container?.names?.[0]?.replace(/^\//, '') || containerId }} - 日志</h1>
+          <div class="header-actions">
+            <n-button size="medium" @click="router.back()">
+              <template #icon>
+                <n-icon :component="ArrowBackOutline" />
+              </template>
+              返回
+            </n-button>
+          </div>
+        </div>
+        <div class="subtitle-text">
+          容器ID: {{ containerId }}
         </div>
       </div>
       <div class="header-actions">
@@ -199,18 +202,37 @@ watch(tailLines, () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 0 10px 10px 10px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 10px;
 }
 
-.header-left {
+.view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title-group h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.title-group .subtitle-text {
+  color: var(--n-text-color-3);
+  font-size: 14px;
+  margin-top: 4px;
 }
 
 .header-info {

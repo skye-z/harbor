@@ -175,13 +175,13 @@ func (c *Client) ListContainers() ([]*Container, error) {
 	return containers, nil
 }
 
-func (c *Client) GetContainerInfo(ctx context.Context, id string) (*client.ContainerInspectResult, error) {
+func (c *Client) GetContainerInfo(ctx context.Context, id string) (*container.InspectResponse, error) {
 	inspect, err := c.cli.ContainerInspect(ctx, id, client.ContainerInspectOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to inspect container: %w", err)
 	}
 
-	return &inspect, nil
+	return &inspect.Container, nil
 }
 
 func (c *Client) GetContainerDetails(ctx context.Context, id string) (map[string]interface{}, error) {

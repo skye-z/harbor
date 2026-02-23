@@ -1,14 +1,30 @@
 <template>
   <div class="image-detail">
     <div class="page-header">
-      <div class="view-header">
         <div class="title-group">
-          <h1>{{ shortImageId }}</h1>
+          <div class="view-header">
+            <h1>{{ shortImageId }}</h1>
+            <div class="header-actions">
+              <n-button type="primary" @click="handleCreateContainer">
+                <template #icon>
+                  <n-icon :component="PlayCircleOutline" />
+                </template>
+                创建容器
+              </n-button>
+              <n-button type="error" ghost @click="handleDelete">
+                <template #icon>
+                  <n-icon :component="TrashOutline" />
+                </template>
+                删除镜像
+              </n-button>
+            </div>
+          </div>
           <div class="subtitle-text">
             <div style="margin-bottom: 10px;" v-if="image?.Config?.Labels?.['org.opencontainers.image.description']">
               {{ image.Config.Labels['org.opencontainers.image.description'] }}
             </div>
-            <n-tag v-for="tag in image?.RepoTags" :key="tag" style="margin-right: 10px;" type="info" closable @close="handleRemoveTag(tag)">
+            <n-tag v-for="tag in image?.RepoTags" :key="tag" style="margin-right: 10px;" type="info" closable
+              @close="handleRemoveTag(tag)">
               {{ tag }}
             </n-tag>
             <n-button size="small" type="primary" @click="showTagModal = true">
@@ -16,21 +32,6 @@
             </n-button>
           </div>
         </div>
-        <div class="header-actions">
-          <n-button type="primary" @click="handleCreateContainer">
-            <template #icon>
-              <n-icon :component="PlayCircleOutline" />
-            </template>
-            创建容器
-          </n-button>
-          <n-button type="error" ghost @click="handleDelete">
-            <template #icon>
-              <n-icon :component="TrashOutline" />
-            </template>
-            删除镜像
-          </n-button>
-        </div>
-      </div>
     </div>
 
     <n-spin :show="loading">
@@ -79,19 +80,22 @@
                 {{ image?.Config?.Labels?.['org.opencontainers.image.licenses'] || '-' }}
               </n-descriptions-item>
               <n-descriptions-item label="文档">
-                <n-button v-if="image?.Config?.Labels?.['org.opencontainers.image.documentation']" text type="primary" @click="openLink(image.Config.Labels['org.opencontainers.image.documentation'])">
+                <n-button v-if="image?.Config?.Labels?.['org.opencontainers.image.documentation']" text type="primary"
+                  @click="openLink(image.Config.Labels['org.opencontainers.image.documentation'])">
                   查看
                 </n-button>
                 <span v-else>-</span>
               </n-descriptions-item>
               <n-descriptions-item label="源码">
-                <n-button v-if="image?.Config?.Labels?.['org.opencontainers.image.source']" text type="primary" @click="openLink(image.Config.Labels['org.opencontainers.image.source'])">
+                <n-button v-if="image?.Config?.Labels?.['org.opencontainers.image.source']" text type="primary"
+                  @click="openLink(image.Config.Labels['org.opencontainers.image.source'])">
                   查看
                 </n-button>
                 <span v-else>-</span>
               </n-descriptions-item>
               <n-descriptions-item label="官网">
-                <n-button v-if="image?.Config?.Labels?.['org.opencontainers.image.url']" text type="primary" @click="openLink(image.Config.Labels['org.opencontainers.image.url'])">
+                <n-button v-if="image?.Config?.Labels?.['org.opencontainers.image.url']" text type="primary"
+                  @click="openLink(image.Config.Labels['org.opencontainers.image.url'])">
                   查看
                 </n-button>
                 <span v-else>-</span>
@@ -206,9 +210,9 @@ const usingContainers = computed(() => {
   return containerStore.containers.filter((c: any) => {
     const fullId = image.value?.id || ''
     const shortId = fullId.startsWith('sha256:') ? fullId.substring(7) : fullId
-    return c.image_id === imgId || c.image_id === fullId || 
-           c.image_id?.startsWith(shortId) ||
-           c.image?.includes(imgId) || c.image?.includes(fullId)
+    return c.image_id === imgId || c.image_id === fullId ||
+      c.image_id?.startsWith(shortId) ||
+      c.image?.includes(imgId) || c.image?.includes(fullId)
   })
 })
 
@@ -342,7 +346,7 @@ onMounted(async () => {
 
 <style scoped>
 .image-detail {
-  padding: 24px;
+  padding: 0 10px 10px 10px;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -352,18 +356,17 @@ onMounted(async () => {
 }
 
 .view-header {
-  display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-top: 12px;
+  display: flex;
 }
 
 .title-group h1 {
   margin: 0;
   font-size: 24px;
   font-weight: 700;
-  display: flex;
   align-items: center;
+  display: flex;
   gap: 12px;
 }
 

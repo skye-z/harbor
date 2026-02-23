@@ -2,8 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useImageStore } from '../plugins/stores/images'
-import { useContainerStore } from '../plugins/stores/containers'
-import { useMessage, useDialog, NTag, NButton, NSpace, NIcon } from 'naive-ui'
+import { useMessage, useDialog } from 'naive-ui'
 import {
   SearchOutline,
   CloudDownloadOutline,
@@ -15,7 +14,6 @@ import {
 
 const router = useRouter()
 const imageStore = useImageStore()
-const containerStore = useContainerStore()
 const message = useMessage()
 const dialog = useDialog()
 
@@ -128,7 +126,6 @@ const handleRefresh = async () => {
   loading.value = true
   try {
     await imageStore.fetchImages()
-    message.success('刷新成功')
   } catch (error: any) {
     message.error('刷新失败: ' + error.message)
   } finally {
@@ -189,10 +186,10 @@ const viewDetails = (id: string) => {
                     </n-tag>
                     <template v-if="image.repo_tags && image.repo_tags.length > 0">
                       <n-tag v-for="(tag, i) in (image.repo_tags || []).slice(0, 2)" type="info" :key="i" size="small"
-                        :bordered="false">
+                        :bordered="false" style="cursor: pointer">
                         {{ tag }}
                       </n-tag>
-                      <n-tag v-if="image.repo_tags && image.repo_tags.length > 2" type="info" size="small" :bordered="false">
+                      <n-tag v-if="image.repo_tags && image.repo_tags.length > 2" type="info" size="small" :bordered="false" style="cursor: pointer">
                         +{{ image.repo_tags.length - 2 }}
                       </n-tag>
                     </template>
@@ -220,7 +217,7 @@ const viewDetails = (id: string) => {
           </n-card>
         </n-gi>
       </n-grid>
-      <n-result v-else status="404" title="这里什么都没有" description="在找啥呢? 要不要先拉取一个镜像试试" style="margin-top: 20vh;">
+      <n-result v-else-if="!loading" status="404" title="这里什么都没有" description="在找啥呢? 要不要先拉取一个镜像试试" style="margin-top: 20vh;">
         <template #icon>
           <n-icon size="100">
             <Balloon />

@@ -49,7 +49,7 @@ class ApiClient {
       (error) => {
         if (error.response?.status === 401) {
           localStorage.removeItem('token')
-          window.location.href = '/app'
+          window.location.href = '/?t='+new Date().getTime()
         }
         const errorMsg = error.response?.data?.message || error.message || 'Unknown error'
         return Promise.reject(new Error(errorMsg))

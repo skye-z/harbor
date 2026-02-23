@@ -29,3 +29,6 @@ dist-ssr
 .pnp.loader.mjs
 yarn.lock
 vite.svg
+
+auto-imports.d.ts
+components.d.ts

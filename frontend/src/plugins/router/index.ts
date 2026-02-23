@@ -38,6 +38,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import(/* webpackChunkName: "container-logs" */ '@/views/ContainerLogs.vue')
       },
       {
+        path: 'containers/:id/file',
+        name: 'ContainerFile',
+        component: () => import(/* webpackChunkName: "container-file" */ '@/views/ContainerFile.vue')
+      },
+      {
         path: 'images',
         name: 'Images',
         component: () => import(/* webpackChunkName: "images" */ '@/views/Images.vue')
