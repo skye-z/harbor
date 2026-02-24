@@ -40,8 +40,8 @@
       </div>
     </div>
 
-    <n-grid x-gap="10" cols="24">
-      <n-gi span="8">
+    <n-grid item-responsive x-gap="10" cols="24">
+      <n-grid-item span="24 760:9 900:8">
         <n-card size="small" title="基本信息" style="margin-bottom: 10px;">
           <template #header-extra>
             <n-tag :type="getStateType(container?.State?.Status)" round size="small" :bordered="false">
@@ -138,8 +138,8 @@
             -
           </n-tag>
         </n-card>
-      </n-gi>
-      <n-gi span="16">
+      </n-grid-item>
+      <n-grid-item span="24 760:15 900:16">
         <n-card size="small" title="启动信息" style="margin-bottom: 10px;">
           <n-descriptions :column="2" label-placement="left">
             <n-descriptions-item label="创建时间" content-style="width: 140px">
@@ -200,7 +200,7 @@
             </div>
           </div>
         </n-card>
-      </n-gi>
+      </n-grid-item>
     </n-grid>
     <div style="margin-top: 20px; text-align: center;">
       <n-button @click="showRawData = true">显示原始数据</n-button>

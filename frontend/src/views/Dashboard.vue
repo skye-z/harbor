@@ -1,8 +1,8 @@
 <template>
   <div class="dashboard">
     <n-spin :show="loading">
-      <n-grid x-gap="10" y-gap="10" :cols="24">
-        <n-gi :span="6">
+      <n-grid x-gap="10" y-gap="10" item-responsive :cols="24">
+        <n-gi span="12 800:6">
           <n-el tag="div" class="card stat-card">
             <div class="stat-content">
               <div class="stat-label">容器</div>
@@ -16,7 +16,7 @@
             </div>
           </n-el>
         </n-gi>
-        <n-gi :span="6">
+        <n-gi span="12 800:6">
           <n-el tag="div" class="card stat-card" hoverable>
             <div class="stat-content">
               <div class="stat-label">镜像</div>
@@ -27,7 +27,7 @@
             </div>
           </n-el>
         </n-gi>
-        <n-gi :span="6">
+        <n-gi span="12 800:6">
           <n-el tag="div" class="card stat-card" hoverable>
             <div class="stat-content">
               <div class="stat-label">存储</div>
@@ -37,7 +37,7 @@
             </div>
           </n-el>
         </n-gi>
-        <n-gi :span="6">
+        <n-gi span="12 800:6">
           <n-el tag="div" class="card stat-card" hoverable>
             <div class="stat-content">
               <div class="stat-label">版本</div>
@@ -47,7 +47,7 @@
             </div>
           </n-el>
         </n-gi>
-        <n-gi :span="6">
+        <n-gi span="24 570:12 800:8 1100:6">
           <n-el tag="div" class="card logs-card">
             <n-scrollbar style="height: calc(100vh - 116px)">
               <n-timeline>
@@ -62,7 +62,7 @@
             </div>
           </n-el>
         </n-gi>
-        <n-gi :span="18">
+        <n-gi span="24 570:12 800:16 1100:18">
           <n-el tag="div" class="card topology-card">
             <ResourceTopology />
           </n-el>
