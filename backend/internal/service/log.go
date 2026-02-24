@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	stdlog "log"
 	"strconv"
 	"time"
 
@@ -18,18 +19,43 @@ type LogService struct {
 
 var logChannel chan *data.SystemLog
 var logBufferSize = 100
+var logEngine *xorm.Engine
 
 func init() {
 	logChannel = make(chan *data.SystemLog, logBufferSize)
+}
+
+func SetLogEngine(engine *xorm.Engine) {
+	logEngine = engine
 	go func() {
-		for log := range logChannel {
-			_, _ = data.Engine.Insert(log)
+		for logEntry := range logChannel {
+			retries := 0
+			maxRetries := 5
+
+			for retries < maxRetries {
+				_, err := logEngine.Insert(logEntry)
+				if err == nil {
+					stdlog.Printf("[Log] Inserted log: Type=%s, Action=%s, Target=%s", logEntry.Type, logEntry.Action, logEntry.Target)
+					break
+				}
+
+				retries++
+				if retries < maxRetries {
+					stdlog.Printf("[Log] Database busy, retry %d/%d: %v", retries, maxRetries, err)
+					time.Sleep(time.Duration(retries) * 100 * time.Millisecond)
+				} else {
+					stdlog.Printf("[Log] Failed to insert log after %d attempts: %v", maxRetries, err)
+				}
+			}
 		}
 	}()
 }
 
 // 创建日志服务实例
 func NewLogService(engine *xorm.Engine) *LogService {
+	if logEngine == nil {
+		SetLogEngine(engine)
+	}
 	return &LogService{engine: engine}
 }
 
@@ -185,6 +211,55 @@ func (s *LogService) Log(logType string, level string, action string, target str
 	return nil
 }
 
+func (s *LogService) LogLogin(username string, userID int, ipAddress string) error {
+	if logEngine == nil {
+		return fmt.Errorf("log engine not initialized")
+	}
+
+	message := fmt.Sprintf("用户登录: %s (ID: %d)", username, userID)
+	logEntry := &data.SystemLog{
+		Type:      LogTypeSystem,
+		Level:     LogLevelInfo,
+		Action:    "login",
+		Target:    "user",
+		TargetID:  fmt.Sprintf("%d", userID),
+		Message:   message,
+		Username:  username,
+		UserID:    userID,
+		IPAddress: ipAddress,
+		CreatedAt: time.Now(),
+	}
+	select {
+	case logChannel <- logEntry:
+		return nil
+	default:
+		return fmt.Errorf("log channel is full")
+	}
+}
+
+func (s *LogService) LogContainerEvent(eventType string, containerName string, containerID string, status string) error {
+	if logEngine == nil {
+		return fmt.Errorf("log engine not initialized")
+	}
+
+	message := fmt.Sprintf("容器事件: %s - %s (%s)", eventType, containerName, status)
+	logEntry := &data.SystemLog{
+		Type:      LogTypeContainer,
+		Level:     LogLevelInfo,
+		Action:    eventType,
+		Target:    containerName,
+		TargetID:  containerID,
+		Message:   message,
+		CreatedAt: time.Now(),
+	}
+	select {
+	case logChannel <- logEntry:
+		return nil
+	default:
+		return fmt.Errorf("log channel is full")
+	}
+}
+
 // 获取日志列表
 func (s *LogService) GetList(logType string, page int, pageSize int) ([]*data.SystemLog, int64, error) {
 	var logs []*data.SystemLog
@@ -195,7 +270,7 @@ func (s *LogService) GetList(logType string, page int, pageSize int) ([]*data.Sy
 	if logType != "" {
 		query = s.engine.Where("type = ?", logType)
 	} else {
-		query = s.engine.Where("")
+		query = s.engine.Table(&data.SystemLog{})
 	}
 
 	// 统计总数

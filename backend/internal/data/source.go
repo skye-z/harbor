@@ -17,7 +17,7 @@ var initialized bool
 
 // 初始化数据库连接
 func InitDB() (*xorm.Engine, error) {
-	engine, err := xorm.NewEngine("sqlite", "/opt/harbor/harbor.db")
+	engine, err := xorm.NewEngine("sqlite", "/opt/harbor/harbor.db?_journal_mode=WAL&_timeout=5000&_synchronous=NORMAL&_busy_timeout=5000")
 	if err != nil {
 		return nil, errors.New("创建数据库引擎失败: " + err.Error())
 	}

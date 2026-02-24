@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
+	"github.com/moby/moby/api/types/events"
 	"github.com/skye-z/harbor/internal/service"
 	"github.com/skye-z/harbor/internal/util/docker"
 	"github.com/skye-z/harbor/internal/util/response"
@@ -52,12 +53,12 @@ func NewRoute(page embed.FS) *Route {
 // 创建引擎实例
 func newRoute(page embed.FS) (*gin.Engine, error) {
 	gin.SetMode(gin.ReleaseMode)
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.Recovery())
 	log.Println("[Core] 加载页面")
 	pageFile, err := fs.Sub(page, "page/dist")
 	if err != nil {
 		log.Printf("[Core] 警告: 加载静态文件失败: %v", err)
-		router = gin.Default()
 		return router, nil
 	}
 	router.StaticFS("/app", http.FS(pageFile))
@@ -68,6 +69,42 @@ func newRoute(page embed.FS) (*gin.Engine, error) {
 func (r Route) Init(engine *xorm.Engine) {
 	r.Engine = engine
 	r.Router.Use(CORSMiddleware())
+
+	if r.DockerClient != nil {
+		ls := service.NewLogService(engine)
+		service.SetLogEngine(engine)
+		r.DockerClient.StartEventListener(func(event events.Message) {
+			if event.Type == "container" {
+				if event.Action == "start" || event.Action == "stop" || event.Action == "restart" || event.Action == "die" {
+					containerName := ""
+					if len(event.Actor.Attributes) > 0 {
+						if name, ok := event.Actor.Attributes["name"]; ok {
+							containerName = name
+						}
+					}
+					if containerName == "" {
+						containerName = event.Actor.ID
+					}
+					containerID := event.Actor.ID
+					if len(containerID) > 12 {
+						containerID = containerID[:12]
+					}
+					log.Printf("[Docker] docker container %s %s, name=%s", containerID, event.Action, containerName)
+					err := ls.LogContainerEvent(string(event.Action), containerName, containerID, "")
+					if err != nil {
+						log.Printf("[Core] Failed to log container event: %v", err)
+					} else {
+						log.Printf("[Core] Container event logged successfully")
+					}
+				}
+			} else if event.Type == "daemon" {
+				if event.Action == "shutdown" {
+					log.Println("[Docker] docker daemon shutdown")
+				}
+			}
+		})
+	}
+
 	r.addPublicRoute()
 	private := r.Router.Group("")
 	private.Use(AuthMiddleware())
@@ -84,6 +121,7 @@ func (r Route) addPublicRoute() {
 	})
 
 	as := service.NewAuthService(r.Engine)
+	ls := service.NewLogService(r.Engine)
 	r.Router.POST("/api/user/login", func(c *gin.Context) {
 		var req service.LoginRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -95,6 +133,8 @@ func (r Route) addPublicRoute() {
 			response.Unauthorized(c, err.Error())
 			return
 		}
+		ipAddress := c.ClientIP()
+		ls.LogLogin(resp.Username, resp.UserID, ipAddress)
 		response.Success(c, resp)
 	})
 }

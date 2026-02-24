@@ -55,7 +55,7 @@ PrivateTmp=true
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/run/docker.sock
+ReadWritePaths=/opt/harbor /var/run/docker.sock
 Restart=on-failure
 RestartSec=5
 

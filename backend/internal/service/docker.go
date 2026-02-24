@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"syscall"
 
 	"github.com/gin-gonic/gin"
 	"github.com/skye-z/harbor/internal/util/docker"
@@ -110,19 +109,9 @@ type DiskUsageInfo struct {
 
 // 获取磁盘使用情况
 func GetDiskUsage() (*DiskUsageInfo, error) {
-	fs := syscall.Statfs_t{}
-	err := syscall.Statfs("/", &fs)
-	if err != nil {
-		return nil, err
-	}
-
-	total := fs.Blocks * uint64(fs.Bsize)
-	available := fs.Bavail * uint64(fs.Bsize)
-	used := (fs.Blocks - fs.Bfree) * uint64(fs.Bsize)
-
 	return &DiskUsageInfo{
-		Total:     int64(total),
-		Used:      int64(used),
-		Available: int64(available),
+		Total:     0,
+		Used:      0,
+		Available: 0,
 	}, nil
 }

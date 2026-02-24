@@ -20,6 +20,9 @@ import (
 var page embed.FS
 
 func main() {
+	log.SetOutput(os.Stdout)
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	config.InitConfigWithPath("/opt/harbor")
 
 	engine, err := data.InitDB()

@@ -344,13 +344,15 @@ const handleStop = async () => {
     onPositiveClick: async () => {
       try {
         loading.value = true
-        await containerStore.operationContainer(containerId.value, 'stop')
+        containerStore.operationContainer(containerId.value, 'stop')
         message.success('容器已停止')
-        await loadContainerDetail()
+        loadContainerDetail()
       } catch (error: any) {
         message.error('停止容器失败: ' + error.message)
       } finally {
-        loading.value = false
+        setTimeout(() => {
+          loading.value = false
+        }, 500);
       }
     }
   })
@@ -378,13 +380,15 @@ const handleRestart = async () => {
     onPositiveClick: async () => {
       try {
         loading.value = true
-        await containerStore.operationContainer(containerId.value, 'restart')
+        containerStore.operationContainer(containerId.value, 'restart')
         message.success('容器已重启')
-        await loadContainerDetail()
+        loadContainerDetail()
       } catch (error: any) {
         message.error('重启容器失败: ' + error.message)
       } finally {
-        loading.value = false
+        setTimeout(() => {
+          loading.value = false
+        }, 500);
       }
     }
   })
@@ -399,7 +403,7 @@ const handleDelete = async () => {
     onPositiveClick: async () => {
       try {
         loading.value = true
-        await containerStore.operationContainer(containerId.value, 'remove')
+        containerStore.operationContainer(containerId.value, 'remove')
         message.success('容器已删除')
         router.push({ name: 'Containers' })
       } catch (error: any) {

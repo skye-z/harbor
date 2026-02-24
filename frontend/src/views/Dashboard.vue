@@ -49,20 +49,17 @@
         </n-gi>
         <n-gi :span="6">
           <n-el tag="div" class="card logs-card">
+            <n-scrollbar style="height: calc(100vh - 116px)">
               <n-timeline>
-                <n-timeline-item
-                  v-for="log in recentLogs"
-                  :key="log.id"
-                  :type="(log.type as any)"
-                  :title="log.action"
-                  :time="log.time"
-                />
+                <n-timeline-item v-for="log in recentLogs" :key="log.id" :type="(log.type as any)" :title="log.action"
+                  :time="log.time" />
               </n-timeline>
-              <div class="logs-more">
-                <n-button strong secondary block type="primary" @click="goToLogs">
-                  查看更多
-                </n-button>
-              </div>
+            </n-scrollbar>
+            <div class="logs-more">
+              <n-button strong secondary block type="primary" @click="goToLogs">
+                查看更多
+              </n-button>
+            </div>
           </n-el>
         </n-gi>
         <n-gi :span="18">
@@ -219,10 +216,12 @@ const loadSystemInfo = async () => {
 }
 
 .logs-card {
-  height: calc(100vh - 200px);
+  max-height: 530px !important;
+  height: calc(100vh - 140px);
+  flex-direction: column;
   position: relative;
   display: flex;
-  flex-direction: column;
+  padding: 0;
 }
 
 .logs-card :deep(.n-timeline) {
@@ -233,12 +232,7 @@ const loadSystemInfo = async () => {
 }
 
 .logs-more {
-  position: absolute;
   padding: 10px;
-  z-index: 1;
-  bottom: 0;
-  right: 0;
-  left: 0;
 }
 
 .logs-card,

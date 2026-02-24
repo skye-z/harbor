@@ -61,6 +61,14 @@ const handlePrune = (type: 'containers' | 'images' | 'volumes' | 'networks' | 'a
     all: '全部资源'
   }[type]
 
+  const pruneMethod = {
+    containers: systemApi.pruneContainers,
+    images: systemApi.pruneImages,
+    volumes: systemApi.pruneVolumes,
+    networks: systemApi.pruneNetworks,
+    all: systemApi.pruneAll
+  }[type]
+
   dialog.warning({
     title: '确认清理',
     content: `确定要清理未使用的${typeName}吗？此操作不可逆。`,
@@ -70,7 +78,7 @@ const handlePrune = (type: 'containers' | 'images' | 'volumes' | 'networks' | 'a
       try {
         pruneLoading.value = true
         pruneResult.value = {}
-        const result = await systemApi.prune(type)
+        const result = await pruneMethod()
         pruneResult.value[type] = result.space_reclaimed
         if (result.details) {
           pruneResult.value = { ...pruneResult.value, ...result.details }
@@ -240,7 +248,7 @@ onMounted(() => {
             </div>
           </n-card>
         </n-gi>
-        <n-gi :span="1 s:2 m:4">
+        <n-gi :span="24">
           <n-card class="prune-card danger" :bordered="false" hoverable>
             <div class="prune-content">
               <n-icon :component="TrashOutline" size="28" color="#d03050" style="margin-bottom: 8px;" />
