@@ -3,6 +3,17 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { darkTheme as naiveDarkTheme, type GlobalThemeOverrides } from 'naive-ui'
 import GlobalAPI from './components/GlobalAPI.vue'
 
+// 导入 highlight.js 核心和语言模块
+import hljs from 'highlight.js/lib/core'
+import json from 'highlight.js/lib/languages/json'
+import bash from 'highlight.js/lib/languages/bash'
+import plaintext from 'highlight.js/lib/languages/plaintext'
+
+// 注册语言
+hljs.registerLanguage('json', json)
+hljs.registerLanguage('bash', bash)
+hljs.registerLanguage('plaintext', plaintext)
+
 const getInitialTheme = () => {
   const savedTheme = localStorage.getItem('theme')
   if (savedTheme === 'dark' || savedTheme === 'light') {
@@ -54,7 +65,7 @@ watch(isDark, (val) => {
 </script>
 
 <template>
-  <n-config-provider :theme="theme" :theme-overrides="isDark ? darkThemeOverrides : lightThemeOverrides">
+  <n-config-provider :theme="theme" :theme-overrides="isDark ? darkThemeOverrides : lightThemeOverrides" :hljs="hljs">
     <n-loading-bar-provider>
       <n-message-provider>
         <n-dialog-provider>
