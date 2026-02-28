@@ -25,8 +25,8 @@ export const containerApi = {
   operation: async (id: string,action: string) => {
     return apiClient.get('/container/operation', { params: { id, action } })
   },
-  logs: async (id: string) => {
-    return apiClient.get('/container/logs', { params: { id, stdout: true, stderr: true, timestamps: true, tail: '100' } })
+  logs: async (id: string, tail?: string) => {
+    return apiClient.get('/container/logs', { params: { id, stdout: true, stderr: true, timestamps: true, tail: tail || '100' } })
   },
   stats: async (id: string) => {
     return apiClient.get('/container/stat', { params: { id } })

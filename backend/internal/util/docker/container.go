@@ -398,6 +398,28 @@ func (c *Client) CopyFromContainer(ctx context.Context, containerID, srcPath, ds
 	return nil
 }
 
+// CopyFromContainerStream 从容器复制文件并返回文件流（用于浏览器下载）
+func (c *Client) CopyFromContainerStream(ctx context.Context, containerID, srcPath string) (io.ReadCloser, string, error) {
+	if containsPathTraversal(srcPath) {
+		return nil, "", fmt.Errorf("invalid source path: potential path traversal")
+	}
+
+	result, err := c.cli.CopyFromContainer(ctx, containerID, client.CopyFromContainerOptions{
+		SourcePath: srcPath,
+	})
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to copy from container: %w", err)
+	}
+
+	filename := filepath.Base(srcPath)
+	if containsPathTraversal(filename) {
+		result.Content.Close()
+		return nil, "", fmt.Errorf("invalid filename: potential path traversal")
+	}
+
+	return result.Content, filename, nil
+}
+
 func containsPathTraversal(path string) bool {
 	cleaned := filepath.Clean(path)
 	return cleaned != path ||

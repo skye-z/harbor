@@ -76,8 +76,8 @@ export const useContainerStore = defineStore('containers', () => {
     await fetchContainers()
   }
 
-  const getContainerLogs = async (id: string) => {
-    return await containerApi.logs(id)
+  const getContainerLogs = async (id: string, tail?: string) => {
+    return await containerApi.logs(id, tail)
   }
 
   const getContainerStats = async (id: string) => {

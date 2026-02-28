@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/binary"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -269,41 +270,60 @@ func (s *ContainerService) CopyFromContainer(c *gin.Context) {
 		return
 	}
 
-	dstPath := c.DefaultQuery("dst_path", "./tmp")
-	err := s.client.CopyFromContainer(c.Request.Context(), id, srcPath, dstPath)
+	// 从容器获取文件流
+	reader, filename, err := s.client.CopyFromContainerStream(c.Request.Context(), id, srcPath)
 	if err != nil {
 		response.Error(c, err.Error())
 		return
 	}
-	response.SuccessWithMessage(c, "文件已复制到本地", nil)
+	defer reader.Close()
+
+	// 设置下载响应头
+	c.Header("Content-Type", "application/octet-stream")
+	c.Header("Content-Disposition", "attachment; filename=\""+filename+"\"")
+	c.Header("Content-Transfer-Encoding", "binary")
+
+	// 将文件流直接传输到浏览器
+	_, err = io.Copy(c.Writer, reader)
+	if err != nil {
+		return
+	}
 }
 
 // 复制文件到容器
 func (s *ContainerService) CopyToContainer(c *gin.Context) {
-	id := c.Query("id")
-	if id == "" {
+	var req struct {
+		ID      string `json:"id"`
+		SrcPath string `json:"src_path"`
+		DstPath string `json:"dst_path"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "无效的请求数据: "+err.Error())
+		return
+	}
+
+	if req.ID == "" {
 		response.BadRequest(c, "缺少容器ID")
 		return
 	}
 
-	srcPath := c.Query("src_path")
-	if srcPath == "" {
+	if req.SrcPath == "" {
 		response.BadRequest(c, "缺少源路径")
 		return
 	}
 
-	dstPath := c.Query("dst_path")
-	if dstPath == "" {
+	if req.DstPath == "" {
 		response.BadRequest(c, "缺少目标路径")
 		return
 	}
 
-	if strings.Contains(dstPath, "..") || strings.HasPrefix(dstPath, "/") {
+	if strings.Contains(req.DstPath, "..") || strings.HasPrefix(req.DstPath, "/") {
 		response.BadRequest(c, "非法的目标路径")
 		return
 	}
 
-	err := s.client.CopyToContainer(c.Request.Context(), id, srcPath, dstPath)
+	err := s.client.CopyToContainer(c.Request.Context(), req.ID, req.SrcPath, req.DstPath)
 	if err != nil {
 		response.Error(c, err.Error())
 		return
@@ -336,6 +356,29 @@ func (s *ContainerService) ConnectTerminal(c *gin.Context) {
 		"exec_id": execID,
 		"ws_url":  "/api/container/terminal/ws?exec_id=" + execID,
 	})
+}
+
+// decodeDockerStream 解码 Docker 多路复用流格式
+// Docker 流格式: [1字节流类型][3字节填充][4字节长度][N字节数据]
+// 流类型: 0=stdin, 1=stdout, 2=stderr
+func decodeDockerStream(reader io.Reader) ([]byte, error) {
+	header := make([]byte, 8)
+	_, err := io.ReadFull(reader, header)
+	if err != nil {
+		return nil, err
+	}
+
+	// 读取数据长度 (大端序)
+	length := binary.BigEndian.Uint32(header[4:8])
+
+	// 读取实际数据
+	data := make([]byte, length)
+	_, err = io.ReadFull(reader, data)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 // 终端WebSocket连接
@@ -376,13 +419,12 @@ func (s *ContainerService) TerminalWebSocket(c *gin.Context) {
 
 	go func() {
 		defer ws.Close()
-		buf := make([]byte, 1024)
 		for {
-			n, err := result.Reader.Read(buf)
+			data, err := decodeDockerStream(result.Reader)
 			if err != nil {
 				return
 			}
-			if err := ws.WriteMessage(websocket.TextMessage, buf[:n]); err != nil {
+			if err := ws.WriteMessage(websocket.TextMessage, data); err != nil {
 				return
 			}
 		}

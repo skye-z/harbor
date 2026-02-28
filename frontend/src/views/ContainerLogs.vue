@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useContainerStore } from '../plugins/stores/containers'
-import { NButton, NIcon, NSelect, NInput, NCheckbox } from 'naive-ui'
+import { NButton, NIcon, NSelect, NInput, NCheckbox, NScrollbar, NCode } from 'naive-ui'
 import { ArrowBack, SearchOutline, RefreshOutline, StopOutline, PlayOutline } from '@vicons/ionicons5'
 
 const route = useRoute()
@@ -16,9 +16,8 @@ const logs = ref<string[]>([])
 const loading = ref(false)
 const searchText = ref('')
 const tailLines = ref('100')
-const showTimestamp = ref(true)
 const follow = ref(false)
-const autoRefresh = ref(false)
+const autoRefresh = ref(true)
 const logsContainerRef = ref<HTMLElement>()
 
 let autoRefreshTimer: number | null = null
@@ -47,23 +46,33 @@ const filteredLogs = computed(() => {
   return logs.value.filter(line => line.toLowerCase().includes(keyword))
 })
 
+const displayLogs = computed(() => {
+  return filteredLogs.value.join('\n')
+})
+
 const toggleAutoRefresh = () => {
   autoRefresh.value = !autoRefresh.value
   if (autoRefresh.value) {
-    autoRefreshTimer = window.setInterval(() => {
-      loadLogs()
-    }, 3000)
-  } else if (autoRefreshTimer) {
-    clearInterval(autoRefreshTimer)
-    autoRefreshTimer = null
+    startAutoRefresh()
+  } else {
+    stopAutoRefresh()
   }
 }
 
-const getLineClass = (line: string) => {
-  if (line.toLowerCase().includes('error') || line.toLowerCase().includes('err')) return 'log-error'
-  if (line.toLowerCase().includes('warn')) return 'log-warn'
-  if (line.toLowerCase().includes('info')) return 'log-info'
-  return ''
+const startAutoRefresh = () => {
+  if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer)
+  }
+  autoRefreshTimer = window.setInterval(() => {
+    loadLogs()
+  }, 3000)
+}
+
+const stopAutoRefresh = () => {
+  if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer)
+    autoRefreshTimer = null
+  }
 }
 
 const loadLogs = async () => {
@@ -71,14 +80,10 @@ const loadLogs = async () => {
   
   loading.value = true
   try {
-    const result = await containerStore.getContainerLogs(containerId.value)
+    const tail = tailLines.value === 'all' ? undefined : tailLines.value
+    const result = await containerStore.getContainerLogs(containerId.value, tail)
     const logText = result?.logs || result || ''
     logs.value = logText.split('\n').filter(line => line.length > 0)
-    
-    if (follow.value || autoRefresh.value) {
-      await nextTick()
-      scrollToBottom()
-    }
   } catch (error: any) {
     console.error('加载日志失败:', error)
   } finally {
@@ -88,7 +93,9 @@ const loadLogs = async () => {
 
 const scrollToBottom = () => {
   if (logsContainerRef.value) {
-    logsContainerRef.value.scrollTop = logsContainerRef.value.scrollHeight
+    setTimeout(() => {
+      logsContainerRef.value!.scrollTop = logsContainerRef.value!.scrollHeight
+    }, 50)
   }
 }
 
@@ -105,17 +112,32 @@ onMounted(async () => {
     return
   }
   await loadLogs()
+  if (autoRefresh.value) {
+    startAutoRefresh()
+  }
 })
 
 onUnmounted(() => {
-  if (autoRefreshTimer) {
-    clearInterval(autoRefreshTimer)
-  }
+  stopAutoRefresh()
 })
 
 watch(tailLines, () => {
   loadLogs()
 })
+
+watch(follow, (newVal) => {
+  if (newVal) {
+    scrollToBottom()
+  }
+})
+
+watch(logs, () => {
+  if (follow.value || autoRefresh.value) {
+    nextTick(() => {
+      scrollToBottom()
+    })
+  }
+}, { flush: 'post' })
 </script>
 
 <template>
@@ -151,7 +173,6 @@ watch(tailLines, () => {
             <n-icon :component="SearchOutline" size="14" />
           </template>
         </n-input>
-        <n-checkbox v-model:checked="showTimestamp" size="small">时间</n-checkbox>
         <n-checkbox v-model:checked="follow" size="small" :disabled="autoRefresh">跟随</n-checkbox>
       </div>
       <div class="toolbar-right">
@@ -173,19 +194,17 @@ watch(tailLines, () => {
       </div>
     </div>
 
-    <div class="logs-area" ref="logsContainerRef">
+    <n-scrollbar class="logs-area" ref="logsContainerRef">
       <div v-if="loading && !logs.length" class="placeholder">
         <span>加载中...</span>
       </div>
       <div v-else-if="!logs.length" class="placeholder">
         <span>暂无日志</span>
       </div>
-      <pre v-else class="logs-content"><code
-        v-for="(line, index) in filteredLogs"
-        :key="index"
-        :class="getLineClass(line)"
-      >{{ line }}</code></pre>
-    </div>
+      <div v-else class="logs-code-wrapper">
+        <n-code :code="displayLogs" language="bash" show-line-numbers />
+      </div>
+    </n-scrollbar>
   </div>
 </template>
 
@@ -267,7 +286,6 @@ watch(tailLines, () => {
 .logs-area {
   flex: 1;
   min-height: 0;
-  overflow: auto;
   padding: 8px 12px;
 }
 
@@ -279,29 +297,22 @@ watch(tailLines, () => {
   color: #808080;
 }
 
-.logs-content {
-  margin: 0;
-  font-family: 'Fira Code', Consolas, 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-all;
+.logs-code-wrapper {
+  padding: 8px 0;
+}
+
+.logs-code-wrapper :deep(.n-code) {
+  background: transparent !important;
+}
+
+.logs-code-wrapper :deep(.n-code__line) {
   color: #d4d4d4;
 }
 
-.logs-content code {
-  display: block;
-}
-
-.log-error {
-  color: #f14c4c;
-}
-
-.log-warn {
-  color: #e5e510;
-}
-
-.log-info {
-  color: #3794ff;
+.logs-code-wrapper :deep(.n-code__line-number) {
+  color: #808080;
+  border-right: 1px solid #3c3c3c;
+  padding-right: 12px;
+  margin-right: 12px;
 }
 </style>

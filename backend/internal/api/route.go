@@ -186,7 +186,7 @@ func (r Route) addPrivateRoute(route gin.IRoutes) {
 	route.GET("/api/container/diff", cs.GetDiff)
 	route.GET("/api/container/files", cs.ListFiles)
 	route.GET("/api/container/copy/from", cs.CopyFromContainer)
-	route.GET("/api/container/copy/to", cs.CopyToContainer)
+	route.POST("/api/container/copy/to", cs.CopyToContainer)
 	route.GET("/api/container/terminal", cs.ConnectTerminal)
 	route.GET("/api/container/terminal/ws", cs.TerminalWebSocket)
 	route.GET("/api/container/terminal/resize", cs.ResizeTerminal)
