@@ -202,7 +202,7 @@ watch(logs, () => {
         <span>暂无日志</span>
       </div>
       <div v-else class="logs-code-wrapper">
-        <n-code :code="displayLogs" language="bash" show-line-numbers />
+        <n-code :code="displayLogs" language="bash" word-wrap trim show-line-numbers />
       </div>
     </n-scrollbar>
   </div>

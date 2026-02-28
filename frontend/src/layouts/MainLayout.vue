@@ -217,6 +217,7 @@ onMounted(() => {
   max-width: 1200px;
   padding-top: 50px;
   margin: 0 auto;
+  overflow: hidden;
 }
 
 .user-section {

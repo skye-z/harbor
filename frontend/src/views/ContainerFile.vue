@@ -328,8 +328,7 @@ onUnmounted(() => {
               <span class="file-name" :title="item.name">{{ item.name }}</span>
               <n-spin
                 v-if="item.is_dir && item.loading"
-                size="small"
-                class="folder-loading"
+                size="8px"
               />
               <n-button
                 v-else-if="!item.is_dir"
@@ -459,8 +458,7 @@ onUnmounted(() => {
 .columns-container {
   display: flex;
   height: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: hidden;
 }
 
 .column {
@@ -557,15 +555,6 @@ onUnmounted(() => {
 
 .file-item:hover .download-btn {
   opacity: 1;
-}
-
-.folder-loading {
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .file-size {

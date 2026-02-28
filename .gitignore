@@ -7,4 +7,5 @@ old/
 
 config.yaml
 harbor.db
+harbor.exe
 harbor
