@@ -13,7 +13,8 @@
               </template>
               停止
             </n-button>
-            <n-button size="medium" type="info" @click="handleRestart" :disabled="container?.State?.Status !== 'running'" :loading="loading">
+            <n-button size="medium" type="info" @click="handleRestart"
+              :disabled="container?.State?.Status !== 'running'" :loading="loading">
               <template #icon>
                 <n-icon :component="RefreshOutline" />
               </template>
@@ -26,7 +27,8 @@
               </template>
               启动
             </n-button>
-            <n-button size="medium" type="error" @click="handleDelete" :disabled="container?.State?.Status === 'running'" :loading="loading">
+            <n-button size="medium" type="error" @click="handleDelete"
+              :disabled="container?.State?.Status === 'running'" :loading="loading">
               <template #icon>
                 <n-icon :component="TrashOutline" />
               </template>
@@ -79,7 +81,7 @@
             </n-descriptions-item>
           </n-descriptions>
         </n-card>
-<div style="margin-bottom: 10px;">
+        <div style="margin-bottom: 10px;">
           <n-button-group style="width: 100%;">
             <n-button size="medium" type="primary" style="width: 33.3%;" @click="openTerminal"
               :disabled="container?.State?.Status !== 'running'">
@@ -95,7 +97,8 @@
               </template>
               日志
             </n-button>
-            <n-button size="medium" type="primary" style="width: 33.3%;" @click="openFile" :disabled="container?.State?.Status !== 'running'">
+            <n-button size="medium" type="primary" style="width: 33.3%;" @click="openFile"
+              :disabled="container?.State?.Status !== 'running'">
               <template #icon>
                 <n-icon :component="FolderOutline" />
               </template>
@@ -166,24 +169,29 @@
         </n-card>
         <n-card v-if="mounts.length" size="small" title="存储映射" style="margin-bottom: 10px;">
           <template #header-extra>
-            <div style="color: #999;">{{ '由 '+container?.Driver+' 驱动' || '-' }}</div>
+            <div style="color: #999;">{{ '由 ' + container?.Driver + ' 驱动' || '-' }}</div>
           </template>
           <n-space vertical :size="8">
             <div v-for="(mount, index) in mounts" :key="index">
               <n-button-group style="width: 100%;">
-                <n-button size="small" style="width: calc(50% - 50px);" tertiary @click="copyText(mount.Source)">{{ mount.Source }}</n-button>
-                <n-button size="small" style="width: 100px;" strong secondary :type="mount.RW ? 'success' : 'default'" @click="copyText(`docker cp ${mount.Source} ${container?.Name?.replace(/^\//, '')}:${mount.Destination}`)">
+                <n-button size="small" style="width: calc(50% - 50px);" tertiary @click="copyText(mount.Source)">{{
+                  mount.Source }}</n-button>
+                <n-button size="small" style="width: 100px;" strong secondary :type="mount.RW ? 'success' : 'default'"
+                  @click="copyText(`docker cp ${mount.Source} ${container?.Name?.replace(/^\//, '')}:${mount.Destination}`)">
                   {{ mount.RW ? '读写' : '只读' }}
                 </n-button>
-                <n-button size="small" style="width: calc(50% - 50px);" tertiary @click="copyText(mount.Destination)">{{ mount.Destination }}</n-button>
+                <n-button size="small" style="width: calc(50% - 50px);" tertiary @click="copyText(mount.Destination)">{{
+                  mount.Destination }}</n-button>
               </n-button-group>
             </div>
           </n-space>
         </n-card>
         <n-card size="small" title="环境变量" style="margin-bottom: 10px;">
           <n-space v-if="container?.Config?.Env?.length" wrap>
-            <n-tag v-for="(env, index) in container?.Config?.Env" :key="index" size="small" style="cursor: pointer" @click="copyText(env.split('=').slice(1).join('='))">
-              {{ env.split('=')[0] }}={{ env.split('=').slice(1).join('=').substring(0, 20) }}{{ env.split('=').slice(1).join('=').length > 20 ? '...' : '' }}
+            <n-tag v-for="(env, index) in container?.Config?.Env" :key="index" size="small" style="cursor: pointer"
+              @click="copyText(env.split('=').slice(1).join('='))">
+              {{ env.split('=')[0] }}={{ env.split('=').slice(1).join('=').substring(0, 20) }}{{
+                env.split('=').slice(1).join('=').length > 20 ? '...' : '' }}
             </n-tag>
           </n-space>
           <n-empty v-else description="暂无环境变量" />
@@ -196,7 +204,8 @@
             </div>
             <div>
               <n-tag size="small">分配地址: {{ item.ipAddress }}</n-tag>
-              <n-tag v-if="item.macAddress !== '-'" size="small" style="margin-left: 8px;">MAC: {{ item.macAddress }}</n-tag>
+              <n-tag v-if="item.macAddress !== '-'" size="small" style="margin-left: 8px;">MAC: {{ item.macAddress
+                }}</n-tag>
             </div>
           </div>
         </n-card>
@@ -206,7 +215,9 @@
       <n-button @click="showRawData = true">显示原始数据</n-button>
     </div>
     <n-modal v-model:show="showRawData" preset="card" title="容器原始数据" style="width: 800px; max-width: 90%;">
-      <pre style="max-height: 500px; overflow: auto; font-size: 12px;">{{ rawData }}</pre>
+      <n-scrollbar style="max-height: 600px">
+        <n-code :code="rawData" language="json" word-wrap show-line-numbers />
+      </n-scrollbar>
     </n-modal>
   </div>
 </template>
@@ -215,7 +226,7 @@
 import { ref, computed, onMounted, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useContainerStore } from '../plugins/stores/containers'
-import { useMessage, useDialog, NIcon, NModal } from 'naive-ui'
+import { useMessage, useDialog, NIcon, NModal, NCode } from 'naive-ui'
 import {
   PlayOutline,
   StopOutline,
@@ -429,7 +440,7 @@ const openFile = () => {
 
 const goToImage = (imageName: string) => {
   if (!imageName) return
-  router.push({ name: 'ImageDetail', params: { id: imageName.substring(0,12) } })
+  router.push({ name: 'ImageDetail', params: { id: imageName.substring(0, 12) } })
 }
 
 const showRawData = ref(false)
@@ -437,14 +448,14 @@ const rawData = computed(() => JSON.stringify(container.value, null, 2))
 
 onMounted(async () => {
   containerLoading.value = true
-  
+
   const cached = containerStore.getContainerInfoCached(containerId.value)
   if (cached) {
     container.value = cached
     containerLoading.value = false
     loadStats()
   }
-  
+
   try {
     const data = await containerStore.refreshContainerInfo(containerId.value)
     container.value = data
@@ -460,7 +471,7 @@ onMounted(async () => {
   } finally {
     containerLoading.value = false
   }
-  
+
   if (!container.value?.Id) {
     message.error('容器不存在')
     router.push({ name: 'Containers' })
