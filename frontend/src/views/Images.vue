@@ -184,6 +184,9 @@ const viewDetails = (id: string) => {
                     <n-tag size="small" :bordered="false" @click.stop="copyId(image.id)" style="cursor: pointer">
                       {{ formatId(image.id) }}
                     </n-tag>
+                    <n-tag v-if="image.containers > 0" size="small" type="warning" :bordered="false">
+                      {{ image.containers }}个容器
+                    </n-tag>
                     <template v-if="image.repo_tags && image.repo_tags.length > 0">
                       <n-tag v-for="(tag, i) in (image.repo_tags || []).slice(0, 2)" type="info" :key="i" size="small"
                         :bordered="false" style="cursor: pointer">

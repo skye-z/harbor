@@ -217,7 +217,7 @@ watch(logs, () => {
   bottom: 0;
   display: flex;
   flex-direction: column;
-  background: #1e1e1e;
+  background: var(--logs-bg, #1e1e1e);
   z-index: 100;
 }
 
@@ -226,8 +226,8 @@ watch(logs, () => {
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  background: #252526;
-  border-bottom: 1px solid #3c3c3c;
+  background: var(--toolbar-bg, #252526);
+  border-bottom: 1px solid var(--border-color, #3c3c3c);
   flex-shrink: 0;
   gap: 16px;
 }
@@ -239,9 +239,15 @@ watch(logs, () => {
 }
 
 .container-name {
-  color: #cccccc;
+  color: var(--text-primary, #cccccc);
   font-weight: 500;
   font-size: 14px;
+}
+
+@media (max-width: 600px) {
+  .container-name {
+    display: none;
+  }
 }
 
 .status-indicator {
@@ -249,6 +255,12 @@ watch(logs, () => {
   align-items: center;
   gap: 4px;
   margin-left: 8px;
+}
+
+@media (max-width: 600px) {
+  .status-indicator {
+    display: none;
+  }
 }
 
 .status-dot {
@@ -267,7 +279,7 @@ watch(logs, () => {
 }
 
 .status-text {
-  color: #808080;
+  color: var(--text-secondary, #808080);
   font-size: 12px;
 }
 
@@ -294,7 +306,7 @@ watch(logs, () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #808080;
+  color: var(--text-secondary, #808080);
 }
 
 .logs-code-wrapper {
@@ -306,13 +318,35 @@ watch(logs, () => {
 }
 
 .logs-code-wrapper :deep(.n-code__line) {
-  color: #d4d4d4;
+  color: var(--code-text, #d4d4d4);
 }
 
 .logs-code-wrapper :deep(.n-code__line-number) {
-  color: #808080;
-  border-right: 1px solid #3c3c3c;
+  color: var(--line-number, #808080);
+  border-right: 1px solid var(--border-color, #3c3c3c);
   padding-right: 12px;
   margin-right: 12px;
+}
+
+/* 明亮模式 */
+[data-theme='light'] .logs-page {
+  --logs-bg: #ffffff;
+  --toolbar-bg: #f5f5f5;
+  --border-color: #e0e0e0;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --code-text: #333333;
+  --line-number: #999999;
+}
+
+/* 暗色模式 */
+[data-theme='dark'] .logs-page {
+  --logs-bg: #1e1e1e;
+  --toolbar-bg: #252526;
+  --border-color: #3c3c3c;
+  --text-primary: #cccccc;
+  --text-secondary: #808080;
+  --code-text: #d4d4d4;
+  --line-number: #808080;
 }
 </style>

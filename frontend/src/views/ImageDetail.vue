@@ -1,42 +1,42 @@
 <template>
   <div class="image-detail">
     <div class="page-header">
-        <div class="title-group">
-          <div class="view-header">
-            <h1>{{ shortImageId }}</h1>
-            <div class="header-actions">
-              <n-button type="primary" @click="handleCreateContainer">
-                <template #icon>
-                  <n-icon :component="PlayCircleOutline" />
-                </template>
-                创建容器
-              </n-button>
-              <n-button type="error" ghost @click="handleDelete">
-                <template #icon>
-                  <n-icon :component="TrashOutline" />
-                </template>
-                删除镜像
-              </n-button>
-            </div>
-          </div>
-          <div class="subtitle-text">
-            <div style="margin-bottom: 10px;" v-if="image?.Config?.Labels?.['org.opencontainers.image.description']">
-              {{ image.Config.Labels['org.opencontainers.image.description'] }}
-            </div>
-            <n-tag v-for="tag in image?.RepoTags" :key="tag" style="margin-right: 10px;" type="info" closable
-              @close="handleRemoveTag(tag)">
-              {{ tag }}
-            </n-tag>
-            <n-button size="small" type="primary" @click="showTagModal = true">
-              添加标签
+      <div class="title-group">
+        <div class="view-header">
+          <h1>{{ shortImageId }}</h1>
+          <div class="header-actions">
+            <n-button type="primary" @click="handleCreateContainer">
+              <template #icon>
+                <n-icon :component="PlayCircleOutline" />
+              </template>
+              创建容器
+            </n-button>
+            <n-button type="error" ghost @click="handleDelete">
+              <template #icon>
+                <n-icon :component="TrashOutline" />
+              </template>
+              删除镜像
             </n-button>
           </div>
         </div>
+        <div class="subtitle-text">
+          <div style="margin-bottom: 10px;" v-if="image?.Config?.Labels?.['org.opencontainers.image.description']">
+            {{ image.Config.Labels['org.opencontainers.image.description'] }}
+          </div>
+          <n-tag v-for="tag in image?.RepoTags" :key="tag" style="margin-right: 10px;" type="info" closable
+            @close="handleRemoveTag(tag)">
+            {{ tag }}
+          </n-tag>
+          <n-button size="small" type="primary" @click="showTagModal = true">
+            添加标签
+          </n-button>
+        </div>
+      </div>
     </div>
 
     <n-spin :show="loading">
-      <n-grid x-gap="10" cols="24">
-        <n-gi span="8">
+      <n-grid item-responsive x-gap="10" cols="24">
+        <n-gi span="24 760:9 900:8">
           <n-card size="small" title="基本信息" style="margin-bottom: 10px;">
             <n-descriptions :column="1" label-placement="left">
               <n-descriptions-item label="名称">
@@ -72,7 +72,7 @@
             <n-empty v-else description="暂无暴露端口" />
           </n-card>
         </n-gi>
-        <n-gi span="16">
+        <n-gi span="24 760:15 900:16">
 
           <n-card size="small" title="更多信息" style="margin-bottom: 10px;">
             <n-descriptions :column="2" label-placement="left">
@@ -121,8 +121,9 @@
             </template>
             <n-empty v-if="usingContainers.length === 0" description="暂无容器使用此镜像" />
             <n-list v-else size="small">
-              <n-list-item v-for="c in usingContainers" :key="c.id">
-                <n-thing :title="getContainerName(c)" @click="viewContainer(c.id)">
+              <n-list-item v-for="c in usingContainers" :key="c.id" style="cursor: pointer"
+                @click="viewContainer(c.id)">
+                <n-thing :title="getContainerName(c)">
                   <template #avatar>
                     <n-tag :type="getStateType(c.state)" size="small" round>
                       {{ formatState(c.state) }}

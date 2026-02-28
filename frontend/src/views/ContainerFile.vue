@@ -359,7 +359,7 @@ onUnmounted(() => {
   bottom: 0;
   display: flex;
   flex-direction: column;
-  background: #1e1e1e;
+  background: var(--file-bg, #1e1e1e);
   z-index: 100;
 }
 
@@ -368,8 +368,8 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  background: #252526;
-  border-bottom: 1px solid #3c3c3c;
+  background: var(--toolbar-bg, #252526);
+  border-bottom: 1px solid var(--border-color, #3c3c3c);
   flex-shrink: 0;
   gap: 16px;
 }
@@ -382,7 +382,7 @@ onUnmounted(() => {
 }
 
 .container-name {
-  color: #cccccc;
+  color: var(--text-primary, #cccccc);
   font-weight: 500;
   font-size: 14px;
 }
@@ -401,7 +401,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  color: #808080;
+  color: var(--text-secondary, #808080);
   overflow: hidden;
   flex: 1;
   justify-content: center;
@@ -419,12 +419,12 @@ onUnmounted(() => {
 }
 
 .breadcrumb-item:hover {
-  background: #3c3c3c;
-  color: #cccccc;
+  background: var(--hover-bg, #3c3c3c);
+  color: var(--text-primary, #cccccc);
 }
 
 .breadcrumb-item.active {
-  color: #cccccc;
+  color: var(--text-primary, #cccccc);
   font-weight: 500;
 }
 
@@ -448,7 +448,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  color: #808080;
+  color: var(--text-secondary, #808080);
 }
 
 .placeholder-icon {
@@ -463,7 +463,7 @@ onUnmounted(() => {
 
 .column {
   flex-shrink: 0;
-  border-right: 1px solid #3c3c3c;
+  border-right: 1px solid var(--border-color, #3c3c3c);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -500,8 +500,9 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #808080;
+  color: var(--text-secondary, #808080);
   font-size: 13px;
+  padding: calc(50vh - 50px) 0;
 }
 
 .file-item {
@@ -511,19 +512,19 @@ onUnmounted(() => {
   padding: 6px 12px;
   cursor: pointer;
   transition: background 0.15s;
-  border-bottom: 1px solid #2d2d2d;
+  border-bottom: 1px solid var(--item-border, #2d2d2d);
 }
 
 .file-item:hover {
-  background: #2a2d2e;
+  background: var(--item-hover, #2a2d2e);
 }
 
 .file-item.selected {
-  background: #094771;
+  background: var(--item-selected, #094771);
 }
 
 .file-item.selected:hover {
-  background: #0d5a8f;
+  background: var(--item-selected-hover, #0d5a8f);
 }
 
 .file-icon {
@@ -537,11 +538,11 @@ onUnmounted(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 13px;
-  color: #d4d4d4;
+  color: var(--file-text, #d4d4d4);
 }
 
 .file-item.is-directory .file-name {
-  color: #dcb67a;
+  color: var(--file-directory);
 }
 
 .download-btn {
@@ -559,9 +560,41 @@ onUnmounted(() => {
 
 .file-size {
   font-size: 11px;
-  color: #808080;
+  color: var(--text-secondary, #808080);
   flex-shrink: 0;
   min-width: 60px;
   text-align: right;
+}
+
+/* 明亮模式 */
+[data-theme='light'] .file-page {
+  --file-bg: #ffffff;
+  --toolbar-bg: #f5f5f5;
+  --border-color: #e0e0e0;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --hover-bg: #e8e8e8;
+  --item-border: #e8e8e8;
+  --item-hover: #f0f0f0;
+  --item-selected: #e3f2fd;
+  --item-selected-hover: #bbdefb;
+  --file-text: #333333;
+  --file-directory: #6c6c6cff;
+}
+
+/* 暗色模式 */
+[data-theme='dark'] .file-page {
+  --file-bg: #1e1e1e;
+  --toolbar-bg: #252526;
+  --border-color: #3c3c3c;
+  --text-primary: #cccccc;
+  --text-secondary: #808080;
+  --hover-bg: #3c3c3c;
+  --item-border: #2d2d2d;
+  --item-hover: #2a2d2e;
+  --item-selected: #094771;
+  --item-selected-hover: #0d5a8f;
+  --file-text: #d4d4d4;
+  --file-directory: #dcb67a;
 }
 </style>

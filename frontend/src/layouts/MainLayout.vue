@@ -184,6 +184,12 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+@media (max-width: 520px) {
+  .logo {
+    display: none;
+  }
+}
+
 .menu-section {
   flex: 1;
   display: flex;
@@ -222,6 +228,12 @@ onMounted(() => {
 
 .user-section {
   flex-shrink: 0;
+}
+
+@media (max-width: 520px) {
+  .user-section {
+    display: none;
+  }
 }
 
 /* 页面切换过渡动画 */

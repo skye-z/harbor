@@ -304,7 +304,8 @@ const displayPorts = computed(() => {
       hasBinding
     })
   }
-  return result
+  // 按端口号排序，确保显示顺序稳定
+  return result.sort((a, b) => a.port - b.port)
 })
 
 const mounts = computed(() => {

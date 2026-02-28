@@ -14,6 +14,7 @@ declare module 'vue' {
     GlobalAPI: typeof import('./components/GlobalAPI.vue')['default']
     LogViewer: typeof import('./components/LogViewer.vue')['default']
     NAlert: typeof import('naive-ui')['NAlert']
+    NAvatar: typeof import('naive-ui')['NAvatar']
     NButton: typeof import('naive-ui')['NButton']
     NButtonGroup: typeof import('naive-ui')['NButtonGroup']
     NCard: typeof import('naive-ui')['NCard']

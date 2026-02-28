@@ -194,6 +194,13 @@ func (r Route) addPrivateRoute(route gin.IRoutes) {
 	route.GET("/api/container/commit", cs.CommitContainer)
 	route.POST("/api/container/create", cs.CreateContainer)
 	route.POST("/api/container/rename", cs.RenameContainer)
+
+	us := service.NewUserService(r.Engine)
+	route.GET("/api/user/list", us.GetList)
+	route.POST("/api/user/create", us.Create)
+	route.POST("/api/user/update", us.Update)
+	route.GET("/api/user/delete", us.Delete)
+	route.GET("/api/user/current", us.GetCurrentUser)
 }
 
 // 获取服务端口
