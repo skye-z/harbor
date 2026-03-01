@@ -8,7 +8,8 @@ import {
   Trash,
   SettingsOutline,
   RefreshOutline,
-  GlobeOutline
+  GlobeOutline,
+  Balloon
 } from '@vicons/ionicons5'
 import type { Volume, Network } from '../types'
 
@@ -258,7 +259,7 @@ onMounted(() => {
         </n-space>
       </div>
 
-      <n-grid x-gap="16" y-gap="16" cols="1 s:2 m:3 l:4" responsive="screen">
+      <n-grid x-gap="16" y-gap="16" cols="1 s:2 m:3 l:4" responsive="screen" v-if="volumes.length > 0">
         <n-gi v-for="volume in volumes" :key="volume.id">
           <n-card hoverable class="volume-card" :bordered="false">
             <template #header>
@@ -287,8 +288,9 @@ onMounted(() => {
             </template>
           </n-card>
         </n-gi>
-        <n-empty v-if="volumes.length === 0" description="暂无数据卷" size="medium" :span="24" />
       </n-grid>
+      <n-result v-else status="404" title="这里什么都没有" style="margin-top: 15px;">
+      </n-result>
     </div>
 
     <div style="margin-top: 30px;">
@@ -309,7 +311,7 @@ onMounted(() => {
         </n-space>
       </div>
 
-      <n-grid x-gap="16" y-gap="16" cols="1 s:2 m:3 l:4" responsive="screen">
+      <n-grid x-gap="16" y-gap="16" cols="1 s:2 m:3 l:4" responsive="screen" v-if="networks.length > 0">
         <n-gi v-for="network in networks" :key="network.id">
           <n-card hoverable class="network-card" :bordered="false">
             <template #header>
@@ -346,8 +348,9 @@ onMounted(() => {
             </template>
           </n-card>
         </n-gi>
-        <n-empty v-if="networks.length === 0" description="暂无网络" size="medium" :span="24" />
       </n-grid>
+      <n-result v-else status="404" title="这里什么都没有" style="margin-top: 15px;">
+      </n-result>
     </div>
 
     <n-modal v-model:show="showVolumeModal" preset="card" title="新建数据卷" style="width: 500px">

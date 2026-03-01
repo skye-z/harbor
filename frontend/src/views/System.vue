@@ -189,36 +189,15 @@ onMounted(() => {
   <div class="system-page">
     <!-- 顶部4张统计卡片 -->
     <n-grid x-gap="16" y-gap="16" cols="2 s:2 m:4" responsive="screen" style="margin-top: 10px;">
-      <n-gi>
+      <n-gi v-for="(stat, key) in [
+        { label: 'CPU', value: (hostInfo?.cpus || 0) + ' 核', color: '#2080f0' },
+        { label: '内存', value: formatSize(hostInfo?.memory || 0), color: '#18a058' },
+        { label: '架构', value: hostInfo?.architecture || 'Unknown', color: '#f0a020' },
+        { label: 'Docker版本', value: systemInfo?.server_version || 'Unknown', color: '#2496ed' }
+      ]" :key="key">
         <n-card class="stat-card" :bordered="false">
-          <div class="stat-info">
-            <div class="stat-label">CPU</div>
-            <div class="stat-value">{{ hostInfo?.cpus || 0 }} 核</div>
-          </div>
-        </n-card>
-      </n-gi>
-      <n-gi>
-        <n-card class="stat-card" :bordered="false">
-          <div class="stat-info">
-            <div class="stat-label">内存</div>
-            <div class="stat-value">{{ formatSize(hostInfo?.memory || 0) }}</div>
-          </div>
-        </n-card>
-      </n-gi>
-      <n-gi>
-        <n-card class="stat-card" :bordered="false">
-          <div class="stat-info">
-            <div class="stat-label">架构</div>
-            <div class="stat-value">{{ hostInfo?.architecture || 'Unknown' }}</div>
-          </div>
-        </n-card>
-      </n-gi>
-      <n-gi>
-        <n-card class="stat-card" :bordered="false">
-          <div class="stat-info">
-            <div class="stat-label">Docker版本</div>
-            <div class="stat-value">{{ systemInfo?.server_version || 'Unknown' }}</div>
-          </div>
+          <div class="stat-label">{{ stat.label }}</div>
+          <div class="stat-value" :style="{ color: stat.color }">{{ stat.value }}</div>
         </n-card>
       </n-gi>
     </n-grid>
@@ -355,19 +334,16 @@ onMounted(() => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.stat-info {
-  padding: 8px 0;
-}
-
 .stat-label {
   font-size: 14px;
   color: var(--n-text-color-3);
+  margin-bottom: 8px;
 }
 
 .stat-value {
-  font-size: 20px;
+  font-size: 28px;
   font-weight: 600;
-  color: var(--n-text-color-1);
+  line-height: 1.2;
 }
 
 .prune-btn {
