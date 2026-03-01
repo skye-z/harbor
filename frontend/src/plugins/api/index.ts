@@ -9,6 +9,9 @@ import type {
 export const authApi = {
   login: async (data: { username: string; password: string }) => {
     return apiClient.post('/user/login', data)
+  },
+  changePassword: async (data: { old_password: string; new_password: string }) => {
+    return apiClient.post('/user/change-password', data)
   }
 }
 

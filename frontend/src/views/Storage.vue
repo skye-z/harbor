@@ -262,34 +262,28 @@ onMounted(() => {
         <n-gi v-for="volume in volumes" :key="volume.id">
           <n-card hoverable class="volume-card" :bordered="false">
             <template #header>
-              <div class="card-header">
-                <div>
+              <div>
+                <div class="card-header">
                   <div class="card-title">
-                    <n-icon :component="ServerOutline" size="16" color="#2080f0" style="margin-right: 6px;" />
                     {{ volume.name }}
                   </div>
+                  <n-tag size="small" :bordered="false" type="info">{{ volume.driver }}</n-tag>
                 </div>
-                <n-tag size="small" :bordered="false" type="info">{{ volume.driver }}</n-tag>
+                <div style="font-size: 12px;color: #999;">{{ volume.mountpoint }}</div>
               </div>
             </template>
-            <div class="volume-info">
-              <div class="info-item">
-                <span class="label">挂载点</span>
-                <span class="value">{{ volume.mountpoint }}</span>
-              </div>
-            </div>
             <template #action>
-              <n-button class="del-btn" size="small" quaternary circle type="error" @click="handleDeleteVolume(volume.id)">
-                <template #icon>
-                  <n-icon><Trash /></n-icon>
-                </template>
-              </n-button>
-              <n-button size="small" tertiary @click="handleInspectVolume(volume.id)">
-                <template #icon>
-                  <n-icon :component="SettingsOutline" />
-                </template>
-                详情
-              </n-button>
+              <div style="display: flex;align-items: center;justify-content: space-between;">
+                <n-time v-if="volume.created_at" :time="new Date(volume.created_at).getTime()" type="relative"
+                  style="font-size: 12px;color: #999;" />
+                <n-button size="small" quaternary circle type="error" @click="handleDeleteVolume(volume.id)">
+                  <template #icon>
+                    <n-icon>
+                      <Trash />
+                    </n-icon>
+                  </template>
+                </n-button>
+              </div>
             </template>
           </n-card>
         </n-gi>
@@ -322,7 +316,6 @@ onMounted(() => {
               <div class="card-header">
                 <div>
                   <div class="card-title">
-                    <n-icon :component="GlobeOutline" size="16" color="#18a058" style="margin-right: 6px;" />
                     {{ network.name }}
                   </div>
                 </div>
@@ -342,16 +335,13 @@ onMounted(() => {
               </div>
             </div>
             <template #action>
-              <n-button class="del-btn" size="small" quaternary circle type="error" @click="handleDeleteNetwork(network.id)">
+              <n-button class="del-btn" size="small" quaternary circle type="error"
+                @click="handleDeleteNetwork(network.id)">
                 <template #icon>
-                  <n-icon><Trash /></n-icon>
+                  <n-icon>
+                    <Trash />
+                  </n-icon>
                 </template>
-              </n-button>
-              <n-button size="small" tertiary @click="handleInspectNetwork(network.id)">
-                <template #icon>
-                  <n-icon :component="SettingsOutline" />
-                </template>
-                详情
               </n-button>
             </template>
           </n-card>

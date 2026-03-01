@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { darkTheme as naiveDarkTheme, type GlobalThemeOverrides } from 'naive-ui'
+import { darkTheme as naiveDarkTheme, type GlobalThemeOverrides, zhCN, dateZhCN } from 'naive-ui'
 import GlobalAPI from './components/GlobalAPI.vue'
 
 // 导入 highlight.js 核心和语言模块
@@ -65,7 +65,7 @@ watch(isDark, (val) => {
 </script>
 
 <template>
-  <n-config-provider :theme="theme" :theme-overrides="isDark ? darkThemeOverrides : lightThemeOverrides" :hljs="hljs">
+  <n-config-provider :theme="theme" :theme-overrides="isDark ? darkThemeOverrides : lightThemeOverrides" :hljs="hljs" :locale="zhCN" :date-locale="dateZhCN">
     <n-loading-bar-provider>
       <n-message-provider>
         <n-dialog-provider>

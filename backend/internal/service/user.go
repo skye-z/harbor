@@ -214,6 +214,69 @@ func (s *UserService) GetCurrentUser(c *gin.Context) {
 	response.Success(c, user)
 }
 
+// 修改密码请求结构
+type ChangePasswordRequest struct {
+	OldPassword string `json:"old_password" binding:"required"`
+	NewPassword string `json:"new_password" binding:"required"`
+}
+
+// 修改密码
+func (s *UserService) ChangePassword(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		response.Unauthorized(c, "未登录")
+		return
+	}
+
+	var req ChangePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "请求参数错误: "+err.Error())
+		return
+	}
+
+	// 验证新密码长度
+	if len(req.NewPassword) < 6 {
+		response.BadRequest(c, "新密码长度不能少于6位")
+		return
+	}
+
+	// 获取用户信息
+	var user data.User
+	has, err := s.engine.ID(userID).Get(&user)
+	if err != nil {
+		response.Error(c, err.Error())
+		return
+	}
+	if !has {
+		response.BadRequest(c, "用户不存在")
+		return
+	}
+
+	// 验证旧密码
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.OldPassword))
+	if err != nil {
+		response.BadRequest(c, "旧密码错误")
+		return
+	}
+
+	// 加密新密码
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		response.Error(c, "密码加密失败")
+		return
+	}
+
+	// 更新密码
+	user.Password = string(hashedPassword)
+	_, err = s.engine.ID(userID).Update(&user)
+	if err != nil {
+		response.Error(c, err.Error())
+		return
+	}
+
+	response.SuccessWithMessage(c, "密码修改成功", nil)
+}
+
 // 错误定义
 var (
 	ErrUserNotFound     = errors.New("用户不存在")

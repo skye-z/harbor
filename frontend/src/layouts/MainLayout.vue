@@ -35,14 +35,36 @@
          </router-view>
        </main>
       </n-scrollbar>
+
+      <!-- 修改密码弹窗 -->
+      <n-modal v-model:show="showChangePasswordModal" preset="card" title="修改密码" style="width: 400px;">
+        <n-form :model="passwordForm" label-placement="left" label-width="100px" style="margin-top: 15px;">
+          <n-form-item label="旧密码" required>
+            <n-input v-model:value="passwordForm.oldPassword" type="password" placeholder="请输入旧密码" />
+          </n-form-item>
+          <n-form-item label="新密码" required>
+            <n-input v-model:value="passwordForm.newPassword" type="password" placeholder="请输入新密码" />
+          </n-form-item>
+          <n-form-item label="确认新密码" required>
+            <n-input v-model:value="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码" />
+          </n-form-item>
+        </n-form>
+        <template #footer>
+          <n-space justify="end">
+            <n-button @click="showChangePasswordModal = false">取消</n-button>
+            <n-button type="primary" @click="handleChangePassword" :loading="changePasswordLoading">确认</n-button>
+          </n-space>
+        </template>
+      </n-modal>
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed, h, onMounted, onUnmounted } from 'vue'
+import { computed, h, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { NIcon, useLoadingBar } from 'naive-ui'
+import { NIcon, useLoadingBar, useMessage } from 'naive-ui'
 import { useUserStore } from '../plugins/stores/user'
+import { authApi } from '../plugins/api'
 import {
   PersonCircleOutline,
   SpeedometerOutline,
@@ -52,13 +74,61 @@ import {
   MoonOutline,
   LogOutOutline,
   SettingsOutline,
-  GitNetworkOutline
+  GitNetworkOutline,
+  KeyOutline
 } from '@vicons/ionicons5'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 const loadingBar = useLoadingBar()
+const message = useMessage()
+
+// 修改密码相关
+const showChangePasswordModal = ref(false)
+const changePasswordLoading = ref(false)
+const passwordForm = ref({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+const handleChangePassword = async () => {
+  if (!passwordForm.value.oldPassword) {
+    message.error('请输入旧密码')
+    return
+  }
+  if (!passwordForm.value.newPassword) {
+    message.error('请输入新密码')
+    return
+  }
+  if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
+    message.error('两次输入的新密码不一致')
+    return
+  }
+  if (passwordForm.value.newPassword.length < 6) {
+    message.error('新密码长度不能少于6位')
+    return
+  }
+
+  try {
+    changePasswordLoading.value = true
+    await authApi.changePassword({
+      old_password: passwordForm.value.oldPassword,
+      new_password: passwordForm.value.newPassword
+    })
+    message.success('密码修改成功，请重新登录')
+    showChangePasswordModal.value = false
+    passwordForm.value = { oldPassword: '', newPassword: '', confirmPassword: '' }
+    // 修改成功后退出登录
+    userStore.logout()
+    router.push({ name: 'Login' })
+  } catch (error: any) {
+    message.error(error.message || '密码修改失败')
+  } finally {
+    changePasswordLoading.value = false
+  }
+}
 
 // 根据当前路由路径的第一段动态计算 activeKey
 const activeKey = computed(() => {
@@ -97,6 +167,15 @@ const menuOptions = [
 
 const userOptions = computed(() => [
   {
+    label: '修改密码',
+    key: 'change-password',
+    icon() {
+      return h(NIcon, null, {
+        default: () => h(KeyOutline)
+      })
+    },
+  },
+  {
     label: '切换主题',
     key: 'toggle-theme',
     icon() {
@@ -128,7 +207,9 @@ const handleMenuSelect = (key: string) => {
 }
 
 const handleUserSelect = (key: string) => {
-  if (key === 'toggle-theme') {
+  if (key === 'change-password') {
+    showChangePasswordModal.value = true
+  } else if (key === 'toggle-theme') {
     toggleTheme()
   } else if (key === 'logout') {
     userStore.logout()

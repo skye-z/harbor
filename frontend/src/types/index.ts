@@ -65,7 +65,7 @@ export interface Volume {
   name: string
   driver: string
   mountpoint: string
-  created: string
+  created_at: string
 }
 
 export interface DockerInfo {

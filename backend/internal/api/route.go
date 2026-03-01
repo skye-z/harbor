@@ -201,6 +201,7 @@ func (r Route) addPrivateRoute(route gin.IRoutes) {
 	route.POST("/api/user/update", us.Update)
 	route.GET("/api/user/delete", us.Delete)
 	route.GET("/api/user/current", us.GetCurrentUser)
+	route.POST("/api/user/change-password", us.ChangePassword)
 }
 
 // 获取服务端口
