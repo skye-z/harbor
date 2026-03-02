@@ -1,11 +1,12 @@
 <template>
   <div class="resource-topology">
-    <v-chart :option="topologyOption" style="height: calc(100vh - 200px); max-height: 500px;" />
+    <v-chart ref="chartRef" :option="topologyOption" style="height: calc(100vh - 200px); max-height: 500px;" @click="handleNodeClick" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import VChart from 'vue-echarts'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -16,11 +17,13 @@ import {
   LegendComponent,
   GridComponent
 } from 'echarts/components'
-import type { EChartsOption, TooltipComponentOption } from 'echarts'
+import type { EChartsOption } from 'echarts'
 import { useContainerStore } from '../plugins/stores/containers'
 import { useImageStore } from '../plugins/stores/images'
 import { useVolumeStore } from '../plugins/stores/volumes'
 import { useNetworkStore } from '../plugins/stores/networks'
+
+const router = useRouter()
 
 use([
   CanvasRenderer,
@@ -38,6 +41,31 @@ const networkStore = useNetworkStore()
 
 const nodes = ref<any[]>([])
 const links = ref<any[]>([])
+const chartRef = ref<any>(null)
+
+// 处理节点点击事件
+const handleNodeClick = (params: any) => {
+  if (params.dataType === 'node') {
+    const node = params.data
+    const nodeId = node.id
+    
+    if (nodeId.startsWith('container-')) {
+      const containerId = nodeId.replace('container-', '')
+      router.push({ name: 'ContainerDetail', params: { id: containerId } })
+    } else if (nodeId.startsWith('image-')) {
+      const imageId = nodeId.replace('image-', '')
+      router.push({ name: 'ImageDetail', params: { id: imageId } })
+    } else if (nodeId.startsWith('volume-')) {
+      const volumeId = nodeId.replace('volume-', '')
+      // 暂时跳转到存储页面，等详情页完成后再修改
+      router.push({ name: 'Storage' })
+    } else if (nodeId.startsWith('network-')) {
+      const networkId = nodeId.replace('network-', '')
+      // 暂时跳转到存储页面，等详情页完成后再修改
+      router.push({ name: 'Storage' })
+    }
+  }
+}
 
 const topologyOption = computed<EChartsOption>(() => ({
   tooltip: {
@@ -120,7 +148,11 @@ const topologyOption = computed<EChartsOption>(() => ({
       label: {
         show: true,
         position: 'right',
-        formatter: '{b}'
+        formatter: '{b}',
+        textBorderColor: '#fff',
+        textBorderWidth: 1,
+        textShadowColor: '#fff',
+        textShadowBlur: 2
       },
       labelLayout: {
         hideOverlap: true
