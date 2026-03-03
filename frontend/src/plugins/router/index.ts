@@ -68,6 +68,16 @@ const routes: RouteRecordRaw[] = [
         component: () => import(/* webpackChunkName: "storage" */ '@/views/Storage.vue')
       },
       {
+        path: 'volumes/:id',
+        name: 'VolumeDetail',
+        component: () => import(/* webpackChunkName: "volume-detail" */ '@/views/VolumeDetail.vue')
+      },
+      {
+        path: 'networks/:id',
+        name: 'NetworkDetail',
+        component: () => import(/* webpackChunkName: "network-detail" */ '@/views/NetworkDetail.vue')
+      },
+      {
         path: 'system',
         name: 'System',
         component: () => import(/* webpackChunkName: "system" */ '@/views/System.vue')

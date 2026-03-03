@@ -261,7 +261,7 @@ onMounted(() => {
 
       <n-grid x-gap="16" y-gap="16" cols="1 s:2 m:3 l:4" responsive="screen" v-if="volumes.length > 0">
         <n-gi v-for="volume in volumes" :key="volume.id">
-          <n-card hoverable class="volume-card" :bordered="false">
+          <n-card hoverable class="volume-card" :bordered="false" style="cursor: pointer" @click="router.push({ name: 'VolumeDetail', params: { id: volume.id } })">
             <template #header>
               <div>
                 <div class="card-header">
@@ -277,7 +277,7 @@ onMounted(() => {
               <div style="display: flex;align-items: center;justify-content: space-between;">
                 <n-time v-if="volume.created_at" :time="new Date(volume.created_at).getTime()" type="relative"
                   style="font-size: 12px;color: #999;" />
-                <n-button size="small" quaternary circle type="error" @click="handleDeleteVolume(volume.id)">
+                <n-button size="small" quaternary circle type="error" @click.stop="handleDeleteVolume(volume.id)">
                   <template #icon>
                     <n-icon>
                       <Trash />

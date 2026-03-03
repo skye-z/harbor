@@ -51,6 +51,9 @@ export const containerApi = {
   },
   terminal: async (id: string) => {
     return apiClient.get('/container/terminal', { params: { id } })
+  },
+  unmountVolume: async (containerId: string, volumeName: string) => {
+    return apiClient.post('/container/unmount', { container_id: containerId, volume_name: volumeName })
   }
 }
 
@@ -93,6 +96,12 @@ export const volumeApi = {
   },
   delete: async (id: string) => {
     return apiClient.get('/volume/remove', { params: { id } })
+  },
+  export: async (id: string) => {
+    return apiClient.get('/volume/export', { params: { id }, responseType: 'blob' })
+  },
+  listFiles: async (id: string, path: string) => {
+    return apiClient.get('/volume/files', { params: { id, path } })
   }
 }
 
