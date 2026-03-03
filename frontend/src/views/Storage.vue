@@ -313,7 +313,7 @@ onMounted(() => {
 
       <n-grid x-gap="16" y-gap="16" cols="1 s:2 m:3 l:4" responsive="screen" v-if="networks.length > 0">
         <n-gi v-for="network in networks" :key="network.id">
-          <n-card hoverable class="network-card" :bordered="false">
+          <n-card hoverable class="network-card" :bordered="false" style="cursor: pointer" @click="router.push({ name: 'NetworkDetail', params: { id: network.id } })">
             <template #header>
               <div class="card-header">
                 <div>
@@ -338,7 +338,7 @@ onMounted(() => {
             </div>
             <template #action>
               <n-button class="del-btn" size="small" quaternary circle type="error"
-                @click="handleDeleteNetwork(network.id)">
+                @click.stop="handleDeleteNetwork(network.id)">
                 <template #icon>
                   <n-icon>
                     <Trash />

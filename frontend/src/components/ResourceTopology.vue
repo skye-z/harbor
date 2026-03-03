@@ -57,12 +57,10 @@ const handleNodeClick = (params: any) => {
       router.push({ name: 'ImageDetail', params: { id: imageId } })
     } else if (nodeId.startsWith('volume-')) {
       const volumeId = nodeId.replace('volume-', '')
-      // 暂时跳转到存储页面，等详情页完成后再修改
-      router.push({ name: 'Storage' })
+      router.push({ name: 'VolumeDetail', params: { id: volumeId } })
     } else if (nodeId.startsWith('network-')) {
       const networkId = nodeId.replace('network-', '')
-      // 暂时跳转到存储页面，等详情页完成后再修改
-      router.push({ name: 'Storage' })
+      router.push({ name: 'NetworkDetail', params: { id: networkId } })
     }
   }
 }

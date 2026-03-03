@@ -120,6 +120,12 @@ export const networkApi = {
   },
   disconnect: async (id: string, container: string) => {
     return apiClient.get('/network/disconnect', { params: { id, container } })
+  },
+  connectContainer: async (networkId: string, containerId: string) => {
+    return apiClient.post('/network/connect', { network_id: networkId, container_id: containerId })
+  },
+  disconnectContainer: async (networkId: string, containerId: string) => {
+    return apiClient.post('/network/disconnect', { network_id: networkId, container_id: containerId })
   }
 }
 
