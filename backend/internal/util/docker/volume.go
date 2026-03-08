@@ -9,6 +9,7 @@ import (
 )
 
 type Volume struct {
+	ID         string            `json:"id"`
 	Name       string            `json:"name"`
 	Driver     string            `json:"driver"`
 	Mountpoint string            `json:"mountpoint"`
@@ -51,6 +52,7 @@ func (c *Client) ListVolumes() ([]*Volume, error) {
 		createdAt, _ := time.Parse(time.RFC3339, vol.CreatedAt)
 
 		volumes = append(volumes, &Volume{
+			ID:         vol.Name, // Docker卷使用名称作为ID
 			Name:       vol.Name,
 			Driver:     vol.Driver,
 			Mountpoint: vol.Mountpoint,

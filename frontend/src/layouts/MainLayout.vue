@@ -155,7 +155,7 @@ const menuOptions = [
   },
   {
     label: '连接',
-    key: 'storage',
+    key: 'connect',
     icon: GitNetworkOutline
   },
   {

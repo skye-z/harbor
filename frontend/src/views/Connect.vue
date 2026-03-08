@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useMessage, useDialog, NButton, NSpace, NIcon } from 'naive-ui'
 import { volumeApi, networkApi, systemApi } from '../plugins/api'
 import {
@@ -13,6 +14,7 @@ import {
 } from '@vicons/ionicons5'
 import type { Volume, Network } from '../types'
 
+const router = useRouter()
 const message = useMessage()
 const dialog = useDialog()
 
@@ -158,6 +160,24 @@ const handleInspectVolume = (id: string) => {
   }
 }
 
+const handleVolumeClick = (volume: Volume) => {
+  const name = volume.name
+  if (name) {
+    router.push({ name: 'VolumeDetail', params: { name } })
+  } else {
+    message.error('数据卷名称不存在')
+  }
+}
+
+const handleNetworkClick = (network: Network) => {
+  const name = network.name
+  if (name) {
+    router.push({ name: 'NetworkDetail', params: { name } })
+  } else {
+    message.error('网络名称不存在')
+  }
+}
+
 const handleCreateNetwork = async () => {
   if (!networkForm.value.name) {
     message.error('请输入网络名称')
@@ -260,8 +280,8 @@ onMounted(() => {
       </div>
 
       <n-grid x-gap="16" y-gap="16" cols="1 s:2 m:3 l:4" responsive="screen" v-if="volumes.length > 0">
-        <n-gi v-for="volume in volumes" :key="volume.id">
-          <n-card hoverable class="volume-card" :bordered="false" style="cursor: pointer" @click="router.push({ name: 'VolumeDetail', params: { id: volume.id } })">
+        <n-gi v-for="volume in volumes" :key="volume.id || volume.name">
+          <n-card hoverable class="volume-card" :bordered="false" style="cursor: pointer" @click="handleVolumeClick(volume)">
             <template #header>
               <div>
                 <div class="card-header">
@@ -313,7 +333,7 @@ onMounted(() => {
 
       <n-grid x-gap="16" y-gap="16" cols="1 s:2 m:3 l:4" responsive="screen" v-if="networks.length > 0">
         <n-gi v-for="network in networks" :key="network.id">
-          <n-card hoverable class="network-card" :bordered="false" style="cursor: pointer" @click="router.push({ name: 'NetworkDetail', params: { id: network.id } })">
+          <n-card hoverable class="network-card" :bordered="false" style="cursor: pointer" @click="handleNetworkClick(network)">
             <template #header>
               <div class="card-header">
                 <div>

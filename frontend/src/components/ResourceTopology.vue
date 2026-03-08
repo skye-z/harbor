@@ -56,11 +56,11 @@ const handleNodeClick = (params: any) => {
       const imageId = nodeId.replace('image-', '')
       router.push({ name: 'ImageDetail', params: { id: imageId } })
     } else if (nodeId.startsWith('volume-')) {
-      const volumeId = nodeId.replace('volume-', '')
-      router.push({ name: 'VolumeDetail', params: { id: volumeId } })
+      const volumeName = nodeId.replace('volume-', '')
+      router.push({ name: 'VolumeDetail', params: { name: volumeName } })
     } else if (nodeId.startsWith('network-')) {
-      const networkId = nodeId.replace('network-', '')
-      router.push({ name: 'NetworkDetail', params: { id: networkId } })
+      const networkName = nodeId.replace('network-', '')
+      router.push({ name: 'NetworkDetail', params: { name: networkName } })
     }
   }
 }
@@ -108,13 +108,13 @@ const topologyOption = computed<EChartsOption>(() => ({
           }
         } else if (node.category === 2) {
           info += `<div>类型: 卷</div>`
-          const volume = volumeStore.volumes.find(v => v.id === node.id.replace('volume-', ''))
+          const volume = volumeStore.volumes.find(v => v.name === node.id.replace('volume-', ''))
           if (volume) {
             info += `<div>驱动: ${volume.driver}</div>`
           }
         } else if (node.category === 3) {
           info += `<div>类型: 网络</div>`
-          const network = networkStore.networks.find(n => n.id === node.id.replace('network-', ''))
+          const network = networkStore.networks.find(n => n.name === node.id.replace('network-', ''))
           if (network) {
             info += `<div>驱动: ${network.driver}</div>`
             info += `<div>子网: ${network.subnet || 'N/A'}</div>`
@@ -207,7 +207,7 @@ const buildTopology = () => {
 
   networkStore.networks.forEach((network) => {
     newNodes.push({
-      id: `network-${network.id}`,
+      id: `network-${network.name}`,
       name: network.name,
       category: 3,
       symbolSize: 15,
@@ -219,7 +219,7 @@ const buildTopology = () => {
 
   volumeStore.volumes.forEach((volume) => {
     newNodes.push({
-      id: `volume-${volume.id}`,
+      id: `volume-${volume.name}`,
       name: volume.name,
       category: 2,
       symbolSize: 15,

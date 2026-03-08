@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useMessage, useDialog } from 'naive-ui'
-import { volumeApi, containerApi } from '../plugins/api'
+import { useMessage, useDialog, NTag, NButton, NSpace, NIcon } from 'naive-ui'
+import { volumeApi } from '../plugins/api'
 import { useVolumeStore } from '../plugins/stores/volumes'
 import { useContainerStore } from '../plugins/stores/containers'
 import {
@@ -12,7 +12,9 @@ import {
   FolderOutline,
   LinkOutline,
   UnlinkOutline,
-  RefreshOutline
+  RefreshOutline,
+  ServerOutline,
+  CubeOutline
 } from '@vicons/ionicons5'
 
 const route = useRoute()
@@ -22,14 +24,14 @@ const dialog = useDialog()
 const volumeStore = useVolumeStore()
 const containerStore = useContainerStore()
 
-const volumeId = route.params.id as string
+const volumeName = route.params.name as string
 const loading = ref(false)
 const exportLoading = ref(false)
 const fileTreeLoading = ref(false)
-const activeTab = ref('info')
 
 const volume = computed(() => {
-  return volumeStore.volumes.find(v => v.id === volumeId)
+  // 通过 name 查找数据卷
+  return volumeStore.volumes.find(v => v.name === volumeName)
 })
 
 // 获取挂载该卷的容器
@@ -44,15 +46,15 @@ const mountedContainers = computed(() => {
 
 // 文件树数据
 const fileTree = ref<any[]>([])
-const selectedFile = ref<string>('')
 
 const loadVolumeDetail = async () => {
   loading.value = true
   try {
     await volumeStore.fetchVolumes()
+    await containerStore.fetchContainers()
     if (!volume.value) {
       message.error('数据卷不存在')
-      router.push({ name: 'Storage' })
+      router.push({ name: 'Connect' })
       return
     }
   } catch (error: any) {
@@ -76,9 +78,9 @@ const handleDelete = () => {
     negativeText: '取消',
     onPositiveClick: async () => {
       try {
-        await volumeApi.delete(volumeId)
+        await volumeApi.delete(volumeName)
         message.success('数据卷已删除')
-        router.push({ name: 'Storage' })
+        router.push({ name: 'Connect' })
       } catch (error: any) {
         message.error('删除失败: ' + error.message)
       }
@@ -90,8 +92,7 @@ const handleDelete = () => {
 const handleExport = async () => {
   try {
     exportLoading.value = true
-    const response = await volumeApi.export(volumeId)
-    // 创建下载链接
+    const response = await volumeApi.export(volumeName)
     const blob = new Blob([response], { type: 'application/x-tar' })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -109,140 +110,180 @@ const handleExport = async () => {
   }
 }
 
-// 加载文件树
-const loadFileTree = async (path: string = '/') => {
-  fileTreeLoading.value = true
-  try {
-    const files = await volumeApi.listFiles(volumeId, path)
-    fileTree.value = files
-  } catch (error: any) {
-    message.error('加载文件列表失败: ' + error.message)
-  } finally {
-    fileTreeLoading.value = false
-  }
-}
-
-// 解除挂载
-const handleUnmount = async (containerId: string) => {
-  try {
-    await containerApi.unmountVolume(containerId, volume.value?.name)
-    message.success('已解除挂载')
-    await containerStore.fetchContainers()
-  } catch (error: any) {
-    message.error('解除挂载失败: ' + error.message)
-  }
+// 格式化大小
+const formatSize = (bytes: number) => {
+  if (bytes === 0) return '0 B'
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB'
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
+  return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB'
 }
 
 onMounted(() => {
   loadVolumeDetail()
-  containerStore.fetchContainers()
 })
 </script>
 
 <template>
-  <div class="volume-detail-page">
+  <div class="volume-detail">
     <div class="page-header">
-      <n-button text @click="router.push({ name: 'Storage' })">
-        <template #icon>
-          <n-icon :component="ArrowBackOutline" />
-        </template>
-        返回
-      </n-button>
-      <h1 class="page-title">{{ volume?.name || '数据卷详情' }}</h1>
-      <n-space>
-        <n-button @click="handleExport" :loading="exportLoading">
-          <template #icon>
-            <n-icon :component="DownloadOutline" />
-          </template>
-          导出
-        </n-button>
-        <n-button type="error" @click="handleDelete">
-          <template #icon>
-            <n-icon :component="TrashOutline" />
-          </template>
-          删除
-        </n-button>
-      </n-space>
+      <div class="title-group">
+        <div class="view-header">
+          <h1>{{ volume?.name || volumeName }}</h1>
+          <div class="header-actions">
+            <n-button type="primary" ghost @click="handleExport" :loading="exportLoading">
+              <template #icon>
+                <n-icon :component="DownloadOutline" />
+              </template>
+              导出
+            </n-button>
+            <n-button type="error" ghost @click="handleDelete">
+              <template #icon>
+                <n-icon :component="TrashOutline" />
+              </template>
+              删除
+            </n-button>
+          </div>
+        </div>
+        <div class="subtitle-text">
+          {{ volume?.mountpoint || '-' }}
+        </div>
+      </div>
     </div>
 
-    <n-tabs v-model:value="activeTab" type="line" style="margin-top: 20px;">
-      <n-tab-pane name="info" tab="基本信息">
-        <n-card :bordered="false">
-          <n-descriptions bordered :column="2">
-            <n-descriptions-item label="名称">{{ volume?.name }}</n-descriptions-item>
-            <n-descriptions-item label="驱动">{{ volume?.driver }}</n-descriptions-item>
-            <n-descriptions-item label="挂载点">{{ volume?.mountpoint }}</n-descriptions-item>
-            <n-descriptions-item label="创建时间">
-              <n-time v-if="volume?.created_at" :time="new Date(volume.created_at).getTime()" type="datetime" />
-            </n-descriptions-item>
-          </n-descriptions>
-        </n-card>
-      </n-tab-pane>
+    <n-spin :show="loading">
+      <n-grid item-responsive x-gap="10" cols="24">
+        <!-- 左侧：基本信息 -->
+        <n-gi span="24 760:9 900:8">
+          <n-card size="small" title="基本信息" style="margin-bottom: 10px;">
+            <template #header-extra>
+              <n-tag type="info" size="small" :bordered="false">
+                {{ volume?.driver || 'local' }}
+              </n-tag>
+            </template>
+            <n-descriptions :column="1" label-placement="left">
+              <n-descriptions-item label="ID">
+                {{ volume?.id || volume?.name || '-' }}
+              </n-descriptions-item>
+              <n-descriptions-item label="名称">
+                {{ volume?.name || '-' }}
+              </n-descriptions-item>
+              <n-descriptions-item label="驱动">
+                {{ volume?.driver || 'local' }}
+              </n-descriptions-item>
+              <n-descriptions-item label="挂载点">
+                <n-ellipsis style="max-width: 200px;">
+                  {{ volume?.mountpoint || '-' }}
+                </n-ellipsis>
+              </n-descriptions-item>
+              <n-descriptions-item label="创建时间">
+                <n-time v-if="volume?.created_at" :time="new Date(volume.created_at).getTime()" type="datetime" />
+                <span v-else>-</span>
+              </n-descriptions-item>
+              <n-descriptions-item label="范围">
+                {{ volume?.scope || 'local' }}
+              </n-descriptions-item>
+            </n-descriptions>
+          </n-card>
 
-      <n-tab-pane name="containers" tab="容器挂载">
-        <n-card :bordered="false">
-          <n-list v-if="mountedContainers.length > 0">
-            <n-list-item v-for="container in mountedContainers" :key="container.id">
-              <n-thing :title="container.names[0]?.replace(/^\//, '') || container.id">
-                <template #description>
-                  <n-space>
-                    <n-tag size="small" :type="container.state === 'running' ? 'success' : 'default'">
-                      {{ container.state }}
-                    </n-tag>
-                    <span style="font-size: 12px; color: #999;">{{ container.image }}</span>
-                  </n-space>
-                </template>
-              </n-thing>
-              <template #suffix>
-                <n-button size="small" quaternary type="error" @click="handleUnmount(container.id)">
-                  <template #icon>
-                    <n-icon :component="UnlinkOutline" />
+          <n-card size="small" title="使用统计" style="margin-bottom: 10px;">
+            <n-descriptions :column="1" label-placement="left">
+              <n-descriptions-item label="挂载容器数">
+                {{ mountedContainers.length }}
+              </n-descriptions-item>
+              <n-descriptions-item label="引用次数">
+                {{ volume?.usage_data?.ref_count || 0 }}
+              </n-descriptions-item>
+              <n-descriptions-item label="大小">
+                {{ formatSize(volume?.usage_data?.size || 0) }}
+              </n-descriptions-item>
+            </n-descriptions>
+          </n-card>
+        </n-gi>
+
+        <!-- 右侧：挂载容器 -->
+        <n-gi span="24 760:15 900:16">
+          <n-card size="small" title="挂载容器" style="margin-bottom: 10px;">
+            <n-list v-if="mountedContainers.length > 0">
+              <n-list-item v-for="container in mountedContainers" :key="container.id">
+                <n-thing :title="container.names[0]?.replace(/^\//, '') || container.id">
+                  <template #avatar>
+                    <n-avatar>
+                      <n-icon :component="CubeOutline" />
+                    </n-avatar>
                   </template>
-                  解除挂载
-                </n-button>
-              </template>
-            </n-list-item>
-          </n-list>
-          <n-empty v-else description="暂无容器挂载此数据卷" />
-        </n-card>
-      </n-tab-pane>
+                  <template #description>
+                    <n-space>
+                      <n-tag size="small" :type="container.state === 'running' ? 'success' : 'default'">
+                        {{ container.state }}
+                      </n-tag>
+                      <span style="font-size: 12px; color: #999;">{{ container.image }}</span>
+                    </n-space>
+                  </template>
+                </n-thing>
+                <template #suffix>
+                  <n-button size="small" quaternary type="primary" @click="router.push({ name: 'ContainerDetail', params: { id: container.id } })">
+                    查看
+                  </n-button>
+                </template>
+              </n-list-item>
+            </n-list>
+            <n-empty v-else description="暂无容器挂载此数据卷" />
+          </n-card>
 
-      <n-tab-pane name="files" tab="文件浏览">
-        <n-card :bordered="false">
-          <n-spin :show="fileTreeLoading">
-            <n-tree
-              :data="fileTree"
-              :render-prefix="() => h(NIcon, { component: FolderOutline })"
-              selectable
-              @update:selected-keys="(keys) => selectedFile = keys[0] as string"
-            />
-          </n-spin>
-          <n-empty v-if="fileTree.length === 0 && !fileTreeLoading" description="暂无文件数据" />
-        </n-card>
-      </n-tab-pane>
-    </n-tabs>
+          <n-card size="small" title="标签">
+            <n-space v-if="volume?.labels && Object.keys(volume.labels).length > 0" wrap>
+              <n-tag v-for="(value, key) in volume.labels" :key="key" size="small">
+                {{ key }}: {{ value }}
+              </n-tag>
+            </n-space>
+            <n-empty v-else description="暂无标签" />
+          </n-card>
+        </n-gi>
+      </n-grid>
+    </n-spin>
   </div>
 </template>
 
 <style scoped>
-.volume-detail-page {
+.volume-detail {
   padding: 0 10px 10px 10px;
   max-width: 1400px;
   margin: 0 auto;
 }
 
 .page-header {
+  margin-bottom: 10px;
+}
+
+.title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.view-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 10px;
 }
 
-.page-title {
+.view-header h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
   flex: 1;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.subtitle-text {
+  font-size: 14px;
+  color: var(--n-text-color-3);
+  word-break: break-all;
 }
 </style>
