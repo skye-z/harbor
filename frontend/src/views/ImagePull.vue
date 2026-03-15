@@ -29,7 +29,12 @@ interface SearchResult {
   IsOfficial: boolean
 }
 
-const suggestions = ref<SearchResult[]>([])
+interface AutoCompleteOption {
+  label: string
+  value: SearchResult
+}
+
+const suggestions = ref<AutoCompleteOption[]>([])
 const suggestionLoading = ref(false)
 
 type PullStatus = 'idle' | 'pulling' | 'success' | 'error'
@@ -81,7 +86,10 @@ const loadSuggestions = async (query: string) => {
   suggestionLoading.value = true
   try {
     const results = await imageApi.search(query, 10)
-    suggestions.value = (results || []) as SearchResult[]
+    suggestions.value = ((results || []) as SearchResult[]).map(s => ({
+      label: s.name,
+      value: s
+    }))
   } catch (e) {
     suggestions.value = []
   } finally {
@@ -223,7 +231,7 @@ onUnmounted(() => {
           <n-form-item label="镜像名称">
             <n-auto-complete
               v-model:value="imageName"
-              :options="suggestions.map(s => ({ label: s.name, value: s, key: s.name }))"
+              :options="suggestions as any"
               :loading="suggestionLoading"
               placeholder="输入镜像名称搜索，如: nginx"
               :render-label="(option: any) => renderSuggestionLabel(option.value)"

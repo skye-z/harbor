@@ -136,6 +136,28 @@ const handleRefresh = async () => {
 const viewDetails = (id: string) => {
   router.push({ name: 'ImageDetail', params: { id } })
 }
+
+const handleBuild = async () => {
+  if (!buildForm.value.imageName) {
+    message.warning('请输入镜像名称')
+    return
+  }
+  if (!buildForm.value.dockerfile) {
+    message.warning('请输入 Dockerfile')
+    return
+  }
+  try {
+    loading.value = true
+    await imageStore.buildImage(buildForm.value.imageName, buildForm.value.dockerfile)
+    message.success('镜像构建成功')
+    showBuildModal.value = false
+    refresh()
+  } catch (error: any) {
+    message.error('构建失败: ' + error.message)
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <template>

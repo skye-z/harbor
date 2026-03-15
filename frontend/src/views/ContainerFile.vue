@@ -328,7 +328,7 @@ onUnmounted(() => {
               <span class="file-name" :title="item.name">{{ item.name }}</span>
               <n-spin
                 v-if="item.is_dir && item.loading"
-                size="8px"
+                :size="8"
               />
               <n-button
                 v-else-if="!item.is_dir"

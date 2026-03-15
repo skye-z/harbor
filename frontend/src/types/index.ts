@@ -12,6 +12,8 @@ export interface Container {
   network_settings: NetworkSettings
   size_rw?: number
   size_root_fs?: number
+  mount?: Array<{ type: string; source: string; destination: string }>
+  mounts?: Array<{ type: string; name?: string; source: string; destination: string }>
 }
 
 export interface Port {
@@ -58,6 +60,16 @@ export interface Network {
   attachable: boolean
   internal: boolean
   created: string
+  subnet?: string
+  gateway?: string
+  ipam?: {
+    config?: Array<{
+      subnet?: string
+      gateway?: string
+      ip_range?: string
+    }>
+  }
+  labels?: Record<string, string>
 }
 
 export interface Volume {
@@ -66,6 +78,12 @@ export interface Volume {
   driver: string
   mountpoint: string
   created_at: string
+  scope?: string
+  usage_data?: {
+    size: number
+    ref_count: number
+  }
+  labels?: Record<string, string>
 }
 
 export interface DockerInfo {
@@ -88,4 +106,9 @@ export interface UserInfo {
   id: string
   username: string
   is_admin: boolean
+}
+
+export interface WSMessage {
+  type: string
+  payload: any
 }

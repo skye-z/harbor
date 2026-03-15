@@ -88,7 +88,7 @@ const handleDelete = () => {
     negativeText: '取消',
     onPositiveClick: async () => {
       try {
-        await networkApi.delete(networkId)
+        await networkApi.delete(networkId.value)
         message.success('网络已删除')
         router.push({ name: 'Connect' })
       } catch (error: any) {
@@ -101,7 +101,7 @@ const handleDelete = () => {
 // 断开容器连接
 const handleDisconnect = async (containerId: string) => {
   try {
-    await networkApi.disconnectContainer(networkId, containerId)
+    await networkApi.disconnectContainer(networkId.value, containerId)
     message.success('已断开连接')
     await containerStore.fetchContainers()
   } catch (error: any) {
@@ -118,7 +118,7 @@ const handleConnect = async () => {
 
   try {
     connectLoading.value = true
-    await networkApi.connectContainer(networkId, selectedContainer.value)
+    await networkApi.connectContainer(networkId.value, selectedContainer.value)
     message.success('容器已接入网络')
     showConnectModal.value = false
     selectedContainer.value = ''

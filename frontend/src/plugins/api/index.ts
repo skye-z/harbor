@@ -4,7 +4,7 @@ import type {
   Image,
   Volume,
   Network
-} from '../types'
+} from '../../types'
 
 export const authApi = {
   login: async (data: { username: string; password: string }) => {
