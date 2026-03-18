@@ -51,7 +51,7 @@ func ErrorWithCode(c *gin.Context, code int, message string) {
 
 // 请求参数错误
 func BadRequest(c *gin.Context, message string) {
-	c.JSON(http.StatusBadRequest, Response{
+	c.JSON(http.StatusOK, Response{
 		Code:    400,
 		Message: message,
 		Data:    nil,
@@ -60,7 +60,7 @@ func BadRequest(c *gin.Context, message string) {
 
 // 未授权访问
 func Unauthorized(c *gin.Context, message string) {
-	c.JSON(http.StatusUnauthorized, Response{
+	c.JSON(http.StatusOK, Response{
 		Code:    401,
 		Message: message,
 		Data:    nil,
@@ -69,7 +69,7 @@ func Unauthorized(c *gin.Context, message string) {
 
 // 禁止访问
 func Forbidden(c *gin.Context, message string) {
-	c.JSON(http.StatusForbidden, Response{
+	c.JSON(http.StatusOK, Response{
 		Code:    403,
 		Message: message,
 		Data:    nil,

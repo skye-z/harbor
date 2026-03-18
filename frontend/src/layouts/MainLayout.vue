@@ -77,6 +77,7 @@ import {
   GitNetworkOutline,
   KeyOutline
 } from '@vicons/ionicons5'
+import MD5 from 'crypto-js/md5'
 
 const router = useRouter()
 const route = useRoute()
@@ -113,9 +114,11 @@ const handleChangePassword = async () => {
 
   try {
     changePasswordLoading.value = true
+    const encryptedOldPassword = MD5(passwordForm.value.oldPassword,).toString()
+    const encryptedNewPassword = MD5(passwordForm.value.newPassword).toString()
     await authApi.changePassword({
-      old_password: passwordForm.value.oldPassword,
-      new_password: passwordForm.value.newPassword
+      old_password: encryptedOldPassword,
+      new_password: encryptedNewPassword
     })
     message.success('密码修改成功，请重新登录')
     showChangePasswordModal.value = false

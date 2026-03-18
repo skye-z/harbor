@@ -47,6 +47,7 @@ class ApiClient {
         return Promise.reject(new Error(res.message || '请求失败'))
       },
       (error) => {
+        console.log(error)
         if (error.response?.status === 401) {
           localStorage.removeItem('token')
           window.location.href = '/?t='+new Date().getTime()
